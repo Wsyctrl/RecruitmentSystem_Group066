@@ -5,7 +5,7 @@
 |-----------------|-------------------|
 | Wsyctrl         | 231226576         |
 | Season-art      | 231226912         |
-| [Member3-GitHub-Username] | [Member3-Student-ID] |
+| YUNSHI111       | 231226646 |
 | KKkkKKkk501     | 231226635         |
 | [Member5-GitHub-Username] | [Member5-Student-ID] |
 | [Member6-GitHub-Username] | [Member6-Student-ID] |
