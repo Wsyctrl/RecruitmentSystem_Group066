@@ -8,7 +8,7 @@
 | YUNSHI111       | 231226646 |
 | KKkkKKkk501     | 231226635         |
 | bibilabu-gugugaga | 231226602       |
-| [Member6-GitHub-Username] | [Member6-Student-ID] |
+| Mellow-zhu | 231226901 |
 
 ### Commit Message Standards
 All commit messages must strictly follow the format: `[Type]: [Concise Description]`. Refer to the table below for valid types and usage:
