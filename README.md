@@ -7,7 +7,7 @@
 | Season-art      | 231226912         |
 | YUNSHI111       | 231226646 |
 | KKkkKKkk501     | 231226635         |
-| [Member5-GitHub-Username] | [Member5-Student-ID] |
+| bibilabu-gugugaga | 231226602       |
 | [Member6-GitHub-Username] | [Member6-Student-ID] |
 
 ### Commit Message Standards
