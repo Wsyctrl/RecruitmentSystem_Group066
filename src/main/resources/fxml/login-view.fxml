@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.bupt.tarecruit.controller.LoginController">
+    <center>
+        <VBox alignment="CENTER" spacing="12" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets top="40" right="40" bottom="40" left="40"/>
+            </padding>
+            <Label text="BUPT International School TA Recruitment" styleClass="h3"/>
+            <TextField fx:id="userIdField" promptText="Username" maxWidth="280"/>
+            <PasswordField fx:id="passwordField" promptText="Password" maxWidth="280"/>
+            <Button text="Sign in" onAction="#handleLogin" maxWidth="280"
+                    styleClass="btn" />
+            <Hyperlink fx:id="registerLink" text="No account? Register"/>
+        </VBox>
+    </center>
+</BorderPane>

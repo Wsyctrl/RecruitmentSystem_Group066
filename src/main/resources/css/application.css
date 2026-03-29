@@ -1,0 +1,37 @@
+.root {
+    -fx-font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+    -fx-font-size: 13px;
+}
+
+.tool-bar {
+    -fx-padding: 8 12;
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: transparent transparent #dee2e6 transparent;
+}
+
+.tab-pane {
+    -fx-tab-min-width: 96px;
+}
+
+.split-pane > .split-pane-divider {
+    -fx-padding: 0 2;
+}
+
+.table-view {
+    -fx-table-cell-border-color: #e9ecef;
+}
+
+.text-muted {
+    -fx-text-fill: #6c757d;
+}
+
+.btn {
+    -fx-background-color: #0d6efd;
+    -fx-text-fill: white;
+}
+
+.btn-outline-secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: #0d6efd;
+    -fx-border-color: #0d6efd;
+}
