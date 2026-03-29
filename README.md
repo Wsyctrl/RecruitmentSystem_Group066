@@ -1,12 +1,16 @@
 # RecruitmentSystem
 
-## GitHub Contribution Guidelines
-### 1. Personal Branch Naming Convention
-All team members must work on their own dedicated personal branches. Do **not** commit directly to the `master` branch.
-- **Naming Format**: `dev/[your-name]`
-- **Example**: `dev/siyan-wu`
+### Team Members
+| GitHub Username | QMID (Student ID) |
+|-----------------|-------------------|
+| Wsyctrl         | 231226576         |
+| Season-art      | 231226912         |
+| YUNSHI111       | 231226646 |
+| KKkkKKkk501     | 231226635         |
+| bibilabu-gugugaga | 231226602       |
+| Mellow-zhu | 231226901 |
 
-### 2. Commit Message Standards
+### Commit Message Standards
 All commit messages must strictly follow the format: `[Type]: [Concise Description]`. Refer to the table below for valid types and usage:
 
 | Type       | Description                                                                 | Example                                                |
