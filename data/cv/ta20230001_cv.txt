@@ -1,0 +1,53 @@
+Alice Wang
+TA Candidate | Student ID: ta20230001
+Email: ta20230001@bupt.edu.cn | Phone: 13810003001
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Detail-oriented Computer Science student with strong foundations in Java, Python, and data structures. Experienced in peer mentoring and lab-style support for first-year programming courses. Skilled at explaining difficult concepts in clear, structured language and at guiding students to solve problems independently rather than giving direct answers. Comfortable working in multicultural and bilingual academic environments.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor of Science in Computer Science (Expected Graduation: 2027)
+Relevant Coursework: Data Structures, Algorithms, Object-Oriented Programming, Database Systems, Software Engineering, Computer Networks
+
+TECHNICAL SKILLS
+- Programming: Java, Python, SQL
+- Tools: Git, IntelliJ IDEA, VS Code, JUnit, Maven
+- Concepts: Complexity analysis, recursion, testing strategy, debugging workflows
+- Communication: Technical explanation, student coaching, collaborative project coordination
+
+TEACHING AND ACADEMIC SUPPORT EXPERIENCE
+Peer Mentor, Introductory Programming Support Program (2024-2025)
+- Supported weekly help sessions for first-year students learning Java fundamentals.
+- Guided students through debugging workflows, compiler errors, and common logic mistakes.
+- Prepared short practice exercises on loops, arrays, and method decomposition.
+- Collaborated with instructors to summarize recurring student difficulties after each session.
+
+Study Group Facilitator, Data Structures Review Circle (2024)
+- Led small-group review activities on linked lists, stacks, queues, trees, and graph basics.
+- Designed whiteboard walkthroughs to explain time complexity trade-offs.
+- Encouraged students to compare multiple valid implementations and discuss maintainability.
+
+PROJECT EXPERIENCE
+Course Project: Student Assignment Tracker (Java, Git, JUnit)
+- Co-developed a Java application for assignment tracking and reminder notifications.
+- Implemented input validation and modular service classes for maintainable architecture.
+- Wrote unit tests for core business logic and documented APIs for teammates.
+
+Course Project: Survey Data Cleaning Toolkit (Python)
+- Built Python scripts to clean messy survey exports and normalize response categories.
+- Automated repetitive transformations and generated quick trend summaries for reports.
+- Presented project outcomes in class with clear explanation of data quality assumptions.
+
+LEADERSHIP AND SERVICE
+Volunteer Tutor, Open Day Programming Booth
+- Explained basic programming ideas to visiting high-school students and parents.
+- Demonstrated beginner-friendly coding examples and answered curriculum questions.
+
+AVAILABILITY
+- Available for weekday evening labs and one weekend support session if needed.
+- Able to commit stable weekly hours across a full teaching term.
+
+REFERENCES
+Available upon request.

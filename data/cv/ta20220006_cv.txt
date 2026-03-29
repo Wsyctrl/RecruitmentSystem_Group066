@@ -1,0 +1,52 @@
+Emma Liu
+TA Candidate | Student ID: ta20220006
+Email: ta20220006@bupt.edu.cn | Phone: 13810002006
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Computer Engineering student focused on networks and Linux-based systems. Hands-on experience with virtualized lab environments, subnet planning, and troubleshooting workflows. Known for careful documentation and methodical debugging. Interested in TA responsibilities that require patience, technical clarity, and safe lab operation standards.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor of Engineering in Computer Engineering (Expected Graduation: 2026)
+Relevant Coursework: Computer Networks, Operating Systems, Computer Architecture, Information Security Basics, Scripting Fundamentals
+
+TECHNICAL SKILLS
+- Systems and Networking: Linux administration basics, shell commands, SSH, firewall concepts
+- Networking Topics: IPv4 subnetting, routing fundamentals, TCP/UDP behavior, packet inspection basics
+- Tools: Wireshark, VirtualBox/VMware, Git, VS Code
+- Programming/Scripting: Python (basic automation), Bash scripts
+
+LAB AND SUPPORT EXPERIENCE
+Network Lab Assistant (Course Support Volunteer, 2024)
+- Helped classmates configure virtual machine network interfaces and SSH access.
+- Supported troubleshooting for connectivity issues, DNS configuration, and firewall rules.
+- Created concise troubleshooting checklists for repeated lab problems.
+- Reinforced safe hardware handling and cable management practices in shared spaces.
+
+Peer Tutor, Systems Fundamentals Study Group
+- Explained core OS and network concepts using diagrams and scenario-based examples.
+- Guided students through interpreting terminal outputs and log messages.
+- Encouraged reproducible debugging habits and versioned note-taking.
+
+PROJECT EXPERIENCE
+Project: Secure Remote Access Mini-Lab (Linux + SSH)
+- Built a small lab setup with multiple virtual machines and role-based SSH access.
+- Documented firewall rule changes and tested rule effects step-by-step.
+- Produced a setup manual to help peers reproduce the environment.
+
+Project: Intro Packet Capture Analysis
+- Captured and reviewed network traffic for common protocols in a controlled environment.
+- Summarized packet flow patterns and identified frequent beginner misinterpretations.
+- Presented findings in a short technical briefing format.
+
+ADDITIONAL INFORMATION
+- This account has previously been used in system demo scenarios; profile status may vary by environment.
+- Committed to professional communication and consistent TA support standards.
+
+AVAILABILITY
+- Available for Friday lab blocks and one additional weekday support session.
+- Can assist with pre-lab preparation and post-lab Q&A follow-up.
+
+REFERENCES
+Available upon request.

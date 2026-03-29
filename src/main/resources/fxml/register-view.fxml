@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.bupt.tarecruit.controller.RegisterController">
+    <center>
+        <StackPane>
+            <VBox alignment="CENTER" spacing="12" maxWidth="360" prefWidth="360">
+                <padding>
+                    <Insets top="30" right="30" bottom="30" left="30"/>
+                </padding>
+                <Label text="Register" styleClass="h3"/>
+                <ChoiceBox fx:id="roleChoice" maxWidth="320" prefWidth="320"/>
+                <TextField fx:id="userIdField" promptText="Student ID (ta+8 digits) or staff ID (mo+8 digits)" maxWidth="320" prefWidth="320"/>
+                <PasswordField fx:id="passwordField" promptText="Password" maxWidth="320" prefWidth="320"/>
+                <PasswordField fx:id="confirmPasswordField" promptText="Confirm password" maxWidth="320" prefWidth="320"/>
+                <Button text="Register" onAction="#handleRegister" maxWidth="320" prefWidth="320" styleClass="btn"/>
+                <Button text="Back to sign in" onAction="#handleBackToLogin" maxWidth="320" prefWidth="320" styleClass="btn-outline-secondary"/>
+            </VBox>
+        </StackPane>
+    </center>
+</BorderPane>

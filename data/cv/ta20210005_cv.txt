@@ -1,0 +1,54 @@
+David Park
+TA Candidate | Student ID: ta20210005
+Email: ta20210005@bupt.edu.cn | Phone: 13810001005
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Information Systems student with practical internship experience in analytics reporting, SQL-based data processing, and Python automation. Strong at translating technical results into clear business-oriented explanations. Interested in TA work that combines technical support, communication, and structured mentoring for students who may feel anxious about quantitative or programming-heavy coursework.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor of Science in Information Systems (Expected Graduation: 2026)
+Relevant Coursework: Database Systems, Business Analytics, Statistics, Data Visualization, Software Engineering Fundamentals
+
+TECHNICAL SKILLS
+- Data and Programming: SQL, Python, Excel (advanced formulas), Power BI
+- Tools: Git, Jupyter, PostgreSQL, Microsoft Office Suite
+- Methods: Data cleaning, KPI tracking, dashboard design, requirement documentation
+- Soft Skills: Stakeholder communication, workshop facilitation, written reporting
+
+INTERNSHIP EXPERIENCE
+Business Analytics Intern, Regional Services Company (Summer 2025)
+- Assisted reporting team in preparing weekly KPI dashboards for operations managers.
+- Wrote SQL queries to aggregate transaction and customer activity metrics.
+- Automated repetitive spreadsheet processing with Python scripts, reducing manual effort.
+- Validated report consistency and documented metric definitions for internal users.
+- Presented key findings during sprint review meetings and incorporated feedback quickly.
+
+TEACHING AND PEER SUPPORT
+Student Workshop Facilitator, Data Literacy Sessions (2024-2025)
+- Co-facilitated workshops on spreadsheet hygiene, chart interpretation, and metric clarity.
+- Helped non-technical students understand joins, filtering logic, and baseline comparisons.
+- Prepared simple examples to explain common mistakes in data interpretation.
+
+Peer Academic Support, Quantitative Course Study Group
+- Provided one-on-one support for classmates on SQL query structure and debugging.
+- Encouraged step-by-step problem decomposition and documented repeatable solving patterns.
+- Shared practical templates for assignment planning and progress tracking.
+
+PROJECT EXPERIENCE
+Project: Enrollment Trend Analytics Dashboard (SQL, Python, Power BI)
+- Built a dashboard prototype visualizing enrollment distribution by module and term.
+- Designed data pipeline steps from raw export cleanup to chart-ready tables.
+- Produced summary notes explaining assumptions, filters, and business implications.
+
+Project: Finance Documentation Workflow Improvement
+- Standardized shared templates and documentation style for student organization records.
+- Improved handover clarity by adding version naming conventions and update logs.
+
+AVAILABILITY
+- Available weekdays before noon and selected afternoon lab slots.
+- Can support weekly office hours, assignment Q&A sessions, and grading assistance.
+
+REFERENCES
+Available upon request.

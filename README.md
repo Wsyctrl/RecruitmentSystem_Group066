@@ -21,3 +21,38 @@ All commit messages must strictly follow the format: `[Type]: [Concise Descripti
 | `refactor` | Code refactoring (no new features or bug fixes, only optimization)          | `refactor: optimize TA application status query logic` |
 | `test`     | Add or modify test code                                                     | `test: write unit test for MO job posting function`    |
 | `chore`    | Routine maintenance tasks (no code/logic changes)                           | `chore: update README.md`                              |
+
+---
+
+# RecruitmentSystem Project Run Guide
+
+## 1. Environment Setup
+- JDK 21
+- Apache Maven
+
+## 2. Clone the Repository
+```bash
+git clone https://github.com/Wsyctrl/RecruitmentSystem_Group066.git
+```
+
+## 3. Load Maven Dependencies
+### Option 1: Command Line
+Navigate to the project root directory and run:
+```bash
+mvn clean install
+```
+
+### Option 2: IntelliJ IDEA
+- Open the **Maven** tool window on the right side
+- Click the **refresh button (🔄)** at the top to automatically download all dependencies
+
+## 4. Run the Project
+### Option 1: Command Line
+```bash
+mvn javafx:run
+```
+
+### Option 2: IntelliJ IDEA
+- Open the **Maven** tool window on the right side
+- Expand `rec` → `Plugins` → `javafx`
+- Double-click **javafx:run** to start the application
