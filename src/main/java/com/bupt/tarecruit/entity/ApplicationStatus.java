@@ -2,9 +2,9 @@ package com.bupt.tarecruit.entity;
 
 public enum ApplicationStatus {
     PENDING(0, "Pending"),
-    HIRED(1, "Hired"),
-    REJECTED(2, "Not hired"),
-    WITHDRAWN(3, "Withdrawn");
+    WITHDRAWN(1, "Withdrawn"),
+    HIRED(2, "Hired"),
+    REJECTED(3, "Not hired");
 
     private final int code;
     private final String label;

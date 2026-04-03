@@ -14,6 +14,8 @@ public class ServiceRegistry {
     private final MoDao moDao;
     private final JobDao jobDao;
     private final ApplicationDao applicationDao;
+    private final AccountLogDao accountLogDao;
+    private final JobLogDao jobLogDao;
 
     private final AuthService authService;
     private final JobService jobService;
@@ -30,6 +32,8 @@ public class ServiceRegistry {
         this.moDao = new CsvMoDao(dataDir.resolve("MO.csv"));
         this.jobDao = new CsvJobDao(dataDir.resolve("Jobs.csv"));
         this.applicationDao = new CsvApplicationDao(dataDir.resolve("Applications.csv"));
+        this.accountLogDao = new CsvAccountLogDao(dataDir.resolve("AccountLogs.csv"));
+        this.jobLogDao = new CsvJobLogDao(dataDir.resolve("JobLogs.csv"));
 
         this.authService = new AuthService(taDao, moDao);
         this.jobService = new JobService(jobDao);
@@ -37,7 +41,7 @@ public class ServiceRegistry {
         // Ensure Applications.csv is consistent with Jobs.csv (no Pending applications for closed jobs).
         this.applicationService.normalizePendingApplicationsForClosedJobs();
         this.profileService = new ProfileService(taDao, moDao);
-        this.adminService = new AdminService(taDao, moDao, jobDao);
+        this.adminService = new AdminService(taDao, moDao, jobDao, accountLogDao);
         this.fileStorageHelper = new FileStorageHelper(dataDir);
     }
 
@@ -67,5 +71,13 @@ public class ServiceRegistry {
 
     public FileStorageHelper fileStorageHelper() {
         return fileStorageHelper;
+    }
+
+    public AccountLogDao accountLogDao() {
+        return accountLogDao;
+    }
+
+    public JobLogDao jobLogDao() {
+        return jobLogDao;
     }
 }

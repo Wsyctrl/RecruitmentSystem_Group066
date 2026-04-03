@@ -39,14 +39,19 @@
                                             <PropertyValueFactory property="jobName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Module" prefWidth="160">
+                                    <TableColumn text="Module" prefWidth="140">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="moduleName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Positions" prefWidth="80">
+                                    <TableColumn text="Positions" prefWidth="70">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="numberOfPositions"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Status" prefWidth="70">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="statusLabel"/>
                                         </cellValueFactory>
                                     </TableColumn>
                                 </columns>
@@ -57,9 +62,10 @@
                                 </padding>
                                 <Label text="Job details" styleClass="h5"/>
                                 <Label fx:id="selectedJobNameLabel" styleClass="h6" wrapText="true"/>
-                                <Label text="Status: Open" styleClass="text-muted"/>
+                                <Label fx:id="selectedJobStatusLabel" styleClass="text-muted"/>
                                 <Label fx:id="selectedJobDatesLabel"/>
                                 <Label fx:id="selectedJobApplicantsLabel"/>
+                                <Label fx:id="selectedJobHiredLabel"/>
                                 <Label text="Requirements" styleClass="text-muted"/>
                                 <TextArea fx:id="selectedJobRequirementsArea" editable="false" wrapText="true" prefRowCount="4"/>
                                 <Label text="Notes" styleClass="text-muted"/>
@@ -67,6 +73,7 @@
                                 <HBox spacing="10">
                                     <Button text="Edit" onAction="#handleEditFromSelected"/>
                                     <Button text="Close job" onAction="#handleCloseJob"/>
+                                    <Button text="Open job" onAction="#handleOpenJob"/>
                                     <Button text="Applicants" onAction="#handleJumpToApplicants"/>
                                 </HBox>
                             </VBox>
@@ -146,9 +153,14 @@
                                             <PropertyValueFactory property="status"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Updated" prefWidth="180">
+                                    <TableColumn text="Apply Time" prefWidth="150">
                                         <cellValueFactory>
-                                            <PropertyValueFactory property="updatedTime"/>
+                                            <PropertyValueFactory property="applyTime"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Hired Time" prefWidth="150">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="hiredTime"/>
                                         </cellValueFactory>
                                     </TableColumn>
                                 </columns>
@@ -202,21 +214,21 @@
                     </HBox>
                 </GridPane>
             </Tab>
-            <Tab text="User admin" fx:id="adminUserTab">
+            <Tab text="TA admin" fx:id="adminTaTab">
                 <SplitPane dividerPositions="0.5">
                     <VBox spacing="6">
                         <padding>
                             <Insets top="10" right="10" bottom="10" left="10"/>
                         </padding>
                         <Label text="TA accounts" styleClass="h5"/>
-                        <TableView fx:id="taUserTable">
+                        <TableView fx:id="adminTaTable">
                             <columns>
                                 <TableColumn text="ID" prefWidth="100">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="taId"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Name" prefWidth="100">
+                                <TableColumn text="Name" prefWidth="120">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="fullName"/>
                                     </cellValueFactory>
@@ -229,6 +241,16 @@
                                 <TableColumn text="Email" prefWidth="180">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="email"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Applied" prefWidth="70">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="appliedCount"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Hired" prefWidth="60">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="hiredCount"/>
                                     </cellValueFactory>
                                 </TableColumn>
                                 <TableColumn text="Status" prefWidth="80">
@@ -243,19 +265,71 @@
                             <Button text="Enable / disable" onAction="#handleToggleTaStatus"/>
                         </HBox>
                     </VBox>
+                    <VBox spacing="8">
+                        <padding>
+                            <Insets top="10" right="10" bottom="10" left="10"/>
+                        </padding>
+                        <Label text="TA Details" styleClass="h5"/>
+                        <Label fx:id="adminTaNameLabel" styleClass="h6"/>
+                        <Label fx:id="adminTaInfoLabel"/>
+                        <Label text="Jobs Applied" styleClass="text-muted"/>
+                        <TableView fx:id="adminTaAppliedJobsTable" prefHeight="150">
+                            <columns>
+                                <TableColumn text="Job ID" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Job Name" prefWidth="200">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                        </TableView>
+                        <Label text="Jobs Hired" styleClass="text-muted"/>
+                        <TableView fx:id="adminTaHiredJobsTable" prefHeight="150">
+                            <columns>
+                                <TableColumn text="Job ID" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Job Name" prefWidth="150">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Hired Time" prefWidth="120">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="time"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Work Period" prefWidth="150">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="workPeriod"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </SplitPane>
+            </Tab>
+            <Tab text="MO admin" fx:id="adminMoTab">
+                <SplitPane dividerPositions="0.5">
                     <VBox spacing="6">
                         <padding>
                             <Insets top="10" right="10" bottom="10" left="10"/>
                         </padding>
                         <Label text="MO accounts" styleClass="h5"/>
-                        <TableView fx:id="moUserTable">
+                        <TableView fx:id="adminMoTable">
                             <columns>
                                 <TableColumn text="ID" prefWidth="100">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="moId"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Name" prefWidth="100">
+                                <TableColumn text="Name" prefWidth="120">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="fullName"/>
                                     </cellValueFactory>
@@ -270,6 +344,11 @@
                                         <PropertyValueFactory property="email"/>
                                     </cellValueFactory>
                                 </TableColumn>
+                                <TableColumn text="Classes" prefWidth="70">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="classesCount"/>
+                                    </cellValueFactory>
+                                </TableColumn>
                                 <TableColumn text="Status" prefWidth="80">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="statusLabel"/>
@@ -282,6 +361,54 @@
                             <Button text="Enable / disable" onAction="#handleToggleMoStatus"/>
                         </HBox>
                     </VBox>
+                    <VBox spacing="8">
+                        <padding>
+                            <Insets top="10" right="10" bottom="10" left="10"/>
+                        </padding>
+                        <Label text="MO Details" styleClass="h5"/>
+                        <Label fx:id="adminMoNameLabel" styleClass="h6"/>
+                        <Label fx:id="adminMoInfoLabel"/>
+                        <Label text="Classes/Jobs" styleClass="text-muted"/>
+                        <TableView fx:id="adminMoJobsTable" prefHeight="300">
+                            <columns>
+                                <TableColumn text="Job ID" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Job Name" prefWidth="160">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Positions" prefWidth="60">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="numberOfPositions"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Hired" prefWidth="50">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="hiredCount"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Start Date" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="startDateLabel"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="End Date" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="endDateLabel"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Status" prefWidth="60">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="statusLabel"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                        </TableView>
+                    </VBox>
                 </SplitPane>
             </Tab>
             <Tab text="All jobs" fx:id="adminJobTab">
@@ -289,22 +416,47 @@
                     <center>
                         <TableView fx:id="adminJobTable">
                             <columns>
-                                <TableColumn text="Job ID" prefWidth="110">
+                                <TableColumn text="Job ID" prefWidth="100">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="jobId"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Title" prefWidth="200">
+                                <TableColumn text="Title" prefWidth="180">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="jobName"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Posted by" prefWidth="120">
+                                <TableColumn text="Module" prefWidth="140">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="moduleName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Posted by" prefWidth="100">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="moId"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Status" prefWidth="90">
+                                <TableColumn text="Positions" prefWidth="70">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="numberOfPositions"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Hired" prefWidth="60">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="hiredCount"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Start Date" prefWidth="100">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="startDateLabel"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="End Date" prefWidth="100">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="endDateLabel"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Status" prefWidth="70">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="statusLabel"/>
                                     </cellValueFactory>
@@ -318,8 +470,119 @@
                                 <Insets top="10" right="10" bottom="10" left="10"/>
                             </padding>
                             <Button text="Close Job" onAction="#handleAdminToggleJob"/>
+                            <Button text="Open Job" onAction="#handleAdminOpenJob"/>
                         </HBox>
                     </bottom>
+                </BorderPane>
+            </Tab>
+            <Tab text="Account Management" fx:id="adminAccountTab">
+                <BorderPane>
+                    <top>
+                        <HBox spacing="10">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label text="Account Management Log" styleClass="h5"/>
+                            <Pane HBox.hgrow="ALWAYS"/>
+                            <Button text="Refresh" onAction="#handleRefreshAccountLogs"/>
+                        </HBox>
+                    </top>
+                    <center>
+                        <TableView fx:id="accountLogTable">
+                            <columns>
+                                <TableColumn text="Time" prefWidth="140">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="timestamp"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Admin" prefWidth="100">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="adminId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Action" prefWidth="100">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="action"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="User ID" prefWidth="100">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="targetUserId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Role" prefWidth="60">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="targetRole"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Before" prefWidth="80">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="previousState"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="After" prefWidth="80">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="newState"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                        </TableView>
+                    </center>
+                </BorderPane>
+            </Tab>
+            <Tab text="Job Management" fx:id="adminJobManagementTab">
+                <BorderPane>
+                    <top>
+                        <HBox spacing="10">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label text="Job Management Log" styleClass="h5"/>
+                            <Pane HBox.hgrow="ALWAYS"/>
+                            <Button text="Refresh" onAction="#handleRefreshJobLogs"/>
+                        </HBox>
+                    </top>
+                    <center>
+                        <TableView fx:id="jobLogTable">
+                            <columns>
+                                <TableColumn text="Time" prefWidth="140">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="timestamp"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Admin" prefWidth="100">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="adminId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Action" prefWidth="100">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="action"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Job ID" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="targetUserId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Job Name" prefWidth="200">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Before" prefWidth="80">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="previousState"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="After" prefWidth="80">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="newState"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                        </TableView>
+                    </center>
                 </BorderPane>
             </Tab>
         </TabPane>

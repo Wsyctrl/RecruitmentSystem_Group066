@@ -29,29 +29,44 @@
                         <SplitPane dividerPositions="0.55">
                             <TableView fx:id="jobTable">
                                 <columns>
-                                    <TableColumn text="Job ID" prefWidth="110">
+                                    <TableColumn text="Job ID" prefWidth="100">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="jobId"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Title" prefWidth="180">
+                                    <TableColumn text="Title" prefWidth="160">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="jobName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Module" prefWidth="140">
+                                    <TableColumn text="Module" prefWidth="120">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="moduleName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Posted by" prefWidth="160">
+                                    <TableColumn text="Posted by" prefWidth="120">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="moName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Positions" prefWidth="90">
+                                    <TableColumn text="Posted Date" prefWidth="110">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="postedDate"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Positions" prefWidth="70">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="numberOfPositions"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Applicants" prefWidth="80">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="applicantsCount"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Hired" prefWidth="60">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="hiredCount"/>
                                         </cellValueFactory>
                                     </TableColumn>
                                 </columns>
@@ -85,29 +100,34 @@
                     <center>
                         <TableView fx:id="applicationTable">
                             <columns>
-                                <TableColumn text="Application ID" prefWidth="120">
+                                <TableColumn text="Application ID" prefWidth="110">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="applyId"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Job title" prefWidth="200">
+                                <TableColumn text="Job title" prefWidth="160">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="jobName"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Module" prefWidth="150">
+                                <TableColumn text="Module" prefWidth="110">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="moduleName"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Status" prefWidth="110">
+                                <TableColumn text="Job Period" prefWidth="150">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobPeriod"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Status" prefWidth="90">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="statusLabel"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Updated" prefWidth="200">
+                                <TableColumn text="Hired Time" prefWidth="130">
                                     <cellValueFactory>
-                                        <PropertyValueFactory property="updatedTime"/>
+                                        <PropertyValueFactory property="hiredTime"/>
                                     </cellValueFactory>
                                 </TableColumn>
                             </columns>
