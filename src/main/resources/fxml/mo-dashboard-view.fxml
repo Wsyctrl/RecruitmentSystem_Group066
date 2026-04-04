@@ -4,7 +4,8 @@
 <?import javafx.scene.control.cell.PropertyValueFactory?>
 <?import javafx.scene.layout.*?>
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.bupt.tarecruit.controller.MoDashboardController">
+            fx:controller="com.bupt.tarecruit.controller.MoDashboardController"
+            styleClass="root">
     <top>
         <ToolBar>
             <Label fx:id="welcomeLabel" text="MO Console" styleClass="h6"/>
@@ -17,19 +18,16 @@
             <Tab text="My jobs">
                 <BorderPane>
                     <top>
-                        <HBox spacing="10">
-                            <padding>
-                                <Insets top="10" right="10" bottom="10" left="10"/>
-                            </padding>
+                        <HBox spacing="10" styleClass="p-3">
                             <TextField fx:id="myJobSearchField" promptText="Search jobs" HBox.hgrow="ALWAYS"/>
                             <Button text="Refresh" onAction="#handleRefreshMyJobs"/>
                         </HBox>
                     </top>
                     <center>
-                        <SplitPane dividerPositions="0.55">
+                        <SplitPane dividerPositions="0.58">
                             <TableView fx:id="myJobTable">
                                 <columns>
-                                    <TableColumn text="ID" prefWidth="110">
+                                    <TableColumn text="ID" prefWidth="85">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="jobId"/>
                                         </cellValueFactory>
@@ -39,35 +37,50 @@
                                             <PropertyValueFactory property="jobName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Module" prefWidth="160">
+                                    <TableColumn text="Module" prefWidth="120">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="moduleName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Positions" prefWidth="80">
+                                    <TableColumn text="Positions" prefWidth="65">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="numberOfPositions"/>
                                         </cellValueFactory>
                                     </TableColumn>
+                                    <TableColumn text="Status" prefWidth="70">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="statusLabel"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
                                 </columns>
                             </TableView>
-                            <VBox spacing="8">
+                            <VBox spacing="12" styleClass="detail-panel">
                                 <padding>
-                                    <Insets top="10" right="10" bottom="10" left="10"/>
+                                    <Insets top="16" right="16" bottom="16" left="16"/>
                                 </padding>
                                 <Label text="Job details" styleClass="h5"/>
-                                <Label fx:id="selectedJobNameLabel" styleClass="h6" wrapText="true"/>
-                                <Label text="Status: Open" styleClass="text-muted"/>
-                                <Label fx:id="selectedJobDatesLabel"/>
-                                <Label fx:id="selectedJobApplicantsLabel"/>
-                                <Label text="Requirements" styleClass="text-muted"/>
-                                <TextArea fx:id="selectedJobRequirementsArea" editable="false" wrapText="true" prefRowCount="4"/>
-                                <Label text="Notes" styleClass="text-muted"/>
-                                <TextArea fx:id="selectedJobNotesArea" editable="false" wrapText="true" prefRowCount="3"/>
-                                <HBox spacing="10">
-                                    <Button text="Edit" onAction="#handleEditFromSelected"/>
-                                    <Button text="Close job" onAction="#handleCloseJob"/>
-                                    <Button text="Applicants" onAction="#handleJumpToApplicants"/>
+                                <VBox spacing="2">
+                                    <Label fx:id="selectedJobNameLabel" styleClass="h6" wrapText="true"/>
+                                    <Label fx:id="selectedJobStatusLabel" styleClass="text-muted"/>
+                                </VBox>
+                                <VBox spacing="2">
+                                    <Label fx:id="selectedJobDatesLabel"/>
+                                    <Label fx:id="selectedJobApplicantsLabel"/>
+                                    <Label fx:id="selectedJobHiredLabel"/>
+                                </VBox>
+                                <VBox spacing="4">
+                                    <Label text="Requirements" styleClass="text-muted"/>
+                                    <TextArea fx:id="selectedJobRequirementsArea" editable="false" wrapText="true" prefRowCount="4"/>
+                                </VBox>
+                                <VBox spacing="4">
+                                    <Label text="Notes" styleClass="text-muted"/>
+                                    <TextArea fx:id="selectedJobNotesArea" editable="false" wrapText="true" prefRowCount="3"/>
+                                </VBox>
+                                <HBox spacing="8">
+                                    <Button text="Edit" onAction="#handleEditFromSelected" styleClass="btn-outline"/>
+                                    <Button text="Close" onAction="#handleCloseJob" styleClass="btn-danger"/>
+                                    <Button text="Open" onAction="#handleOpenJob" styleClass="btn-success"/>
+                                    <Button text="Applicants" onAction="#handleJumpToApplicants" HBox.hgrow="ALWAYS"/>
                                 </HBox>
                             </VBox>
                         </SplitPane>
@@ -75,50 +88,66 @@
                 </BorderPane>
             </Tab>
             <Tab text="Post / edit job">
-                <GridPane hgap="12" vgap="12">
-                    <padding>
-                        <Insets top="20" right="20" bottom="20" left="20"/>
-                    </padding>
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="25"/>
-                        <ColumnConstraints percentWidth="75"/>
-                    </columnConstraints>
-                    <Label fx:id="formJobIdLabel" text="New job" styleClass="h5" GridPane.columnSpan="2"/>
-                    <Label text="Job title" GridPane.rowIndex="1"/>
-                    <TextField fx:id="jobNameField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-                    <Label text="Module" GridPane.rowIndex="2"/>
-                    <TextField fx:id="moduleField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-                    <Label text="Positions" GridPane.rowIndex="3"/>
-                    <Spinner fx:id="positionsSpinner" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-                    <Label text="Start date" GridPane.rowIndex="4"/>
-                    <DatePicker fx:id="startDatePicker" GridPane.rowIndex="4" GridPane.columnIndex="1" editable="false"/>
-                    <Label text="End date" GridPane.rowIndex="5"/>
-                    <DatePicker fx:id="endDatePicker" GridPane.rowIndex="5" GridPane.columnIndex="1" editable="false"/>
-                    <Label text="Requirements" GridPane.rowIndex="6"/>
-                    <TextArea fx:id="requirementsField" wrapText="true" prefRowCount="4" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
-                    <Label text="Notes" GridPane.rowIndex="7"/>
-                    <TextArea fx:id="notesField" wrapText="true" prefRowCount="3" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
-                    <HBox spacing="12" alignment="CENTER_RIGHT" GridPane.rowIndex="8" GridPane.columnIndex="1">
-                        <Label fx:id="formStatusLabel" textFill="green"/>
-                        <Button text="Save" onAction="#handleSaveJob" styleClass="btn btn-primary"/>
-                        <Button text="Clear" onAction="#handleCreateNewJob"/>
-                    </HBox>
-                </GridPane>
+                <BorderPane>
+                    <center>
+                        <GridPane hgap="15" vgap="12" styleClass="form-container" maxWidth="650">
+                            <padding>
+                                <Insets top="16" right="16" bottom="16" left="16"/>
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="100" maxWidth="120" prefWidth="110"/>
+                                <ColumnConstraints hgrow="ALWAYS"/>
+                            </columnConstraints>
+
+                            <Label fx:id="formJobIdLabel" text="New job" styleClass="h5" GridPane.columnSpan="2"/>
+
+                            <Label text="Job title" GridPane.rowIndex="1" styleClass="form-label"/>
+                            <TextField fx:id="jobNameField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                            <Label text="Module" GridPane.rowIndex="3" styleClass="form-label"/>
+                            <TextField fx:id="moduleField" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                            <HBox spacing="15" alignment="CENTER_LEFT" GridPane.rowIndex="5" GridPane.columnIndex="1">
+                                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                    <Label text="Positions" styleClass="form-label"/>
+                                    <Spinner fx:id="positionsSpinner"/>
+                                </VBox>
+                                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                    <Label text="Start date" styleClass="form-label"/>
+                                    <DatePicker fx:id="startDatePicker" editable="false"/>
+                                </VBox>
+                            </HBox>
+                            <Label text="Positions" GridPane.rowIndex="5" styleClass="form-label"/>
+
+                            <Label text="End date" GridPane.rowIndex="6" styleClass="form-label"/>
+                            <DatePicker fx:id="endDatePicker" GridPane.rowIndex="7" GridPane.columnIndex="1" editable="false"/>
+
+                            <Label text="Requirements" GridPane.rowIndex="8" styleClass="form-label"/>
+                            <TextArea fx:id="requirementsField" wrapText="true" prefRowCount="4" GridPane.rowIndex="9" GridPane.columnIndex="1"/>
+
+                            <Label text="Notes" GridPane.rowIndex="10" styleClass="form-label"/>
+                            <TextArea fx:id="notesField" wrapText="true" prefRowCount="3" GridPane.rowIndex="11" GridPane.columnIndex="1"/>
+
+                            <HBox spacing="12" alignment="CENTER_RIGHT" GridPane.rowIndex="12" GridPane.columnIndex="1">
+                                <Label fx:id="formStatusLabel" textFill="green"/>
+                                <Button text="Save" onAction="#handleSaveJob" styleClass="btn-primary"/>
+                                <Button text="Clear" onAction="#handleCreateNewJob"/>
+                            </HBox>
+                        </GridPane>
+                    </center>
+                </BorderPane>
             </Tab>
             <Tab text="Applicants">
                 <BorderPane>
                     <top>
-                        <HBox spacing="10">
-                            <padding>
-                                <Insets top="10" right="10" bottom="10" left="10"/>
-                            </padding>
-                            <ComboBox fx:id="jobSelector" promptText="Select an open job" prefWidth="260"/>
+                        <HBox spacing="10" styleClass="p-3">
+                            <ComboBox fx:id="jobSelector" promptText="Select an open job" prefWidth="220"/>
                             <TextField fx:id="applicantSearchField" promptText="Search name, ID, phone, email, status" HBox.hgrow="ALWAYS"/>
                             <Button text="Refresh" onAction="#handleRefreshApplicants"/>
                         </HBox>
                     </top>
                     <center>
-                        <SplitPane dividerPositions="0.5">
+                        <SplitPane dividerPositions="0.52">
                             <TableView fx:id="applicantTable">
                                 <columns>
                                     <TableColumn text="Name" prefWidth="100">
@@ -126,45 +155,47 @@
                                             <PropertyValueFactory property="taName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="TA ID" prefWidth="120">
+                                    <TableColumn text="TA ID" prefWidth="100">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="taId"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Phone" prefWidth="120">
+                                    <TableColumn text="Phone" prefWidth="110">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="phone"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Email" prefWidth="180">
+                                    <TableColumn text="Email" prefWidth="160">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="email"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Status" prefWidth="100">
+                                    <TableColumn text="Status" prefWidth="85">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="status"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Updated" prefWidth="180">
+                                    <TableColumn text="Apply Time" prefWidth="130">
                                         <cellValueFactory>
-                                            <PropertyValueFactory property="updatedTime"/>
+                                            <PropertyValueFactory property="applyTime"/>
                                         </cellValueFactory>
                                     </TableColumn>
                                 </columns>
                             </TableView>
-                            <VBox spacing="8">
+                            <VBox spacing="12" styleClass="detail-panel">
                                 <padding>
-                                    <Insets top="10" right="10" bottom="10" left="10"/>
+                                    <Insets top="16" right="16" bottom="16" left="16"/>
                                 </padding>
                                 <Label text="Applicant profile" styleClass="h5"/>
-                                <Label fx:id="applicantNameLabel"/>
-                                <Label fx:id="applicantStatusLabel"/>
-                                <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" prefRowCount="12"/>
-                                <HBox spacing="10">
-                                    <Button text="Download CV" onAction="#handleDownloadCv"/>
-                                    <Button text="Hire" onAction="#handleHireApplicant"/>
-                                    <Button text="Reject" onAction="#handleRejectApplicant"/>
+                                <VBox spacing="2">
+                                    <Label fx:id="applicantNameLabel" styleClass="h6"/>
+                                    <Label fx:id="applicantStatusLabel"/>
+                                </VBox>
+                                <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" prefRowCount="10" VBox.vgrow="ALWAYS"/>
+                                <HBox spacing="8">
+                                    <Button text="Download CV" onAction="#handleDownloadCv" styleClass="btn-outline"/>
+                                    <Button text="Hire" onAction="#handleHireApplicant" styleClass="btn-success"/>
+                                    <Button text="Reject" onAction="#handleRejectApplicant" styleClass="btn-danger"/>
                                 </HBox>
                             </VBox>
                         </SplitPane>
@@ -172,115 +203,255 @@
                 </BorderPane>
             </Tab>
             <Tab text="My profile">
-                <GridPane hgap="10" vgap="10">
+                <BorderPane>
                     <padding>
-                        <Insets top="20" right="20" bottom="20" left="20"/>
+                        <Insets top="20" right="30" bottom="20" left="30"/>
                     </padding>
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="25"/>
-                        <ColumnConstraints percentWidth="75"/>
-                    </columnConstraints>
-                    <Label text="Full name" GridPane.rowIndex="0"/>
-                    <TextField fx:id="moFullNameField" promptText="Shown in welcome message" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-                    <Label text="Phone" GridPane.rowIndex="1"/>
-                    <TextField fx:id="moPhoneField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-                    <Label text="Email" GridPane.rowIndex="2"/>
-                    <TextField fx:id="moEmailField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-                    <Label text="Responsible modules" GridPane.rowIndex="3"/>
-                    <TextArea fx:id="moModuleArea" wrapText="true" prefRowCount="4" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-                    <Label text="Current password" GridPane.rowIndex="4"/>
-                    <PasswordField fx:id="moCurrentPasswordField" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
-                    <Label text="New password" GridPane.rowIndex="5"/>
-                    <PasswordField fx:id="moNewPasswordField" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
-                    <Label text="Confirm new password" GridPane.rowIndex="6"/>
-                    <PasswordField fx:id="moConfirmPasswordField" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
-                    <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.rowIndex="7" GridPane.columnIndex="1">
-                        <Button text="Change password" onAction="#handleChangeMoPassword"/>
-                    </HBox>
-                    <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.rowIndex="8" GridPane.columnIndex="1">
-                        <Button text="Save profile" onAction="#handleSaveMoProfile" styleClass="btn btn-primary"/>
-                    </HBox>
-                </GridPane>
+                    <center>
+                        <GridPane hgap="15" vgap="10" styleClass="form-container" maxWidth="600">
+                            <padding>
+                                <Insets top="20" right="20" bottom="20" left="20"/>
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="120" maxWidth="140" prefWidth="130"/>
+                                <ColumnConstraints hgrow="ALWAYS"/>
+                            </columnConstraints>
+
+                            <Label text="Full name" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextField fx:id="moFullNameField" promptText="Shown in welcome message" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                            <Label text="Phone" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextField fx:id="moPhoneField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                            <Label text="Email" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextField fx:id="moEmailField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                            <Label text="Responsible modules" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextArea fx:id="moModuleArea" wrapText="true" prefRowCount="3" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                            <Label styleClass="h5" text="Change Password" GridPane.rowIndex="4" GridPane.columnSpan="2">
+                                <GridPane.margin>
+                                    <Insets top="12" bottom="8"/>
+                                </GridPane.margin>
+                            </Label>
+
+                            <Label text="Current password" GridPane.rowIndex="5" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <PasswordField fx:id="moCurrentPasswordField" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                            <Label text="New password" GridPane.rowIndex="6" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <PasswordField fx:id="moNewPasswordField" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+                            <Label text="Confirm new password" GridPane.rowIndex="7" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <PasswordField fx:id="moConfirmPasswordField" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+
+                            <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.rowIndex="8" GridPane.columnIndex="1">
+                                <Button text="Change password" onAction="#handleChangeMoPassword"/>
+                            </HBox>
+                            <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.rowIndex="9" GridPane.columnIndex="1">
+                                <Button text="Save profile" onAction="#handleSaveMoProfile" styleClass="btn-primary"/>
+                            </HBox>
+                        </GridPane>
+                    </center>
+                </BorderPane>
             </Tab>
-            <Tab text="User admin" fx:id="adminUserTab">
+            <Tab text="TA admin" fx:id="adminTaTab">
                 <SplitPane dividerPositions="0.5">
-                    <VBox spacing="6">
-                        <padding>
-                            <Insets top="10" right="10" bottom="10" left="10"/>
-                        </padding>
+                    <VBox spacing="8" styleClass="p-3">
                         <Label text="TA accounts" styleClass="h5"/>
-                        <TableView fx:id="taUserTable">
+                        <TableView fx:id="adminTaTable" VBox.vgrow="ALWAYS">
                             <columns>
-                                <TableColumn text="ID" prefWidth="100">
+                                <TableColumn text="ID" prefWidth="90">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="taId"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Name" prefWidth="100">
+                                <TableColumn text="Name" prefWidth="110">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="fullName"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Phone" prefWidth="120">
+                                <TableColumn text="Phone" prefWidth="110">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="phone"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Email" prefWidth="180">
+                                <TableColumn text="Email" prefWidth="160">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="email"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Status" prefWidth="80">
+                                <TableColumn text="Applied" prefWidth="60">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="appliedCount"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Hired" prefWidth="55">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="hiredCount"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Status" prefWidth="70">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="statusLabel"/>
                                     </cellValueFactory>
                                 </TableColumn>
                             </columns>
                         </TableView>
-                        <HBox spacing="10">
-                            <Button text="Reset password" onAction="#handleResetTaPassword"/>
-                            <Button text="Enable / disable" onAction="#handleToggleTaStatus"/>
+                        <HBox spacing="8">
+                            <Button text="Reset password" onAction="#handleResetTaPassword" styleClass="btn-outline"/>
+                            <Button text="Enable / disable" onAction="#handleToggleTaStatus" styleClass="btn-danger"/>
                         </HBox>
                     </VBox>
-                    <VBox spacing="6">
+                    <VBox spacing="12" styleClass="detail-panel">
                         <padding>
-                            <Insets top="10" right="10" bottom="10" left="10"/>
+                            <Insets top="16" right="16" bottom="16" left="16"/>
                         </padding>
+                        <Label text="TA Details" styleClass="h5"/>
+                        <VBox spacing="2">
+                            <Label fx:id="adminTaNameLabel" styleClass="h6"/>
+                            <Label fx:id="adminTaInfoLabel"/>
+                        </VBox>
+                        <VBox spacing="4" VBox.vgrow="ALWAYS">
+                            <Label text="Jobs Applied" styleClass="text-muted"/>
+                            <TableView fx:id="adminTaAppliedJobsTable" prefHeight="150">
+                                <columns>
+                                    <TableColumn text="Job ID" prefWidth="85">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="jobId"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Job Name" prefWidth="180">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="jobName"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                </columns>
+                            </TableView>
+                        </VBox>
+                        <VBox spacing="4">
+                            <Label text="Jobs Hired" styleClass="text-muted"/>
+                            <TableView fx:id="adminTaHiredJobsTable" prefHeight="150">
+                                <columns>
+                                    <TableColumn text="Job ID" prefWidth="85">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="jobId"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Job Name" prefWidth="130">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="jobName"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Hired Time" prefWidth="100">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="time"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Work Period" prefWidth="120">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="workPeriod"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                </columns>
+                            </TableView>
+                        </VBox>
+                    </VBox>
+                </SplitPane>
+            </Tab>
+            <Tab text="MO admin" fx:id="adminMoTab">
+                <SplitPane dividerPositions="0.5">
+                    <VBox spacing="8" styleClass="p-3">
                         <Label text="MO accounts" styleClass="h5"/>
-                        <TableView fx:id="moUserTable">
+                        <TableView fx:id="adminMoTable" VBox.vgrow="ALWAYS">
                             <columns>
-                                <TableColumn text="ID" prefWidth="100">
+                                <TableColumn text="ID" prefWidth="90">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="moId"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Name" prefWidth="100">
+                                <TableColumn text="Name" prefWidth="110">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="fullName"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Phone" prefWidth="120">
+                                <TableColumn text="Phone" prefWidth="110">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="phone"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Email" prefWidth="180">
+                                <TableColumn text="Email" prefWidth="160">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="email"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Status" prefWidth="80">
+                                <TableColumn text="Classes" prefWidth="60">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="classesCount"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Status" prefWidth="70">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="statusLabel"/>
                                     </cellValueFactory>
                                 </TableColumn>
                             </columns>
                         </TableView>
-                        <HBox spacing="10">
-                            <Button text="Reset password" onAction="#handleResetMoPassword"/>
-                            <Button text="Enable / disable" onAction="#handleToggleMoStatus"/>
+                        <HBox spacing="8">
+                            <Button text="Reset password" onAction="#handleResetMoPassword" styleClass="btn-outline"/>
+                            <Button text="Enable / disable" onAction="#handleToggleMoStatus" styleClass="btn-danger"/>
                         </HBox>
+                    </VBox>
+                    <VBox spacing="12" styleClass="detail-panel">
+                        <padding>
+                            <Insets top="16" right="16" bottom="16" left="16"/>
+                        </padding>
+                        <Label text="MO Details" styleClass="h5"/>
+                        <VBox spacing="2">
+                            <Label fx:id="adminMoNameLabel" styleClass="h6"/>
+                            <Label fx:id="adminMoInfoLabel"/>
+                        </VBox>
+                        <VBox spacing="4" VBox.vgrow="ALWAYS">
+                            <Label text="Classes/Jobs" styleClass="text-muted"/>
+                            <TableView fx:id="adminMoJobsTable" prefHeight="280">
+                                <columns>
+                                    <TableColumn text="Job ID" prefWidth="85">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="jobId"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Job Name" prefWidth="140">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="jobName"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Positions" prefWidth="55">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="numberOfPositions"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Hired" prefWidth="45">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="hiredCount"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Start Date" prefWidth="80">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="startDateLabel"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="End Date" prefWidth="80">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="endDateLabel"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Status" prefWidth="55">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="statusLabel"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                </columns>
+                            </TableView>
+                        </VBox>
                     </VBox>
                 </SplitPane>
             </Tab>
@@ -289,22 +460,47 @@
                     <center>
                         <TableView fx:id="adminJobTable">
                             <columns>
-                                <TableColumn text="Job ID" prefWidth="110">
+                                <TableColumn text="Job ID" prefWidth="90">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="jobId"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Title" prefWidth="200">
+                                <TableColumn text="Title" prefWidth="170">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="jobName"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Posted by" prefWidth="120">
+                                <TableColumn text="Module" prefWidth="120">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="moduleName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Posted by" prefWidth="85">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="moId"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Status" prefWidth="90">
+                                <TableColumn text="Positions" prefWidth="60">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="numberOfPositions"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Hired" prefWidth="50">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="hiredCount"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Start Date" prefWidth="85">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="startDateLabel"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="End Date" prefWidth="85">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="endDateLabel"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Status" prefWidth="60">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="statusLabel"/>
                                     </cellValueFactory>
@@ -313,13 +509,115 @@
                         </TableView>
                     </center>
                     <bottom>
-                        <HBox spacing="10" alignment="CENTER_RIGHT">
-                            <padding>
-                                <Insets top="10" right="10" bottom="10" left="10"/>
-                            </padding>
-                            <Button text="Close Job" onAction="#handleAdminToggleJob"/>
+                        <HBox spacing="8" alignment="CENTER_RIGHT" styleClass="p-3">
+                            <Button text="Close Job" onAction="#handleAdminToggleJob" styleClass="btn-danger"/>
+                            <Button text="Open Job" onAction="#handleAdminOpenJob" styleClass="btn-success"/>
                         </HBox>
                     </bottom>
+                </BorderPane>
+            </Tab>
+            <Tab text="Account Management" fx:id="adminAccountTab">
+                <BorderPane>
+                    <top>
+                        <HBox spacing="10" styleClass="p-3">
+                            <Label text="Account Management Log" styleClass="h5"/>
+                            <Pane HBox.hgrow="ALWAYS"/>
+                            <Button text="Refresh" onAction="#handleRefreshAccountLogs"/>
+                        </HBox>
+                    </top>
+                    <center>
+                        <TableView fx:id="accountLogTable">
+                            <columns>
+                                <TableColumn text="Time" prefWidth="130">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="timestamp"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Admin" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="adminId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Action" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="action"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="User ID" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="targetUserId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Role" prefWidth="50">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="targetRole"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Before" prefWidth="70">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="previousState"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="After" prefWidth="70">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="newState"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                        </TableView>
+                    </center>
+                </BorderPane>
+            </Tab>
+            <Tab text="Job Management" fx:id="adminJobManagementTab">
+                <BorderPane>
+                    <top>
+                        <HBox spacing="10" styleClass="p-3">
+                            <Label text="Job Management Log" styleClass="h5"/>
+                            <Pane HBox.hgrow="ALWAYS"/>
+                            <Button text="Refresh" onAction="#handleRefreshJobLogs"/>
+                        </HBox>
+                    </top>
+                    <center>
+                        <TableView fx:id="jobLogTable">
+                            <columns>
+                                <TableColumn text="Time" prefWidth="130">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="timestamp"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Admin" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="adminId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Action" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="action"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Job ID" prefWidth="80">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="targetUserId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Job Name" prefWidth="170">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Before" prefWidth="70">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="previousState"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="After" prefWidth="70">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="newState"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                        </TableView>
+                    </center>
                 </BorderPane>
             </Tab>
         </TabPane>

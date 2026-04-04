@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class CsvApplicationDao implements ApplicationDao {
 
-    private static final String[] HEADER = {"apply_id", "ta_id", "job_id", "apply_status", "update_time"};
+    private static final String[] HEADER = {"apply_id", "ta_id", "job_id", "apply_status", "apply_time", "hired_time"};
     private final Path filePath;
 
     public CsvApplicationDao(Path filePath) {
@@ -76,7 +76,13 @@ public class CsvApplicationDao implements ApplicationDao {
         record.setTaId(rowAt(row, 1));
         record.setJobId(rowAt(row, 2));
         record.setStatus(ApplicationStatus.fromCode(parseInt(rowAt(row, 3))));
-        DateTimeUtil.parseDateTime(rowAt(row, 4)).ifPresent(record::setUpdateTime);
+        // For backward compatibility, if apply_time is missing, use update_time or current time
+        if (row.length > 4 && !rowAt(row, 4).isBlank()) {
+            DateTimeUtil.parseDateTime(rowAt(row, 4)).ifPresent(record::setApplyTime);
+        }
+        if (row.length > 5 && !rowAt(row, 5).isBlank()) {
+            DateTimeUtil.parseDateTime(rowAt(row, 5)).ifPresent(record::setHiredTime);
+        }
         return record;
     }
 
@@ -86,7 +92,8 @@ public class CsvApplicationDao implements ApplicationDao {
                 record.getTaId(),
                 record.getJobId(),
                 String.valueOf(record.getStatus().getCode()),
-                DateTimeUtil.formatDateTime(record.getUpdateTime())
+                DateTimeUtil.formatDateTime(record.getApplyTime()),
+                record.getHiredTime() != null ? DateTimeUtil.formatDateTime(record.getHiredTime()) : ""
         };
     }
 
