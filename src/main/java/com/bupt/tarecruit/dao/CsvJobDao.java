@@ -85,6 +85,10 @@ public class CsvJobDao implements JobDao {
         };
     }
 
+    private boolean parseBoolean(String value) {
+        return "true".equalsIgnoreCase(value);
+    }
+
     private int parseInt(String value) {
         try {
             return value == null || value.isBlank() ? 0 : Integer.parseInt(value);

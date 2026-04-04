@@ -9,6 +9,8 @@ public class ApplicationRecord {
     private String jobId;
     private ApplicationStatus status = ApplicationStatus.PENDING;
     private LocalDateTime updateTime = LocalDateTime.now();
+    private LocalDateTime applyTime = LocalDateTime.now();
+    private LocalDateTime hiredTime;
 
     public String getApplyId() {
         return applyId;
@@ -50,8 +52,28 @@ public class ApplicationRecord {
         this.updateTime = updateTime;
     }
 
+    public LocalDateTime getApplyTime() {
+        return applyTime;
+    }
+
+    public void setApplyTime(LocalDateTime applyTime) {
+        this.applyTime = applyTime;
+    }
+
+    public LocalDateTime getHiredTime() {
+        return hiredTime;
+    }
+
+    public void setHiredTime(LocalDateTime hiredTime) {
+        this.hiredTime = hiredTime;
+    }
+
     public boolean isPending() {
         return status == ApplicationStatus.PENDING;
+    }
+
+    public boolean isHired() {
+        return status == ApplicationStatus.HIRED;
     }
 
     @Override

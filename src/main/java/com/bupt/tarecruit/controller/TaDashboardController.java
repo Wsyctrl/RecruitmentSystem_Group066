@@ -11,6 +11,7 @@ import com.bupt.tarecruit.util.DialogUtil;
 import com.bupt.tarecruit.util.FileStorageHelper;
 import com.bupt.tarecruit.util.OperationResult;
 import com.bupt.tarecruit.viewmodel.ApplicationDisplay;
+import com.bupt.tarecruit.viewmodel.TaJobDisplay;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -22,6 +23,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,8 +31,8 @@ import java.util.stream.Collectors;
 public class TaDashboardController extends BaseController implements SessionAware {
 
     private UserSession session;
-    private final ObservableList<Job> jobItems = FXCollections.observableArrayList();
-    private FilteredList<Job> filteredJobs;
+    private final ObservableList<TaJobDisplay> jobItems = FXCollections.observableArrayList();
+    private FilteredList<TaJobDisplay> filteredJobs;
     private final ObservableList<ApplicationDisplay> applicationItems = FXCollections.observableArrayList();
 
     @FXML
@@ -38,7 +40,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
     @FXML
     private TextField jobSearchField;
     @FXML
-    private TableView<Job> jobTable;
+    private TableView<TaJobDisplay> jobTable;
     @FXML
     private Label jobNameLabel;
     @FXML
@@ -111,14 +113,27 @@ public class TaDashboardController extends BaseController implements SessionAwar
 
     private void refreshJobs() {
         JobService jobService = services.jobService();
-        jobItems.setAll(jobService.findOpenJobs());
+        ApplicationService applicationService = services.applicationService();
+
+        List<Job> jobs = jobService.findOpenJobs();
         // Fill MO display names for UI rendering.
-        for (Job job : jobItems) {
+        for (Job job : jobs) {
             String moId = job.getMoId();
             services.profileService().findMo(moId)
                     .map(Mo::getDisplayLabel)
                     .ifPresent(job::setMoName);
         }
+
+        // Create TaJobDisplay items with applicant and hired counts
+        List<TaJobDisplay> displayItems = jobs.stream()
+                .map(job -> new TaJobDisplay(
+                        job,
+                        applicationService.findActiveApplicationsForJob(job.getJobId()).size(),
+                        applicationService.countHiredForJob(job.getJobId())
+                ))
+                .collect(Collectors.toList());
+
+        jobItems.setAll(displayItems);
         if (!jobItems.isEmpty()) {
             jobTable.getSelectionModel().selectFirst();
         } else {
@@ -179,9 +194,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
             return;
         }
         String lower = keyword == null ? "" : keyword.toLowerCase();
-        filteredJobs.setPredicate(job -> containsIgnoreCase(job.getJobName(), lower)
-                || containsIgnoreCase(job.getModuleName(), lower)
-                || containsIgnoreCase(job.getRequirements(), lower));
+        filteredJobs.setPredicate(display -> {
+            Job job = display.getJob();
+            return containsIgnoreCase(job.getJobName(), lower)
+                    || containsIgnoreCase(job.getModuleName(), lower)
+                    || containsIgnoreCase(job.getRequirements(), lower);
+        });
     }
 
     private boolean containsIgnoreCase(String source, String keyword) {
@@ -199,8 +217,8 @@ public class TaDashboardController extends BaseController implements SessionAwar
         return value == null ? "" : value;
     }
 
-    private void updateJobDetails(Job job) {
-        if (job == null) {
+    private void updateJobDetails(TaJobDisplay display) {
+        if (display == null) {
             jobNameLabel.setText("Select a job");
             jobMoNameLabel.setText("-");
             jobModuleLabel.setText("-");
@@ -211,6 +229,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
             applyButton.setDisable(true);
             return;
         }
+        Job job = display.getJob();
         jobNameLabel.setText(job.getJobName());
         jobMoNameLabel.setText(job.getMoName() == null || job.getMoName().isBlank() ? job.getMoId() : job.getMoName());
         jobModuleLabel.setText(job.getModuleName());
@@ -229,17 +248,19 @@ public class TaDashboardController extends BaseController implements SessionAwar
 
     @FXML
     private void handleApply() {
-        Job job = jobTable.getSelectionModel().getSelectedItem();
-        if (job == null) {
+        TaJobDisplay display = jobTable.getSelectionModel().getSelectedItem();
+        if (display == null) {
             DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
             return;
         }
+        Job job = display.getJob();
         String taId = session.taOptional().map(Ta::getTaId).orElse("");
         OperationResult<?> result = services.applicationService().applyForJob(taId, job);
         if (result.success()) {
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
             refreshApplications();
-            updateJobDetails(job);
+            refreshJobs(); // Refresh to update applicant counts
+            updateJobDetails(display);
         } else {
             DialogUtil.error(result.message(), navigator.getPrimaryStage());
         }
