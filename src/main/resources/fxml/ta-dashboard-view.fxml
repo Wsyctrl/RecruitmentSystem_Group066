@@ -32,7 +32,7 @@
                                             <PropertyValueFactory property="jobId"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Title" prefWidth="180">
+                                    <TableColumn text="Title" prefWidth="160">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="jobName"/>
                                         </cellValueFactory>
