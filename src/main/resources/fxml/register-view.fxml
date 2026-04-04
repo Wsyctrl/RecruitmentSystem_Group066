@@ -3,20 +3,49 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.bupt.tarecruit.controller.RegisterController">
+            fx:controller="com.bupt.tarecruit.controller.RegisterController"
+            styleClass="root">
     <center>
         <StackPane>
-            <VBox alignment="CENTER" spacing="12" maxWidth="360" prefWidth="360">
+            <padding>
+                <Insets top="50" right="80" bottom="50" left="80"/>
+            </padding>
+            <VBox alignment="CENTER" spacing="14" maxWidth="400" styleClass="card">
                 <padding>
-                    <Insets top="30" right="30" bottom="30" left="30"/>
+                    <Insets top="32" right="32" bottom="32" left="32"/>
                 </padding>
-                <Label text="Register" styleClass="h3"/>
-                <ChoiceBox fx:id="roleChoice" maxWidth="320" prefWidth="320"/>
-                <TextField fx:id="userIdField" promptText="Student ID (ta+8 digits) or staff ID (mo+8 digits)" maxWidth="320" prefWidth="320"/>
-                <PasswordField fx:id="passwordField" promptText="Password" maxWidth="320" prefWidth="320"/>
-                <PasswordField fx:id="confirmPasswordField" promptText="Confirm password" maxWidth="320" prefWidth="320"/>
-                <Button text="Register" onAction="#handleRegister" maxWidth="320" prefWidth="320" styleClass="btn"/>
-                <Button text="Back to sign in" onAction="#handleBackToLogin" maxWidth="320" prefWidth="320" styleClass="btn-outline-secondary"/>
+                <Label text="Create Account" styleClass="h2">
+                    <VBox.margin>
+                        <Insets bottom="4"/>
+                    </VBox.margin>
+                </Label>
+                <Label text="Register as TA or MO" styleClass="text-muted">
+                    <VBox.margin>
+                        <Insets bottom="20"/>
+                    </VBox.margin>
+                </Label>
+                <VBox spacing="6" maxWidth="Infinity">
+                    <Label text="I am a" styleClass="form-label"/>
+                    <ChoiceBox fx:id="roleChoice" maxWidth="Infinity"/>
+                </VBox>
+                <VBox spacing="6" maxWidth="Infinity">
+                    <Label text="User ID" styleClass="form-label"/>
+                    <TextField fx:id="userIdField" promptText="ta+8 digits or mo+8 digits"/>
+                </VBox>
+                <VBox spacing="6" maxWidth="Infinity">
+                    <Label text="Password" styleClass="form-label"/>
+                    <PasswordField fx:id="passwordField" promptText="Choose a password"/>
+                </VBox>
+                <VBox spacing="6" maxWidth="Infinity">
+                    <Label text="Confirm Password" styleClass="form-label"/>
+                    <PasswordField fx:id="confirmPasswordField" promptText="Confirm your password"/>
+                </VBox>
+                <Button text="Register" onAction="#handleRegister" maxWidth="Infinity" styleClass="btn-primary btn-lg">
+                    <VBox.margin>
+                        <Insets top="12"/>
+                    </VBox.margin>
+                </Button>
+                <Button text="Back to sign in" onAction="#handleBackToLogin" maxWidth="Infinity" styleClass="btn-outline"/>
             </VBox>
         </StackPane>
     </center>

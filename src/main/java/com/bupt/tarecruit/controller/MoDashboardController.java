@@ -5,7 +5,7 @@ import com.bupt.tarecruit.service.ApplicationService;
 import com.bupt.tarecruit.util.DateTimeUtil;
 import com.bupt.tarecruit.util.DialogUtil;
 import com.bupt.tarecruit.util.OperationResult;
-import com.bupt.tarecruit.viewmodel.ApplicantDisplay;
+import com.bupt.tarecruit.viewmodel.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -40,6 +40,16 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private final ObservableList<Mo> moUsers = FXCollections.observableArrayList();
     private final ObservableList<Job> adminJobItems = FXCollections.observableArrayList();
 
+    // Admin TA/MO display items
+    private final ObservableList<AdminTaDisplay> adminTaItems = FXCollections.observableArrayList();
+    private final ObservableList<AdminMoDisplay> adminMoItems = FXCollections.observableArrayList();
+    private final ObservableList<AdminJobDisplay> adminJobDisplayItems = FXCollections.observableArrayList();
+    private final ObservableList<AdminTaDisplay.JobApplicationInfo> adminTaAppliedJobsItems = FXCollections.observableArrayList();
+    private final ObservableList<AdminTaDisplay.JobApplicationInfo> adminTaHiredJobsItems = FXCollections.observableArrayList();
+    private final ObservableList<AdminJobDisplay> adminMoJobsItems = FXCollections.observableArrayList();
+    private final ObservableList<AccountLogDisplay> accountLogItems = FXCollections.observableArrayList();
+    private final ObservableList<JobLogDisplay> jobLogItems = FXCollections.observableArrayList();
+
     @FXML
     private TabPane tabPane;
     @FXML
@@ -51,9 +61,13 @@ public class MoDashboardController extends BaseController implements SessionAwar
     @FXML
     private Label selectedJobNameLabel;
     @FXML
+    private Label selectedJobStatusLabel;
+    @FXML
     private Label selectedJobDatesLabel;
     @FXML
     private Label selectedJobApplicantsLabel;
+    @FXML
+    private Label selectedJobHiredLabel;
     @FXML
     private TextArea selectedJobRequirementsArea;
     @FXML
@@ -109,13 +123,47 @@ public class MoDashboardController extends BaseController implements SessionAwar
     @FXML
     private Tab adminUserTab;
     @FXML
+    private Tab adminTaTab;
+    @FXML
+    private Tab adminMoTab;
+    @FXML
     private Tab adminJobTab;
+    @FXML
+    private Tab adminAccountTab;
+    @FXML
+    private Tab adminJobManagementTab;
     @FXML
     private TableView<Ta> taUserTable;
     @FXML
     private TableView<Mo> moUserTable;
     @FXML
-    private TableView<Job> adminJobTable;
+    private TableView<AdminJobDisplay> adminJobTable;
+
+    // New admin tables
+    @FXML
+    private TableView<AdminTaDisplay> adminTaTable;
+    @FXML
+    private TableView<AdminMoDisplay> adminMoTable;
+    @FXML
+    private TableView<AdminTaDisplay.JobApplicationInfo> adminTaAppliedJobsTable;
+    @FXML
+    private TableView<AdminTaDisplay.JobApplicationInfo> adminTaHiredJobsTable;
+    @FXML
+    private TableView<AdminJobDisplay> adminMoJobsTable;
+    @FXML
+    private TableView<AccountLogDisplay> accountLogTable;
+    @FXML
+    private TableView<JobLogDisplay> jobLogTable;
+
+    // Admin detail labels
+    @FXML
+    private Label adminTaNameLabel;
+    @FXML
+    private Label adminTaInfoLabel;
+    @FXML
+    private Label adminMoNameLabel;
+    @FXML
+    private Label adminMoInfoLabel;
 
     @Override
     protected void onInit() {
@@ -146,14 +194,79 @@ public class MoDashboardController extends BaseController implements SessionAwar
         applicantSearchField.textProperty().addListener((obs, old, val) -> filterApplicants(val));
         applicantTable.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> updateApplicantDetail(val));
 
+        // Set row factory to highlight hired rows with yellow background
+        applicantTable.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(ApplicantDisplay item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setStyle("");
+                } else if (item.isHired()) {
+                    setStyle("-fx-background-color: #fff9c4;"); // Light yellow
+                } else {
+                    setStyle("");
+                }
+            }
+        });
+
         positionsSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 50, 1));
         setupAdminVisibility(false);
 
-        // When switching to "All jobs", always refresh so new postings appear immediately.
+        // Set up admin TA table
+        if (adminTaTable != null) {
+            adminTaTable.setItems(adminTaItems);
+            adminTaTable.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> updateAdminTaDetail(val));
+        }
+
+        // Set up admin MO table
+        if (adminMoTable != null) {
+            adminMoTable.setItems(adminMoItems);
+            adminMoTable.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> updateAdminMoDetail(val));
+        }
+
+        // Set up admin job display table
+        if (adminJobTable != null) {
+            adminJobTable.setItems(adminJobDisplayItems);
+        }
+
+        // Set up admin TA applied/hired jobs tables
+        if (adminTaAppliedJobsTable != null) {
+            adminTaAppliedJobsTable.setItems(adminTaAppliedJobsItems);
+        }
+        if (adminTaHiredJobsTable != null) {
+            adminTaHiredJobsTable.setItems(adminTaHiredJobsItems);
+        }
+
+        // Set up admin MO jobs table
+        if (adminMoJobsTable != null) {
+            adminMoJobsTable.setItems(adminMoJobsItems);
+        }
+
+        // Set up account log table
+        if (accountLogTable != null) {
+            accountLogTable.setItems(accountLogItems);
+        }
+
+        // Set up job log table
+        if (jobLogTable != null) {
+            jobLogTable.setItems(jobLogItems);
+        }
+
+        // When switching to admin tabs, refresh data
         if (tabPane != null) {
             tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-                if (newTab != null && newTab == adminJobTab) {
-                    refreshAdminJobs();
+                if (newTab != null) {
+                    if (newTab == adminJobTab) {
+                        refreshAdminJobs();
+                    } else if (newTab == adminTaTab) {
+                        refreshAdminTaData();
+                    } else if (newTab == adminMoTab) {
+                        refreshAdminMoData();
+                    } else if (newTab == adminAccountTab) {
+                        refreshAccountLogs();
+                    } else if (newTab == adminJobManagementTab) {
+                        refreshJobLogs();
+                    }
                 }
             });
         }
@@ -163,13 +276,108 @@ public class MoDashboardController extends BaseController implements SessionAwar
         if (!adminMode) {
             return;
         }
-        if (adminJobItems == null) {
+        if (adminJobDisplayItems == null) {
             return;
         }
-        adminJobItems.setAll(services.jobService().findAllJobs());
+        List<Job> allJobs = services.jobService().findAllJobs();
+        List<AdminJobDisplay> displayItems = allJobs.stream()
+                .map(job -> new AdminJobDisplay(job, services.applicationService().countHiredForJob(job.getJobId())))
+                .collect(Collectors.toList());
+        adminJobDisplayItems.setAll(displayItems);
         if (adminJobTable != null) {
             adminJobTable.refresh();
         }
+    }
+
+    private void refreshAdminTaData() {
+        if (!adminMode) {
+            return;
+        }
+        if (adminTaItems == null) {
+            return;
+        }
+        List<Ta> allTa = services.adminService().findAllTa();
+        List<Job> allJobs = services.jobService().findAllJobs();
+
+        List<ApplicationRecord> allApplications = services.applicationService().findByJob("*");
+        // Actually need to get all applications - let's fix this
+        allApplications = services.jobService().findAllJobs().stream()
+                .flatMap(job -> services.applicationService().findByJob(job.getJobId()).stream())
+                .collect(Collectors.toList());
+
+        Map<String, List<ApplicationRecord>> taApplicationsMap = allApplications.stream()
+                .collect(Collectors.groupingBy(ApplicationRecord::getTaId));
+
+        List<AdminTaDisplay> displayItems = allTa.stream()
+                .map(ta -> new AdminTaDisplay(ta,
+                        taApplicationsMap.getOrDefault(ta.getTaId(), List.of()),
+                        allJobs))
+                .collect(Collectors.toList());
+
+        adminTaItems.setAll(displayItems);
+        if (adminTaTable != null) {
+            adminTaTable.refresh();
+        }
+    }
+
+    private void refreshAdminMoData() {
+        if (!adminMode) {
+            return;
+        }
+        if (adminMoItems == null) {
+            return;
+        }
+        List<Mo> allMo = services.adminService().findAllMo().stream()
+                .filter(mo -> !mo.isAdmin())
+                .collect(Collectors.toList());
+        List<Job> allJobs = services.jobService().findAllJobs();
+
+        Map<String, List<Job>> moJobsMap = allJobs.stream()
+                .collect(Collectors.groupingBy(Job::getMoId));
+
+        List<AdminMoDisplay> displayItems = allMo.stream()
+                .map(mo -> new AdminMoDisplay(mo, moJobsMap.getOrDefault(mo.getMoId(), List.of())))
+                .collect(Collectors.toList());
+
+        adminMoItems.setAll(displayItems);
+        if (adminMoTable != null) {
+            adminMoTable.refresh();
+        }
+    }
+
+    private void updateAdminTaDetail(AdminTaDisplay display) {
+        if (display == null) {
+            adminTaNameLabel.setText("None selected");
+            adminTaInfoLabel.setText("");
+            adminTaAppliedJobsItems.clear();
+            adminTaHiredJobsItems.clear();
+            return;
+        }
+        Ta ta = display.getTa();
+        adminTaNameLabel.setText(ta.getDisplayLabel() + " (" + ta.getTaId() + ")");
+        adminTaInfoLabel.setText(String.format("Phone: %s\nEmail: %s\nMajor: %s",
+                safeText(ta.getPhone()), safeText(ta.getEmail()), safeText(ta.getMajor())));
+
+        adminTaAppliedJobsItems.setAll(display.getAppliedJobs());
+        adminTaHiredJobsItems.setAll(display.getHiredJobs());
+    }
+
+    private void updateAdminMoDetail(AdminMoDisplay display) {
+        if (display == null) {
+            adminMoNameLabel.setText("None selected");
+            adminMoInfoLabel.setText("");
+            adminMoJobsItems.clear();
+            return;
+        }
+        Mo mo = display.getMo();
+        adminMoNameLabel.setText(mo.getDisplayLabel() + " (" + mo.getMoId() + ")");
+        adminMoInfoLabel.setText(String.format("Phone: %s | Email: %s | Modules: %s",
+                safeText(mo.getPhone()), safeText(mo.getEmail()), safeText(mo.getResponsibleModules())));
+
+        List<AdminJobDisplay> jobDisplays = display.getJobs().stream()
+                .map(job -> new AdminJobDisplay(job, services.applicationService().countHiredForJob(job.getJobId())))
+                .collect(Collectors.toList());
+        adminMoJobsItems.setAll(jobDisplays);
     }
 
     private void setupAdminVisibility(boolean enabled) {
@@ -177,15 +385,27 @@ public class MoDashboardController extends BaseController implements SessionAwar
             return;
         }
         if (enabled) {
-            if (!tabPane.getTabs().contains(adminUserTab)) {
-                tabPane.getTabs().add(adminUserTab);
+            if (!tabPane.getTabs().contains(adminTaTab)) {
+                tabPane.getTabs().add(adminTaTab);
+            }
+            if (!tabPane.getTabs().contains(adminMoTab)) {
+                tabPane.getTabs().add(adminMoTab);
             }
             if (!tabPane.getTabs().contains(adminJobTab)) {
                 tabPane.getTabs().add(adminJobTab);
             }
+            if (!tabPane.getTabs().contains(adminAccountTab)) {
+                tabPane.getTabs().add(adminAccountTab);
+            }
+            if (!tabPane.getTabs().contains(adminJobManagementTab)) {
+                tabPane.getTabs().add(adminJobManagementTab);
+            }
         } else {
-            tabPane.getTabs().remove(adminUserTab);
+            tabPane.getTabs().remove(adminTaTab);
+            tabPane.getTabs().remove(adminMoTab);
             tabPane.getTabs().remove(adminJobTab);
+            tabPane.getTabs().remove(adminAccountTab);
+            tabPane.getTabs().remove(adminJobManagementTab);
         }
     }
 
@@ -195,8 +415,8 @@ public class MoDashboardController extends BaseController implements SessionAwar
         this.adminMode = session.role() == Role.ADMIN;
         welcomeLabel.setText("Welcome, " + session.getDisplayName());
         setupAdminVisibility(adminMode);
-        if (adminMode && tabPane != null && adminUserTab != null) {
-            tabPane.getSelectionModel().select(adminUserTab);
+        if (adminMode && tabPane != null && adminTaTab != null) {
+            tabPane.getSelectionModel().select(adminTaTab);
         }
         loadData();
     }
@@ -214,7 +434,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
     }
 
     private void refreshMyJobs() {
-        List<Job> jobs = services.jobService().findOpenJobsByMo(currentMoId());
+        List<Job> jobs = services.jobService().findJobsByMo(currentMoId());
         jobs.sort(Comparator.comparing(Job::getJobId));
         myJobs.setAll(jobs);
         jobOptions.setAll(jobs);
@@ -229,16 +449,21 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private void updateSelectedJob(Job job) {
         if (job == null) {
             selectedJobNameLabel.setText("None selected");
+            selectedJobStatusLabel.setText("");
             selectedJobDatesLabel.setText("-");
             selectedJobApplicantsLabel.setText("Applicants: 0");
+            selectedJobHiredLabel.setText("Current employed: 0");
             selectedJobRequirementsArea.clear();
             selectedJobNotesArea.clear();
             return;
         }
         selectedJobNameLabel.setText(job.getJobName());
+        selectedJobStatusLabel.setText("Status: " + job.getStatusLabel());
         selectedJobDatesLabel.setText(DateTimeUtil.formatDate(job.getStartDate()) + " to " + DateTimeUtil.formatDate(job.getEndDate()));
         int count = services.applicationService().findActiveApplicationsForJob(job.getJobId()).size();
         selectedJobApplicantsLabel.setText("Applicants: " + count);
+        int hiredCount = services.applicationService().countHiredForJob(job.getJobId());
+        selectedJobHiredLabel.setText("Current employed: " + hiredCount);
         selectedJobRequirementsArea.setText(safeText(job.getRequirements()));
         selectedJobNotesArea.setText(safeText(job.getAdditionalNotes()));
     }
@@ -343,10 +568,16 @@ CV: %s
         moUsers.setAll(services.adminService().findAllMo().stream()
                 .filter(mo -> !mo.isAdmin())
                 .collect(Collectors.toList()));
-        adminJobItems.setAll(services.jobService().findAllJobs());
-        taUserTable.setItems(taUsers);
-        moUserTable.setItems(moUsers);
-        adminJobTable.setItems(adminJobItems);
+        if (taUserTable != null) {
+            taUserTable.setItems(taUsers);
+        }
+        if (moUserTable != null) {
+            moUserTable.setItems(moUsers);
+        }
+        // Load new admin tables
+        refreshAdminTaData();
+        refreshAdminMoData();
+        refreshAdminJobs();
     }
 
     @FXML
@@ -426,10 +657,59 @@ CV: %s
             DialogUtil.error("Please select a job", navigator.getPrimaryStage());
             return;
         }
+        if (!job.isOpen()) {
+            DialogUtil.info("This job is already closed", navigator.getPrimaryStage());
+            return;
+        }
         if (DialogUtil.confirm("Close this job?", navigator.getPrimaryStage())) {
             OperationResult<Void> result = services.jobService().closeJob(job.getJobId());
             if (result.success()) {
                 services.applicationService().rejectPendingApplicationsForJob(job.getJobId());
+                // Log the action to JobLog
+                String moId = session.moOptional().map(Mo::getMoId).orElse("admin");
+                JobLog log = new JobLog();
+                log.setLogId(generateLogId());
+                log.setAdminId(moId);
+                log.setJobId(job.getJobId());
+                log.setAction(JobLog.JobLogAction.CLOSE_JOB);
+                log.setPreviousState("Open");
+                log.setNewState("Closed");
+                log.setTimestamp(java.time.LocalDateTime.now());
+                services.jobLogDao().save(log);
+                refreshJobLogs();
+                refreshMyJobs();
+            } else {
+                DialogUtil.error(result.message(), navigator.getPrimaryStage());
+            }
+        }
+    }
+
+    @FXML
+    private void handleOpenJob() {
+        Job job = myJobTable.getSelectionModel().getSelectedItem();
+        if (job == null) {
+            DialogUtil.error("Please select a job", navigator.getPrimaryStage());
+            return;
+        }
+        if (job.isOpen()) {
+            DialogUtil.info("This job is already open", navigator.getPrimaryStage());
+            return;
+        }
+        if (DialogUtil.confirm("Re-open this job?", navigator.getPrimaryStage())) {
+            String moId = session.moOptional().map(Mo::getMoId).orElse("admin");
+            OperationResult<Void> result = services.jobService().openJob(job.getJobId());
+            if (result.success()) {
+                // Log the action to JobLog
+                JobLog log = new JobLog();
+                log.setLogId(generateLogId());
+                log.setAdminId(moId);
+                log.setJobId(job.getJobId());
+                log.setAction(JobLog.JobLogAction.OPEN_JOB);
+                log.setPreviousState("Closed");
+                log.setNewState("Open");
+                log.setTimestamp(java.time.LocalDateTime.now());
+                services.jobLogDao().save(log);
+                refreshJobLogs();
                 refreshMyJobs();
             } else {
                 DialogUtil.error(result.message(), navigator.getPrimaryStage());
@@ -454,15 +734,30 @@ CV: %s
             DialogUtil.error("Please select an applicant", navigator.getPrimaryStage());
             return;
         }
-        if (DialogUtil.confirm("Hire this applicant?", navigator.getPrimaryStage())) {
-            OperationResult<Void> result = services.applicationService().hireApplicant(display.getRecord().getApplyId());
-            if (result.success()) {
-                DialogUtil.info(result.message(), navigator.getPrimaryStage());
-                refreshMyJobs();
-                loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
+        ApplicationRecord record = display.getRecord();
+        OperationResult<Void> result;
+
+        // If already hired, unhire (back to pending)
+        if (record.getStatus() == ApplicationStatus.HIRED) {
+            if (DialogUtil.confirm("Unhire this applicant? Status will change back to Pending.", navigator.getPrimaryStage())) {
+                result = services.applicationService().unhireApplicant(record.getApplyId());
             } else {
-                DialogUtil.error(result.message(), navigator.getPrimaryStage());
+                return;
             }
+        } else {
+            if (DialogUtil.confirm("Hire this applicant?", navigator.getPrimaryStage())) {
+                result = services.applicationService().hireApplicant(record.getApplyId());
+            } else {
+                return;
+            }
+        }
+
+        if (result.success()) {
+            DialogUtil.info(result.message(), navigator.getPrimaryStage());
+            refreshMyJobs();
+            loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
+        } else {
+            DialogUtil.error(result.message(), navigator.getPrimaryStage());
         }
     }
 
@@ -473,7 +768,14 @@ CV: %s
             DialogUtil.error("Please select an applicant", navigator.getPrimaryStage());
             return;
         }
-        OperationResult<Void> result = services.applicationService().rejectApplicant(display.getRecord().getApplyId());
+        ApplicationRecord record = display.getRecord();
+        OperationResult<Void> result;
+        // If currently rejected, unreject (back to pending)
+        if (record.getStatus() == ApplicationStatus.REJECTED) {
+            result = services.applicationService().unrejectApplicant(record.getApplyId());
+        } else {
+            result = services.applicationService().rejectApplicant(record.getApplyId());
+        }
         if (result.success()) {
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
             loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
@@ -567,59 +869,84 @@ CV: %s
     // Admin operations
     @FXML
     private void handleResetTaPassword() {
-        Ta ta = taUserTable.getSelectionModel().getSelectedItem();
+        AdminTaDisplay display = adminTaTable != null ? adminTaTable.getSelectionModel().getSelectedItem() : null;
+        Ta ta = display != null ? display.getTa() : null;
+        if (ta == null) {
+            // Fallback to old table
+            ta = taUserTable.getSelectionModel().getSelectedItem();
+        }
         if (ta == null) {
             DialogUtil.error("Please select a TA user", navigator.getPrimaryStage());
             return;
         }
-        OperationResult<Void> result = services.adminService().resetPassword(Role.TA, ta.getTaId());
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        OperationResult<Void> result = services.adminService().resetPassword(Role.TA, ta.getTaId(), adminId);
         DialogUtil.info(result.message(), navigator.getPrimaryStage());
         loadAdminData();
     }
 
     @FXML
     private void handleToggleTaStatus() {
-        Ta ta = taUserTable.getSelectionModel().getSelectedItem();
+        AdminTaDisplay display = adminTaTable != null ? adminTaTable.getSelectionModel().getSelectedItem() : null;
+        Ta ta = display != null ? display.getTa() : null;
+        if (ta == null) {
+            // Fallback to old table
+            ta = taUserTable.getSelectionModel().getSelectedItem();
+        }
         if (ta == null) {
             DialogUtil.error("Please select a TA user", navigator.getPrimaryStage());
             return;
         }
-        OperationResult<Void> result = services.adminService().toggleStatus(Role.TA, ta.getTaId(), !ta.isDisabled());
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        OperationResult<Void> result = services.adminService().toggleStatus(Role.TA, ta.getTaId(), !ta.isDisabled(), adminId);
         DialogUtil.info(result.message(), navigator.getPrimaryStage());
         loadAdminData();
     }
 
     @FXML
     private void handleResetMoPassword() {
-        Mo mo = moUserTable.getSelectionModel().getSelectedItem();
+        AdminMoDisplay display = adminMoTable != null ? adminMoTable.getSelectionModel().getSelectedItem() : null;
+        Mo mo = display != null ? display.getMo() : null;
+        if (mo == null) {
+            // Fallback to old table
+            mo = moUserTable.getSelectionModel().getSelectedItem();
+        }
         if (mo == null) {
             DialogUtil.error("Please select an MO user", navigator.getPrimaryStage());
             return;
         }
-        OperationResult<Void> result = services.adminService().resetPassword(Role.MO, mo.getMoId());
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        OperationResult<Void> result = services.adminService().resetPassword(Role.MO, mo.getMoId(), adminId);
         DialogUtil.info(result.message(), navigator.getPrimaryStage());
         loadAdminData();
     }
 
     @FXML
     private void handleToggleMoStatus() {
-        Mo mo = moUserTable.getSelectionModel().getSelectedItem();
+        AdminMoDisplay display = adminMoTable != null ? adminMoTable.getSelectionModel().getSelectedItem() : null;
+        Mo mo = display != null ? display.getMo() : null;
+        if (mo == null) {
+            // Fallback to old table
+            mo = moUserTable.getSelectionModel().getSelectedItem();
+        }
         if (mo == null) {
             DialogUtil.error("Please select an MO user", navigator.getPrimaryStage());
             return;
         }
-        OperationResult<Void> result = services.adminService().toggleStatus(Role.MO, mo.getMoId(), !mo.isDisabled());
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        OperationResult<Void> result = services.adminService().toggleStatus(Role.MO, mo.getMoId(), !mo.isDisabled(), adminId);
         DialogUtil.info(result.message(), navigator.getPrimaryStage());
         loadAdminData();
     }
 
     @FXML
     private void handleAdminToggleJob() {
-        Job job = adminJobTable.getSelectionModel().getSelectedItem();
-        if (job == null) {
+        AdminJobDisplay display = adminJobTable.getSelectionModel().getSelectedItem();
+        if (display == null) {
             DialogUtil.error("Please select a job", navigator.getPrimaryStage());
             return;
         }
+        Job job = display.getJob();
         if (!job.isOpen()) {
             DialogUtil.info("This job is already closed", navigator.getPrimaryStage());
             return;
@@ -627,14 +954,129 @@ CV: %s
         if (!DialogUtil.confirm("Close this job?", navigator.getPrimaryStage())) {
             return;
         }
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
         OperationResult<Void> result = services.adminService().toggleJobOpenClosed(job.getJobId());
         if (result.success()) {
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
             services.applicationService().rejectPendingApplicationsForJob(job.getJobId());
-            loadAdminData();
+            // Log the action to JobLog
+            JobLog log = new JobLog();
+            log.setLogId(generateLogId());
+            log.setAdminId(adminId);
+            log.setJobId(job.getJobId());
+            log.setAction(JobLog.JobLogAction.CLOSE_JOB);
+            log.setPreviousState("Open");
+            log.setNewState("Closed");
+            log.setTimestamp(java.time.LocalDateTime.now());
+            services.jobLogDao().save(log);
+            refreshJobLogs();
+            refreshAdminJobs();
         } else {
             DialogUtil.error(result.message(), navigator.getPrimaryStage());
         }
+    }
+
+    @FXML
+    private void handleAdminOpenJob() {
+        AdminJobDisplay display = adminJobTable.getSelectionModel().getSelectedItem();
+        if (display == null) {
+            DialogUtil.error("Please select a job", navigator.getPrimaryStage());
+            return;
+        }
+        Job job = display.getJob();
+        if (job.isOpen()) {
+            DialogUtil.info("This job is already open", navigator.getPrimaryStage());
+            return;
+        }
+        if (!DialogUtil.confirm("Re-open this job?", navigator.getPrimaryStage())) {
+            return;
+        }
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        OperationResult<Void> result = services.jobService().openJob(job.getJobId());
+        if (result.success()) {
+            DialogUtil.info(result.message(), navigator.getPrimaryStage());
+            // Log the action to JobLog
+            JobLog log = new JobLog();
+            log.setLogId(generateLogId());
+            log.setAdminId(adminId);
+            log.setJobId(job.getJobId());
+            log.setAction(JobLog.JobLogAction.OPEN_JOB);
+            log.setPreviousState("Closed");
+            log.setNewState("Open");
+            log.setTimestamp(java.time.LocalDateTime.now());
+            services.jobLogDao().save(log);
+            refreshJobLogs();
+            refreshAdminJobs();
+        } else {
+            DialogUtil.error(result.message(), navigator.getPrimaryStage());
+        }
+    }
+
+    private void refreshAccountLogs() {
+        if (!adminMode || accountLogItems == null) {
+            return;
+        }
+        List<AccountLogDisplay> logs = services.adminService().findAllAccountLogs().stream()
+                .map(AccountLogDisplay::new)
+                .collect(Collectors.toList());
+        accountLogItems.setAll(logs);
+        if (accountLogTable != null) {
+            accountLogTable.refresh();
+        }
+    }
+
+    private void updateJobManagementDetail(AdminJobDisplay display) {
+        // No longer used
+    }
+
+    private void refreshJobLogs() {
+        if (!adminMode || jobLogItems == null) {
+            return;
+        }
+        List<JobLog> allLogs = services.jobLogDao().findAll();
+        List<Job> allJobs = services.jobService().findAllJobs();
+
+        // Create a map of jobId to Job
+        Map<String, Job> jobMap = allJobs.stream()
+                .collect(Collectors.toMap(Job::getJobId, Function.identity(), (a, b) -> a));
+
+        // Create display items
+        List<JobLogDisplay> jobLogs = allLogs.stream()
+                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
+                .map(log -> new JobLogDisplay(log, jobMap.get(log.getJobId())))
+                .collect(Collectors.toList());
+
+        jobLogItems.setAll(jobLogs);
+        if (jobLogTable != null) {
+            jobLogTable.refresh();
+        }
+    }
+
+    @FXML
+    private void handleToggleJobManagementDisabled() {
+        // Removed - job management is done in All Jobs tab
+    }
+
+    @FXML
+    private void handleRefreshJobManagement() {
+        // Removed - job management is done in All Jobs tab
+    }
+
+    @FXML
+    private void handleRefreshJobLogs() {
+        refreshJobLogs();
+    }
+
+    private String generateLogId() {
+        List<String> existing = services.accountLogDao().findAll().stream()
+                .map(com.bupt.tarecruit.entity.AccountLog::getLogId)
+                .collect(Collectors.toList());
+        return com.bupt.tarecruit.util.IdGenerator.nextId("log", existing);
+    }
+
+    @FXML
+    private void handleRefreshAccountLogs() {
+        refreshAccountLogs();
     }
 }
 

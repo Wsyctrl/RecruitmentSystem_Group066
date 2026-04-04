@@ -19,5 +19,9 @@ public class DataBootstrapper {
                 new String[]{"job_id", "job_name", "mo_id", "number_of_positions", "module_name", "requirements", "start_date", "end_date", "additional_notes", "status"});
         CsvUtil.ensureFileWithHeader(dataDir.resolve("Applications.csv"),
                 new String[]{"apply_id", "ta_id", "job_id", "apply_status", "update_time"});
+        CsvUtil.ensureFileWithHeader(dataDir.resolve("AccountLogs.csv"),
+                new String[]{"log_id", "admin_id", "target_user_id", "target_role", "action", "previous_state", "new_state", "timestamp"});
+        CsvUtil.ensureFileWithHeader(dataDir.resolve("JobLogs.csv"),
+                new String[]{"log_id", "admin_id", "job_id", "action", "previous_state", "new_state", "timestamp"});
     }
 }
