@@ -1,2 +1,0 @@
-log_id,admin_id,job_id,action,previous_state,new_state,timestamp
-log001,admin,job006,CLOSE_JOB,Open,Closed,2026-04-03 21:22
