@@ -40,4 +40,25 @@ public class ApplicationDisplay {
     public String getUpdatedTime() {
         return DateTimeUtil.formatDateTime(record.getUpdateTime());
     }
+
+    public String getJobStartDate() {
+        return job != null ? DateTimeUtil.formatDate(job.getStartDate()) : "-";
+    }
+
+    public String getJobEndDate() {
+        return job != null ? DateTimeUtil.formatDate(job.getEndDate()) : "-";
+    }
+
+    public String getHiredTime() {
+        return record.getHiredTime() != null ? DateTimeUtil.formatDateTime(record.getHiredTime()) : "-";
+    }
+
+    public String getJobPeriod() {
+        if (job == null) {
+            return "-";
+        }
+        String start = DateTimeUtil.formatDate(job.getStartDate());
+        String end = DateTimeUtil.formatDate(job.getEndDate());
+        return start + " - " + end;
+    }
 }

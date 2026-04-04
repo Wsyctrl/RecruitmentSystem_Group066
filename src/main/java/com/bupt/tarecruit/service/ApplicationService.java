@@ -91,6 +91,16 @@ public class ApplicationService {
         return OperationResult.success(null, "Application withdrawn");
     }
 
+    /**
+     * Count hired applicants for a specific job.
+     */
+    public int countHiredForJob(String jobId) {
+        return applicationDao.findByJobId(jobId).stream()
+                .filter(r -> r.getStatus() == ApplicationStatus.HIRED)
+                .toList()
+                .size();
+    }
+
     public OperationResult<Void> hireApplicant(String applyId) {
         ApplicationRecord record = applicationDao.findById(applyId).orElse(null);
         if (record == null) {
@@ -102,20 +112,43 @@ public class ApplicationService {
         }
         record.setStatus(ApplicationStatus.HIRED);
         record.setUpdateTime(LocalDateTime.now());
+        record.setHiredTime(LocalDateTime.now());
         applicationDao.update(record);
 
-        job.setStatus(JobStatus.CLOSED);
-        jobDao.update(job);
+        // Check if job should be closed (when positions are filled)
+        int hiredCount = countHiredForJob(job.getJobId());
+        if (hiredCount >= job.getNumberOfPositions()) {
+            job.setStatus(JobStatus.CLOSED);
+            jobDao.update(job);
 
-        List<ApplicationRecord> others = applicationDao.findByJobId(job.getJobId());
-        for (ApplicationRecord other : others) {
-            if (!other.getApplyId().equals(record.getApplyId()) && other.getStatus() == ApplicationStatus.PENDING) {
-                other.setStatus(ApplicationStatus.REJECTED);
-                other.setUpdateTime(LocalDateTime.now());
-                applicationDao.update(other);
+            // Reject remaining pending applications
+            List<ApplicationRecord> others = applicationDao.findByJobId(job.getJobId());
+            for (ApplicationRecord other : others) {
+                if (other.getStatus() == ApplicationStatus.PENDING) {
+                    other.setStatus(ApplicationStatus.REJECTED);
+                    other.setUpdateTime(LocalDateTime.now());
+                    applicationDao.update(other);
+                }
             }
+            return OperationResult.success(null, "Applicant hired; job closed (position filled)");
         }
-        return OperationResult.success(null, "Applicant hired; job closed");
+
+        return OperationResult.success(null, "Applicant hired (" + hiredCount + "/" + job.getNumberOfPositions() + " positions filled)");
+    }
+
+    public OperationResult<Void> unhireApplicant(String applyId) {
+        ApplicationRecord record = applicationDao.findById(applyId).orElse(null);
+        if (record == null) {
+            return OperationResult.failure("Application not found");
+        }
+        if (record.getStatus() != ApplicationStatus.HIRED) {
+            return OperationResult.failure("Only hired applicants can be unhired");
+        }
+        record.setStatus(ApplicationStatus.PENDING);
+        record.setUpdateTime(LocalDateTime.now());
+        record.setHiredTime(null);
+        applicationDao.update(record);
+        return OperationResult.success(null, "Applicant status changed back to Pending");
     }
 
     public OperationResult<Void> rejectApplicant(String applyId) {
@@ -123,10 +156,31 @@ public class ApplicationService {
         if (record == null) {
             return OperationResult.failure("Application not found");
         }
+        // If currently hired, clear hired time when rejecting
+        if (record.getStatus() == ApplicationStatus.HIRED) {
+            record.setHiredTime(null);
+        }
         record.setStatus(ApplicationStatus.REJECTED);
         record.setUpdateTime(LocalDateTime.now());
         applicationDao.update(record);
         return OperationResult.success(null, "Marked as not hired");
+    }
+
+    /**
+     * Undo reject - change status from REJECTED back to PENDING
+     */
+    public OperationResult<Void> unrejectApplicant(String applyId) {
+        ApplicationRecord record = applicationDao.findById(applyId).orElse(null);
+        if (record == null) {
+            return OperationResult.failure("Application not found");
+        }
+        if (record.getStatus() != ApplicationStatus.REJECTED) {
+            return OperationResult.failure("Only rejected applications can be unrejected");
+        }
+        record.setStatus(ApplicationStatus.PENDING);
+        record.setUpdateTime(LocalDateTime.now());
+        applicationDao.update(record);
+        return OperationResult.success(null, "Application status changed back to Pending");
     }
 
     /**

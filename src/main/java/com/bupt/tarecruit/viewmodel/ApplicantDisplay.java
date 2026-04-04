@@ -46,7 +46,19 @@ public class ApplicantDisplay {
         return record.getStatus().getLabel();
     }
 
+    public String getApplyTime() {
+        return DateTimeUtil.formatDateTime(record.getApplyTime());
+    }
+
+    public String getHiredTime() {
+        return record.getHiredTime() != null ? DateTimeUtil.formatDateTime(record.getHiredTime()) : "-";
+    }
+
     public String getUpdatedTime() {
         return DateTimeUtil.formatDateTime(record.getUpdateTime());
+    }
+
+    public boolean isHired() {
+        return record.isHired();
     }
 }

@@ -48,17 +48,10 @@ public class JobService {
         return source.toLowerCase().contains(keyword);
     }
 
+    /** MO dashboard: all jobs including closed ones. */
     public List<Job> findJobsByMo(String moId) {
         return jobDao.findAll().stream()
                 .filter(job -> job.getMoId().equalsIgnoreCase(moId))
-                .sorted(Comparator.comparing(Job::getJobId))
-                .collect(Collectors.toList());
-    }
-
-    /** MO dashboard: only open jobs (closed are hidden). */
-    public List<Job> findOpenJobsByMo(String moId) {
-        return jobDao.findAll().stream()
-                .filter(job -> job.getMoId().equalsIgnoreCase(moId) && job.isOpen())
                 .sorted(Comparator.comparing(Job::getJobId))
                 .collect(Collectors.toList());
     }
@@ -102,6 +95,16 @@ public class JobService {
         job.setStatus(JobStatus.CLOSED);
         jobDao.update(job);
         return OperationResult.success(null, "Job closed");
+    }
+
+    public OperationResult<Void> openJob(String jobId) {
+        Job job = jobDao.findById(jobId).orElse(null);
+        if (job == null) {
+            return OperationResult.failure("Job not found");
+        }
+        job.setStatus(JobStatus.OPEN);
+        jobDao.update(job);
+        return OperationResult.success(null, "Job reopened");
     }
 
     private String generateJobId() {

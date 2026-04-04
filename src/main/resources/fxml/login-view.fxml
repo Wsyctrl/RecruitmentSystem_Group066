@@ -3,18 +3,42 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.bupt.tarecruit.controller.LoginController">
+            fx:controller="com.bupt.tarecruit.controller.LoginController"
+            styleClass="root">
     <center>
-        <VBox alignment="CENTER" spacing="12" BorderPane.alignment="CENTER">
+        <StackPane>
             <padding>
-                <Insets top="40" right="40" bottom="40" left="40"/>
+                <Insets top="60" right="80" bottom="60" left="80"/>
             </padding>
-            <Label text="BUPT International School TA Recruitment" styleClass="h3"/>
-            <TextField fx:id="userIdField" promptText="Username" maxWidth="280"/>
-            <PasswordField fx:id="passwordField" promptText="Password" maxWidth="280"/>
-            <Button text="Sign in" onAction="#handleLogin" maxWidth="280"
-                    styleClass="btn" />
-            <Hyperlink fx:id="registerLink" text="No account? Register"/>
-        </VBox>
+            <VBox alignment="CENTER" spacing="16" maxWidth="380" styleClass="card">
+                <padding>
+                    <Insets top="36" right="36" bottom="36" left="36"/>
+                </padding>
+                <Label text="TA Recruitment" styleClass="h2">
+                    <VBox.margin>
+                        <Insets bottom="4"/>
+                    </VBox.margin>
+                </Label>
+                <Label text="Sign in to continue" styleClass="text-muted">
+                    <VBox.margin>
+                        <Insets bottom="24"/>
+                    </VBox.margin>
+                </Label>
+                <VBox spacing="6" maxWidth="Infinity">
+                    <Label text="Username" styleClass="form-label"/>
+                    <TextField fx:id="userIdField" promptText="Enter your username"/>
+                </VBox>
+                <VBox spacing="6" maxWidth="Infinity">
+                    <Label text="Password" styleClass="form-label"/>
+                    <PasswordField fx:id="passwordField" promptText="Enter your password"/>
+                </VBox>
+                <Button text="Sign in" onAction="#handleLogin" maxWidth="Infinity" styleClass="btn-primary btn-lg">
+                    <VBox.margin>
+                        <Insets top="12"/>
+                    </VBox.margin>
+                </Button>
+                <Hyperlink fx:id="registerLink" text="No account? Register"/>
+            </VBox>
+        </StackPane>
     </center>
 </BorderPane>

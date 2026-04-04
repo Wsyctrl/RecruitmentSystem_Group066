@@ -4,7 +4,8 @@
 <?import javafx.scene.control.cell.PropertyValueFactory?>
 <?import javafx.scene.layout.*?>
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.bupt.tarecruit.controller.TaDashboardController">
+            fx:controller="com.bupt.tarecruit.controller.TaDashboardController"
+            styleClass="root">
     <top>
         <ToolBar>
             <Label fx:id="welcomeLabel" text="TA Console" styleClass="h6"/>
@@ -17,19 +18,16 @@
             <Tab text="Browse jobs">
                 <BorderPane>
                     <top>
-                        <HBox spacing="10">
-                            <padding>
-                                <Insets top="10" right="10" bottom="10" left="10"/>
-                            </padding>
-                            <TextField fx:id="jobSearchField" promptText="Search title, module, requirements" HBox.hgrow="ALWAYS"/>
+                        <HBox spacing="10" styleClass="p-3">
+                            <TextField fx:id="jobSearchField" promptText="Search title, module, requirements" HBox.hgrow="ALWAYS" styleClass="search-field"/>
                             <Button text="Refresh" onAction="#handleRefreshJobs"/>
                         </HBox>
                     </top>
                     <center>
-                        <SplitPane dividerPositions="0.55">
+                        <SplitPane dividerPositions="0.58">
                             <TableView fx:id="jobTable">
                                 <columns>
-                                    <TableColumn text="Job ID" prefWidth="110">
+                                    <TableColumn text="Job ID" prefWidth="90">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="jobId"/>
                                         </cellValueFactory>
@@ -39,42 +37,69 @@
                                             <PropertyValueFactory property="jobName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Module" prefWidth="140">
+                                    <TableColumn text="Module" prefWidth="110">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="moduleName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Posted by" prefWidth="160">
+                                    <TableColumn text="Posted by" prefWidth="100">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="moName"/>
                                         </cellValueFactory>
                                     </TableColumn>
-                                    <TableColumn text="Positions" prefWidth="90">
+                                    <TableColumn text="Positions" prefWidth="65">
                                         <cellValueFactory>
                                             <PropertyValueFactory property="numberOfPositions"/>
                                         </cellValueFactory>
                                     </TableColumn>
+                                    <TableColumn text="Applicants" prefWidth="70">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="applicantsCount"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Hired" prefWidth="55">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="hiredCount"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
                                 </columns>
                             </TableView>
-                            <VBox spacing="8">
+                            <VBox spacing="12" styleClass="detail-panel">
                                 <padding>
-                                    <Insets top="10" right="10" bottom="10" left="10"/>
+                                    <Insets top="16" right="16" bottom="16" left="16"/>
                                 </padding>
                                 <Label text="Job details" styleClass="h5"/>
-                                <Label text="Title" styleClass="text-muted"/>
-                                <Label fx:id="jobNameLabel" styleClass="h6" wrapText="true"/>
-                                <Label text="Posted by" styleClass="text-muted"/>
-                                <Label fx:id="jobMoNameLabel" styleClass="h6" wrapText="true"/>
-                                <Label text="Module" styleClass="text-muted"/>
-                                <Label fx:id="jobModuleLabel"/>
-                                <Label text="Positions / dates" styleClass="text-muted"/>
-                                <Label fx:id="jobPositionsLabel"/>
-                                <Label fx:id="jobDateLabel"/>
-                                <Label text="Requirements" styleClass="text-muted"/>
-                                <TextArea fx:id="jobRequirementsArea" editable="false" wrapText="true" prefRowCount="5"/>
-                                <Label text="Notes" styleClass="text-muted"/>
-                                <TextArea fx:id="jobNotesArea" editable="false" wrapText="true" prefRowCount="4"/>
-                                <Button fx:id="applyButton" text="Apply" onAction="#handleApply" styleClass="btn btn-primary"/>
+                                <VBox spacing="2">
+                                    <Label text="Title" styleClass="text-muted"/>
+                                    <Label fx:id="jobNameLabel" styleClass="h6" wrapText="true"/>
+                                </VBox>
+                                <VBox spacing="2">
+                                    <Label text="Posted by" styleClass="text-muted"/>
+                                    <Label fx:id="jobMoNameLabel" styleClass="h6" wrapText="true"/>
+                                </VBox>
+                                <HBox spacing="20">
+                                    <VBox spacing="2">
+                                        <Label text="Module" styleClass="text-muted"/>
+                                        <Label fx:id="jobModuleLabel"/>
+                                    </VBox>
+                                    <VBox spacing="2">
+                                        <Label text="Positions" styleClass="text-muted"/>
+                                        <Label fx:id="jobPositionsLabel"/>
+                                    </VBox>
+                                </HBox>
+                                <VBox spacing="2">
+                                    <Label text="Dates" styleClass="text-muted"/>
+                                    <Label fx:id="jobDateLabel"/>
+                                </VBox>
+                                <VBox spacing="4">
+                                    <Label text="Requirements" styleClass="text-muted"/>
+                                    <TextArea fx:id="jobRequirementsArea" editable="false" wrapText="true" prefRowCount="5"/>
+                                </VBox>
+                                <VBox spacing="4">
+                                    <Label text="Notes" styleClass="text-muted"/>
+                                    <TextArea fx:id="jobNotesArea" editable="false" wrapText="true" prefRowCount="3"/>
+                                </VBox>
+                                <Button fx:id="applyButton" text="Apply" onAction="#handleApply" styleClass="btn-primary" maxWidth="Infinity"/>
                             </VBox>
                         </SplitPane>
                     </center>
@@ -85,90 +110,118 @@
                     <center>
                         <TableView fx:id="applicationTable">
                             <columns>
-                                <TableColumn text="Application ID" prefWidth="120">
+                                <TableColumn text="Application ID" prefWidth="100">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="applyId"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Job title" prefWidth="200">
+                                <TableColumn text="Job title" prefWidth="180">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="jobName"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Module" prefWidth="150">
+                                <TableColumn text="Module" prefWidth="100">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="moduleName"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Status" prefWidth="110">
+                                <TableColumn text="Job Period" prefWidth="140">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobPeriod"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Status" prefWidth="85">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="statusLabel"/>
                                     </cellValueFactory>
                                 </TableColumn>
-                                <TableColumn text="Updated" prefWidth="200">
+                                <TableColumn text="Hired Time" prefWidth="120">
                                     <cellValueFactory>
-                                        <PropertyValueFactory property="updatedTime"/>
+                                        <PropertyValueFactory property="hiredTime"/>
                                     </cellValueFactory>
                                 </TableColumn>
                             </columns>
                         </TableView>
                     </center>
                     <bottom>
-                        <HBox spacing="10" alignment="CENTER_RIGHT">
-                            <padding>
-                                <Insets top="10" right="10" bottom="10" left="10"/>
-                            </padding>
+                        <HBox spacing="10" alignment="CENTER_RIGHT" styleClass="p-3">
                             <Button fx:id="withdrawButton" text="Withdraw" onAction="#handleWithdraw"/>
                         </HBox>
                     </bottom>
                 </BorderPane>
             </Tab>
             <Tab text="My profile">
-                <GridPane hgap="12" vgap="12">
+                <BorderPane>
                     <padding>
-                        <Insets top="20" right="20" bottom="20" left="20"/>
+                        <Insets top="20" right="30" bottom="20" left="30"/>
                     </padding>
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="25"/>
-                        <ColumnConstraints percentWidth="75"/>
-                    </columnConstraints>
-                    <Label text="Full name" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-                    <TextField fx:id="fullNameField" promptText="Shown in welcome message" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-                    <Label text="Phone" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-                    <TextField fx:id="phoneField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-                    <Label text="Email" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-                    <TextField fx:id="emailField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-                    <Label text="Major" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-                    <TextField fx:id="majorField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-                    <Label text="Skills" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-                    <TextArea fx:id="skillsArea" wrapText="true" prefRowCount="2" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
-                    <Label text="Experience" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-                    <TextArea fx:id="experienceArea" wrapText="true" prefRowCount="2" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
-                    <Label text="Self evaluation" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
-                    <TextArea fx:id="selfEvalArea" wrapText="true" prefRowCount="3" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
-                    <Label text="CV file" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
-                    <HBox spacing="10" GridPane.rowIndex="7" GridPane.columnIndex="1">
-                        <Label fx:id="cvPathLabel" text="None" HBox.hgrow="ALWAYS"/>
-                        <Button text="Upload TXT" onAction="#handleUploadCv"/>
-                        <Button fx:id="downloadCvButton"
-                                text="Download TXT"
-                                onAction="#handleDownloadCv"
-                                visible="false"
-                                managed="false"/>
-                    </HBox>
-                    <Label text="Current password" GridPane.rowIndex="8" GridPane.columnIndex="0"/>
-                    <PasswordField fx:id="currentPasswordField" GridPane.rowIndex="8" GridPane.columnIndex="1"/>
-                    <Label text="New password" GridPane.rowIndex="9" GridPane.columnIndex="0"/>
-                    <PasswordField fx:id="newPasswordField" GridPane.rowIndex="9" GridPane.columnIndex="1"/>
-                    <Label text="Confirm new password" GridPane.rowIndex="10" GridPane.columnIndex="0"/>
-                    <PasswordField fx:id="confirmPasswordField" GridPane.rowIndex="10" GridPane.columnIndex="1"/>
-                    <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.rowIndex="11" GridPane.columnIndex="1">
-                        <Button text="Change password" onAction="#handleChangePassword"/>
-                    </HBox>
-                    <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.rowIndex="12" GridPane.columnIndex="1">
-                        <Button text="Save profile" onAction="#handleSaveProfile" styleClass="btn btn-primary"/>
-                    </HBox>
-                </GridPane>
+                    <center>
+                        <GridPane hgap="15" vgap="10" styleClass="form-container" maxWidth="650">
+                            <padding>
+                                <Insets top="20" right="20" bottom="20" left="20"/>
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="110" maxWidth="130" prefWidth="120"/>
+                                <ColumnConstraints hgrow="ALWAYS"/>
+                            </columnConstraints>
+
+                            <!-- Profile Section -->
+                            <Label text="Full name" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextField fx:id="fullNameField" promptText="Shown in welcome message" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                            <Label text="Phone" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextField fx:id="phoneField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                            <Label text="Email" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextField fx:id="emailField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                            <Label text="Major" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextField fx:id="majorField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                            <Label text="Skills" GridPane.rowIndex="4" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextArea fx:id="skillsArea" wrapText="true" prefRowCount="2" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                            <Label text="Experience" GridPane.rowIndex="5" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextArea fx:id="experienceArea" wrapText="true" prefRowCount="2" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                            <Label text="Self evaluation" GridPane.rowIndex="6" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <TextArea fx:id="selfEvalArea" wrapText="true" prefRowCount="3" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+                            <!-- CV Section -->
+                            <Label text="CV file" GridPane.rowIndex="7" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <HBox spacing="10" alignment="CENTER_LEFT" GridPane.rowIndex="7" GridPane.columnIndex="1">
+                                <Label fx:id="cvPathLabel" text="None" styleClass="text-muted" HBox.hgrow="ALWAYS"/>
+                                <Button text="Upload TXT" onAction="#handleUploadCv"/>
+                                <Button fx:id="downloadCvButton" text="Download TXT" onAction="#handleDownloadCv"
+                                        visible="false" managed="false"/>
+                            </HBox>
+
+                            <!-- Password Section -->
+                            <Label styleClass="h5" text="Change Password" GridPane.rowIndex="8" GridPane.columnSpan="2">
+                                <GridPane.margin>
+                                    <Insets top="12" bottom="8"/>
+                                </GridPane.margin>
+                            </Label>
+
+                            <Label text="Current password" GridPane.rowIndex="9" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <PasswordField fx:id="currentPasswordField" GridPane.rowIndex="9" GridPane.columnIndex="1"/>
+
+                            <Label text="New password" GridPane.rowIndex="10" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <PasswordField fx:id="newPasswordField" GridPane.rowIndex="10" GridPane.columnIndex="1"/>
+
+                            <Label text="Confirm new password" GridPane.rowIndex="11" GridPane.columnIndex="0" styleClass="form-label"/>
+                            <PasswordField fx:id="confirmPasswordField" GridPane.rowIndex="11" GridPane.columnIndex="1"/>
+
+                            <!-- Action Buttons -->
+                            <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.rowIndex="12" GridPane.columnIndex="1">
+                                <Button text="Change password" onAction="#handleChangePassword"/>
+                            </HBox>
+                            <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.rowIndex="13" GridPane.columnIndex="1">
+                                <Button text="Save profile" onAction="#handleSaveProfile" styleClass="btn-primary"/>
+                            </HBox>
+                        </GridPane>
+                    </center>
+                </BorderPane>
             </Tab>
         </TabPane>
     </center>
