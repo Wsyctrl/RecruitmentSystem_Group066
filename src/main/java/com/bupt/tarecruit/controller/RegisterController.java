@@ -9,29 +9,75 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
+/**
+ * Controller for the registration view.
+ * Handles user registration input, role selection, and navigation back to the login page.
+ */
 public class RegisterController extends BaseController {
 
+    /**
+     * Choice box used to select the user role during registration.
+     */
     @FXML
     private ChoiceBox<Role> roleChoice;
+
+    /**
+     * Input field for the user ID.
+     */
     @FXML
     private TextField userIdField;
+
+    /**
+     * Input field for the password.
+     */
     @FXML
     private PasswordField passwordField;
+
+    /**
+     * Input field for confirming the password.
+     */
     @FXML
     private PasswordField confirmPasswordField;
 
+    /**
+     * Initializes the registration view after the FXML components are loaded.
+     * Sets the available roles and the default selected role.
+     */
     @FXML
     private void initialize() {
         roleChoice.setItems(FXCollections.observableArrayList(Role.TA, Role.MO));
         roleChoice.setValue(Role.TA);
     }
 
+    /**
+     * Handles the registration action triggered from the UI.
+     * Validates required input fields before calling the authentication service.
+     */
     @FXML
     private void handleRegister() {
         Role role = roleChoice.getValue() == null ? Role.TA : roleChoice.getValue();
+        String userId = userIdField.getText();
+        String password = passwordField.getText();
+        String confirmPassword = confirmPasswordField.getText();
+
+        if (userId == null || userId.trim().isEmpty()) {
+            DialogUtil.error("User ID cannot be empty.", navigator.getPrimaryStage());
+            return;
+        }
+
+        if (password == null || password.trim().isEmpty()) {
+            DialogUtil.error("Password cannot be empty.", navigator.getPrimaryStage());
+            return;
+        }
+
+        if (confirmPassword == null || confirmPassword.trim().isEmpty()) {
+            DialogUtil.error("Please confirm your password.", navigator.getPrimaryStage());
+            return;
+        }
+
         OperationResult<Void> result = services.authService()
-                .register(role, userIdField.getText(),
-                        passwordField.getText(), confirmPasswordField.getText());
+                .register(role, userId, password, confirmPassword);
+
         if (result.success()) {
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
             navigator.showLogin();
@@ -40,6 +86,9 @@ public class RegisterController extends BaseController {
         }
     }
 
+    /**
+     * Navigates the user back to the login page.
+     */
     @FXML
     private void handleBackToLogin() {
         navigator.showLogin();

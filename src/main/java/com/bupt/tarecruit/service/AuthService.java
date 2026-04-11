@@ -12,16 +12,40 @@ import com.bupt.tarecruit.util.ValidationUtil;
 
 import java.util.Optional;
 
+/**
+ * Provides authentication-related business logic,
+ * including user login and account registration.
+ */
 public class AuthService {
 
+    /**
+     * Data access object for TA accounts.
+     */
     private final TaDao taDao;
+
+    /**
+     * Data access object for MO accounts.
+     */
     private final MoDao moDao;
 
+    /**
+     * Creates an authentication service with required data access dependencies.
+     *
+     * @param taDao data access object for TA records
+     * @param moDao data access object for MO records
+     */
     public AuthService(TaDao taDao, MoDao moDao) {
         this.taDao = taDao;
         this.moDao = moDao;
     }
 
+    /**
+     * Authenticates a user with the given credentials and returns a user session on success.
+     *
+     * @param userId user account identifier
+     * @param password raw password entered by the user
+     * @return operation result containing the authenticated user session on success
+     */
     public OperationResult<UserSession> login(String userId, String password) {
         ValidationUtil.requireNonBlank(userId, "Please enter your username");
         ValidationUtil.requireNonBlank(password, "Please enter your password");
@@ -53,6 +77,16 @@ public class AuthService {
         return OperationResult.failure("Unknown user or incorrect password");
     }
 
+    /**
+     * Registers a new TA or MO account after validating the user ID format,
+     * password confirmation, and account uniqueness.
+     *
+     * @param role target account role
+     * @param userId user account identifier
+     * @param password password entered during registration
+     * @param confirmPassword confirmation password entered during registration
+     * @return operation result describing whether the registration succeeded
+     */
     public OperationResult<Void> register(Role role, String userId, String password, String confirmPassword) {
         ValidationUtil.requireNonBlank(userId, "Username is required");
         ValidationUtil.requireNonBlank(password, "Password is required");
