@@ -24,7 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
+/**
+ * Controller for the MO dashboard view.
+ * Manages job posting, applicant review, profile updates,
+ * and administrator operations in the dashboard.
+ */
 public class MoDashboardController extends BaseController implements SessionAware {
 
     private UserSession session;
@@ -164,7 +168,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private Label adminMoNameLabel;
     @FXML
     private Label adminMoInfoLabel;
-
+/**
+ * Performs controller-specific initialization after shared dependencies
+ * have been injected. Sets up table bindings, search filters, selection
+ * listeners, spinner defaults, and admin tab behavior.
+ */
     @Override
     protected void onInit() {
         filteredMyJobs = new FilteredList<>(myJobs, job -> true);
@@ -271,7 +279,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
             });
         }
     }
-
+/**
+ * Reloads all job records for the admin job table.
+ * Each job is converted into a display model with hired-count information.
+ */
     private void refreshAdminJobs() {
         if (!adminMode) {
             return;
@@ -288,7 +299,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
             adminJobTable.refresh();
         }
     }
-
+/**
+ * Reloads all TA account data for the admin TA table,
+ * including application and hired-job summaries.
+ */
     private void refreshAdminTaData() {
         if (!adminMode) {
             return;
@@ -319,7 +333,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
             adminTaTable.refresh();
         }
     }
-
+/**
+ * Reloads all MO account data for the admin MO table
+ * and groups related jobs for display.
+ */
     private void refreshAdminMoData() {
         if (!adminMode) {
             return;
@@ -1079,4 +1096,3 @@ CV: %s
         refreshAccountLogs();
     }
 }
-

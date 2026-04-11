@@ -27,7 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
+/**
+ * Controller for the TA dashboard view.
+ * Manages job browsing, job applications, profile updates,
+ * CV upload and download, and account-related actions.
+ */
 public class TaDashboardController extends BaseController implements SessionAware {
 
     private UserSession session;
@@ -87,7 +91,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
     private PasswordField newPasswordField;
     @FXML
     private PasswordField confirmPasswordField;
-
+/**
+ * Performs controller-specific initialization after shared dependencies
+ * have been injected. Sets up job filtering, table bindings, and selection listeners.
+ */
     @Override
     protected void onInit() {
         filteredJobs = new FilteredList<>(jobItems, job -> true);
@@ -97,20 +104,30 @@ public class TaDashboardController extends BaseController implements SessionAwar
         applicationTable.setItems(applicationItems);
         updateJobDetails(null);
     }
-
+/**
+ * Sets the current user session and loads the initial dashboard data.
+ *
+ * @param session current authenticated user session
+ */
     @Override
     public void setSession(UserSession session) {
         this.session = session;
         welcomeLabel.setText("Welcome, " + session.getDisplayName());
         loadInitialData();
     }
-
+/**
+ * Loads all initial dashboard data, including jobs,
+ * existing applications, and profile information.
+ */
     private void loadInitialData() {
         refreshJobs();
         refreshApplications();
         loadProfile();
     }
-
+/**
+ * Reloads all open jobs and converts them into display models
+ * with applicant and hired-count information for the UI.
+ */
     private void refreshJobs() {
         JobService jobService = services.jobService();
         ApplicationService applicationService = services.applicationService();
@@ -140,7 +157,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
             updateJobDetails(null);
         }
     }
-
+/**
+ * Reloads all active applications submitted by the current TA user.
+ */
     private void refreshApplications() {
         String taId = session.taOptional().map(Ta::getTaId).orElse("");
         ApplicationService applicationService = services.applicationService();
@@ -151,7 +170,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
                 .collect(Collectors.toList()));
         applicationTable.refresh();
     }
-
+/**
+ * Loads the current TA user's profile data into the profile form fields.
+ */
     private void loadProfile() {
         Ta ta = session.taOptional().orElse(null);
         if (ta == null) {
@@ -167,7 +188,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
         updateCvUi(ta);
         clearPasswordFields();
     }
-
+/**
+ * Updates the CV-related UI controls according to whether
+ * the current TA user has uploaded a CV file.
+ *
+ * @param ta current TA user
+ */
     private void updateCvUi(Ta ta) {
         boolean hasCv = ta.getCvPath() != null && !ta.getCvPath().isBlank();
         cvPathLabel.setText(hasCv ? "Uploaded" : "None");
@@ -176,7 +202,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
             downloadCvButton.setManaged(hasCv);
         }
     }
-
+/**
+ * Clears all password input fields in the profile section.
+ */
     private void clearPasswordFields() {
         if (currentPasswordField != null) {
             currentPasswordField.clear();
@@ -188,7 +216,11 @@ public class TaDashboardController extends BaseController implements SessionAwar
             confirmPasswordField.clear();
         }
     }
-
+/**
+ * Applies a keyword filter to the visible job list.
+ *
+ * @param keyword search keyword entered by the user
+ */
     private void applyJobFilter(String keyword) {
         if (filteredJobs == null) {
             return;
@@ -201,22 +233,43 @@ public class TaDashboardController extends BaseController implements SessionAwar
                     || containsIgnoreCase(job.getRequirements(), lower);
         });
     }
-
+/**
+ * Checks whether the source text contains the given keyword,
+ * ignoring case differences.
+ *
+ * @param source source text to search in
+ * @param keyword keyword to search for
+ * @return true if the source contains the keyword; false otherwise
+ */
     private boolean containsIgnoreCase(String source, String keyword) {
         if (source == null) {
             return false;
         }
         return source.toLowerCase().contains(keyword);
     }
-
+/**
+ * Returns a placeholder when the given date text is null or blank.
+ *
+ * @param value formatted date text
+ * @return the original value or "-" when the value is empty
+ */
     private String formatDateOrPlaceholder(String value) {
         return (value == null || value.isBlank()) ? "-" : value;
     }
-
+/**
+ * Returns an empty string when the input value is null.
+ *
+ * @param value source text value
+ * @return non-null text value
+ */
     private String safeText(String value) {
         return value == null ? "" : value;
     }
-
+/**
+ * Updates the job detail panel based on the currently selected job.
+ *
+ * @param display selected job display model, or null to clear the detail view
+ */
     private void updateJobDetails(TaJobDisplay display) {
         if (display == null) {
             jobNameLabel.setText("Select a job");
@@ -241,7 +294,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
         jobNotesArea.setText(safeText(job.getAdditionalNotes()));
         applyButton.setDisable(!job.isOpen() || hasApplied(job.getJobId()));
     }
-
+/**
+ * Checks whether the current TA user has already applied for the given job.
+ *
+ * @param jobId target job identifier
+ * @return true if an application for the job already exists; false otherwise
+ */
     private boolean hasApplied(String jobId) {
         return applicationItems.stream().anyMatch(display -> display.getRecord().getJobId().equalsIgnoreCase(jobId));
     }
