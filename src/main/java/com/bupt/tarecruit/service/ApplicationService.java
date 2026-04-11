@@ -15,23 +15,53 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Provides business logic for TA job applications, including submission,
+ * withdrawal, hiring, rejection, and application status normalization.
+ */
 public class ApplicationService {
 
+    /**
+     * Data access object for application records.
+     */
     private final ApplicationDao applicationDao;
+
+    /**
+     * Data access object for job records.
+     */
     private final JobDao jobDao;
 
+    /**
+     * Creates an application service with required data access dependencies.
+     *
+     * @param applicationDao data access object for application records
+     * @param jobDao data access object for job records
+     */
     public ApplicationService(ApplicationDao applicationDao, JobDao jobDao) {
         this.applicationDao = applicationDao;
         this.jobDao = jobDao;
     }
 
+    /**
+     * Returns all applications submitted by a specific TA user,
+     * sorted by latest update time in descending order.
+     *
+     * @param taId TA user identifier
+     * @return list of applications submitted by the TA user
+     */
     public List<ApplicationRecord> findByTa(String taId) {
         return applicationDao.findByTaId(taId).stream()
                 .sorted(Comparator.comparing(ApplicationRecord::getUpdateTime).reversed())
                 .collect(Collectors.toList());
     }
 
-    /** TA application list (excludes withdrawn). */
+    /**
+     * Returns all active applications submitted by a specific TA user,
+     * excluding withdrawn records.
+     *
+     * @param taId TA user identifier
+     * @return list of active applications for the TA user
+     */
     public List<ApplicationRecord> findActiveApplicationsForTa(String taId) {
         return applicationDao.findByTaId(taId).stream()
                 .filter(r -> r.getStatus() != ApplicationStatus.WITHDRAWN)
@@ -39,13 +69,26 @@ public class ApplicationService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Returns all application records for a specific job,
+     * sorted by latest update time in descending order.
+     *
+     * @param jobId target job identifier
+     * @return list of applications for the job
+     */
     public List<ApplicationRecord> findByJob(String jobId) {
         return applicationDao.findByJobId(jobId).stream()
                 .sorted(Comparator.comparing(ApplicationRecord::getUpdateTime).reversed())
                 .collect(Collectors.toList());
     }
 
-    /** Applicants for a job (excludes withdrawn). */
+    /**
+     * Returns all active applicants for a specific job,
+     * excluding withdrawn application records.
+     *
+     * @param jobId target job identifier
+     * @return list of active applications for the job
+     */
     public List<ApplicationRecord> findActiveApplicationsForJob(String jobId) {
         return applicationDao.findByJobId(jobId).stream()
                 .filter(r -> r.getStatus() != ApplicationStatus.WITHDRAWN)
@@ -53,6 +96,14 @@ public class ApplicationService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Submits a new application for a TA user to an open job.
+     * Rejects duplicate active applications for the same job.
+     *
+     * @param taId TA user identifier
+     * @param job target job
+     * @return operation result containing the created application record on success
+     */
     public OperationResult<ApplicationRecord> applyForJob(String taId, Job job) {
         if (job == null || !job.isOpen()) {
             return OperationResult.failure("This job is not open for applications");
@@ -73,6 +124,13 @@ public class ApplicationService {
         return OperationResult.success(record, "Application submitted");
     }
 
+    /**
+     * Withdraws a pending application belonging to the specified TA user.
+     *
+     * @param applyId application identifier
+     * @param taId TA user identifier
+     * @return operation result describing whether the withdrawal succeeded
+     */
     public OperationResult<Void> withdraw(String applyId, String taId) {
         Optional<ApplicationRecord> recordOpt = applicationDao.findById(applyId);
         if (recordOpt.isEmpty()) {
@@ -92,7 +150,10 @@ public class ApplicationService {
     }
 
     /**
-     * Count hired applicants for a specific job.
+     * Counts the number of hired applicants for a specific job.
+     *
+     * @param jobId target job identifier
+     * @return number of hired applicants for the job
      */
     public int countHiredForJob(String jobId) {
         return applicationDao.findByJobId(jobId).stream()
@@ -101,6 +162,13 @@ public class ApplicationService {
                 .size();
     }
 
+    /**
+     * Marks an application as hired. If all job positions become filled,
+     * the job is closed and remaining pending applications are rejected.
+     *
+     * @param applyId application identifier
+     * @return operation result describing whether the hire action succeeded
+     */
     public OperationResult<Void> hireApplicant(String applyId) {
         ApplicationRecord record = applicationDao.findById(applyId).orElse(null);
         if (record == null) {
@@ -115,13 +183,11 @@ public class ApplicationService {
         record.setHiredTime(LocalDateTime.now());
         applicationDao.update(record);
 
-        // Check if job should be closed (when positions are filled)
         int hiredCount = countHiredForJob(job.getJobId());
         if (hiredCount >= job.getNumberOfPositions()) {
             job.setStatus(JobStatus.CLOSED);
             jobDao.update(job);
 
-            // Reject remaining pending applications
             List<ApplicationRecord> others = applicationDao.findByJobId(job.getJobId());
             for (ApplicationRecord other : others) {
                 if (other.getStatus() == ApplicationStatus.PENDING) {
@@ -136,6 +202,12 @@ public class ApplicationService {
         return OperationResult.success(null, "Applicant hired (" + hiredCount + "/" + job.getNumberOfPositions() + " positions filled)");
     }
 
+    /**
+     * Restores a hired applicant back to pending status.
+     *
+     * @param applyId application identifier
+     * @return operation result describing whether the status change succeeded
+     */
     public OperationResult<Void> unhireApplicant(String applyId) {
         ApplicationRecord record = applicationDao.findById(applyId).orElse(null);
         if (record == null) {
@@ -151,12 +223,18 @@ public class ApplicationService {
         return OperationResult.success(null, "Applicant status changed back to Pending");
     }
 
+    /**
+     * Marks an application as rejected. If the application was previously hired,
+     * the hired timestamp is cleared.
+     *
+     * @param applyId application identifier
+     * @return operation result describing whether the reject action succeeded
+     */
     public OperationResult<Void> rejectApplicant(String applyId) {
         ApplicationRecord record = applicationDao.findById(applyId).orElse(null);
         if (record == null) {
             return OperationResult.failure("Application not found");
         }
-        // If currently hired, clear hired time when rejecting
         if (record.getStatus() == ApplicationStatus.HIRED) {
             record.setHiredTime(null);
         }
@@ -167,7 +245,10 @@ public class ApplicationService {
     }
 
     /**
-     * Undo reject - change status from REJECTED back to PENDING
+     * Restores a rejected application back to pending status.
+     *
+     * @param applyId application identifier
+     * @return operation result describing whether the status change succeeded
      */
     public OperationResult<Void> unrejectApplicant(String applyId) {
         ApplicationRecord record = applicationDao.findById(applyId).orElse(null);
@@ -184,7 +265,11 @@ public class ApplicationService {
     }
 
     /**
-     * When a job is closed, all still-pending applications for that job must be marked as rejected.
+     * Rejects all still-pending applications for a specific job.
+     * This is typically used when a job is manually closed.
+     *
+     * @param jobId target job identifier
+     * @return operation result describing how many records were updated
      */
     public OperationResult<Void> rejectPendingApplicationsForJob(String jobId) {
         List<ApplicationRecord> records = applicationDao.findByJobId(jobId);
@@ -204,8 +289,8 @@ public class ApplicationService {
     }
 
     /**
-     * Startup data normalization: if a job is already closed in Jobs.csv but some applications are still Pending
-     * in Applications.csv, fix them so users never see Pending for closed jobs.
+     * Normalizes startup data by converting pending applications
+     * for already-closed jobs into rejected status.
      */
     public void normalizePendingApplicationsForClosedJobs() {
         List<Job> closedJobs = jobDao.findAll().stream()
@@ -216,6 +301,11 @@ public class ApplicationService {
         }
     }
 
+    /**
+     * Generates the next unique application identifier.
+     *
+     * @return generated application identifier
+     */
     private String generateApplyId() {
         List<String> existing = applicationDao.findAll().stream()
                 .map(ApplicationRecord::getApplyId)
