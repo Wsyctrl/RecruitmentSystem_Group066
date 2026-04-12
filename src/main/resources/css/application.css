@@ -150,6 +150,20 @@
     -fx-border-color: transparent;
 }
 
+/* Tab header keyboard-focus ring (thin blue rectangle) — hide so only custom selected underline shows */
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab .focus-indicator,
+.tab-pane:focused > .tab-header-area > .headers-region > .tab .focus-indicator,
+.tab-pane:focused > .tab-header-area > .headers-region > .tab:selected .focus-indicator {
+    -fx-border-width: 0;
+    -fx-border-insets: 0;
+    -fx-border-color: transparent;
+}
+
 /* ========================================
    SplitPane
    ======================================== */
