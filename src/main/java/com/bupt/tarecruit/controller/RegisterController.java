@@ -51,7 +51,7 @@ public class RegisterController extends BaseController {
 
     /**
      * Handles the registration action triggered from the UI.
-     * Validates required input fields before calling the authentication service.
+     * Delegates validation and registration to {@link com.bupt.tarecruit.service.AuthService}.
      */
     @FXML
     private void handleRegister() {
@@ -59,21 +59,6 @@ public class RegisterController extends BaseController {
         String userId = userIdField.getText();
         String password = passwordField.getText();
         String confirmPassword = confirmPasswordField.getText();
-
-        if (userId == null || userId.trim().isEmpty()) {
-            DialogUtil.error("User ID cannot be empty.", navigator.getPrimaryStage());
-            return;
-        }
-
-        if (password == null || password.trim().isEmpty()) {
-            DialogUtil.error("Password cannot be empty.", navigator.getPrimaryStage());
-            return;
-        }
-
-        if (confirmPassword == null || confirmPassword.trim().isEmpty()) {
-            DialogUtil.error("Please confirm your password.", navigator.getPrimaryStage());
-            return;
-        }
 
         OperationResult<Void> result = services.authService()
                 .register(role, userId, password, confirmPassword);

@@ -122,6 +122,21 @@
     -fx-background-radius: 0;
     -fx-border-color: transparent;
     -fx-padding: 12 20 8 20;
+    /* Tab headers are mouse-driven navigation; hide Modena keyboard focus ring */
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:focused,
+.tab-pane > .tab-header-area > .headers-region > .tab:selected:focused {
+    -fx-border-color: transparent;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab > .focus-indicator {
+    -fx-border-width: 0;
+    -fx-border-insets: 0;
+    -fx-border-radius: 0;
+    -fx-border-color: transparent;
 }
 
 .tab-pane .tab .tab-label {

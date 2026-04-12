@@ -47,8 +47,12 @@ public class AuthService {
      * @return operation result containing the authenticated user session on success
      */
     public OperationResult<UserSession> login(String userId, String password) {
-        ValidationUtil.requireNonBlank(userId, "Please enter your username");
-        ValidationUtil.requireNonBlank(password, "Please enter your password");
+        if (ValidationUtil.isBlank(userId)) {
+            return OperationResult.failure("Please enter your username");
+        }
+        if (ValidationUtil.isBlank(password)) {
+            return OperationResult.failure("Please enter your password");
+        }
 
         Optional<Ta> taOptional = taDao.findById(userId);
         if (taOptional.isPresent()) {
@@ -88,8 +92,15 @@ public class AuthService {
      * @return operation result describing whether the registration succeeded
      */
     public OperationResult<Void> register(Role role, String userId, String password, String confirmPassword) {
-        ValidationUtil.requireNonBlank(userId, "Username is required");
-        ValidationUtil.requireNonBlank(password, "Password is required");
+        if (ValidationUtil.isBlank(userId)) {
+            return OperationResult.failure("Username is required");
+        }
+        if (ValidationUtil.isBlank(password)) {
+            return OperationResult.failure("Password is required");
+        }
+        if (ValidationUtil.isBlank(confirmPassword)) {
+            return OperationResult.failure("Please confirm your password");
+        }
         if (!password.equals(confirmPassword)) {
             return OperationResult.failure("Passwords do not match");
         }

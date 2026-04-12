@@ -33,6 +33,19 @@ class AuthServiceTest {
     Path tempDir;
 
     @Test
+    void loginBlankUsernameShouldFail() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        OperationResult<UserSession> blankId = service.login("  ", "any");
+        assertFalse(blankId.success());
+
+        OperationResult<UserSession> blankPass = service.login("user", "");
+        assertFalse(blankPass.success());
+    }
+
+    @Test
     void loginAdminMoShouldResolveToAdminRole() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
         CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));

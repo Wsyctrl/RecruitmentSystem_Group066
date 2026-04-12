@@ -43,32 +43,18 @@ public class LoginController extends BaseController {
 
     /**
      * Handles the login action triggered from the UI.
-     * Validates required input fields before calling the authentication service.
+     * Delegates validation and authentication to {@link com.bupt.tarecruit.service.AuthService}.
      */
     @FXML
     private void handleLogin() {
         String userId = userIdField.getText();
         String password = passwordField.getText();
 
-        if (userId == null || userId.trim().isEmpty()) {
-            DialogUtil.error("User ID cannot be empty.", navigator.getPrimaryStage());
-            return;
-        }
-
-        if (password == null || password.trim().isEmpty()) {
-            DialogUtil.error("Password cannot be empty.", navigator.getPrimaryStage());
-            return;
-        }
-
-        try {
-            OperationResult<UserSession> result = services.authService().login(userId, password);
-            if (result.success()) {
-                navigator.showDashboard(result.data());
-            } else {
-                DialogUtil.error(result.message(), navigator.getPrimaryStage());
-            }
-        } catch (IllegalArgumentException ex) {
-            DialogUtil.error(ex.getMessage(), navigator.getPrimaryStage());
+        OperationResult<UserSession> result = services.authService().login(userId, password);
+        if (result.success()) {
+            navigator.showDashboard(result.data());
+        } else {
+            DialogUtil.error(result.message(), navigator.getPrimaryStage());
         }
     }
 }
