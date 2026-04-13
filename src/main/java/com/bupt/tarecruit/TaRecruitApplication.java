@@ -34,4 +34,10 @@ public class TaRecruitApplication extends Application {
         Locale.setDefault(Locale.Category.FORMAT, english);
         launch(args);
     }
+
+    public static class Launcher {
+        public static void main(String[] args) {
+            TaRecruitApplication.main(args);
+        }
+    }
 }
