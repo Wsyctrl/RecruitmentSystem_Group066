@@ -56,3 +56,30 @@ mvn javafx:run
 - Open the **Maven** tool window on the right side
 - Expand `rec` → `Plugins` → `javafx`
 - Double-click **javafx:run** to start the application
+
+---
+
+# Package and Run Executable JAR
+
+### 1. Update version in pom.xml:
+```xml
+<version>your-version</version>
+```
+
+### 2. Build the package:
+```bash
+mvn clean package
+```
+### 3. Go to the target directory:
+```bash
+cd target
+```
+
+### 4. Run the JAR (replace "your-version" with the actual version):
+```bash
+java -jar tarecruit-your-version.jar
+```
+Example:
+```bash
+java -jar tarecruit-1.0.0.jar
+```
