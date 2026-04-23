@@ -57,6 +57,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
     @FXML
     private TabPane tabPane;
     @FXML
+    private Tab applicantsTab;
+    @FXML
+    private Tab myJobsTab;
+    @FXML
+    private Tab postEditJobTab;
+    @FXML
     private Label welcomeLabel;
     @FXML
     private TextField myJobSearchField;
@@ -291,6 +297,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
             return;
         }
         List<Job> allJobs = services.jobService().findAllJobs();
+        for (Job job : allJobs) {
+            services.profileService().findMo(job.getMoId())
+                    .map(Mo::getDisplayLabel)
+                    .ifPresent(job::setMoName);
+        }
         List<AdminJobDisplay> displayItems = allJobs.stream()
                 .map(job -> new AdminJobDisplay(job, services.applicationService().countHiredForJob(job.getJobId())))
                 .collect(Collectors.toList());
@@ -371,9 +382,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
             return;
         }
         Ta ta = display.getTa();
-        adminTaNameLabel.setText(ta.getDisplayLabel() + " (" + ta.getTaId() + ")");
-        adminTaInfoLabel.setText(String.format("Phone: %s\nEmail: %s\nMajor: %s",
-                safeText(ta.getPhone()), safeText(ta.getEmail()), safeText(ta.getMajor())));
+        adminTaNameLabel.setText("Email: " + safeText(ta.getEmail()));
+        adminTaInfoLabel.setText(String.format("Name: %s\nPhone: %s\nMajor: %s",
+                ta.getDisplayLabel(), safeText(ta.getPhone()), safeText(ta.getMajor())));
 
         adminTaAppliedJobsItems.setAll(display.getAppliedJobs());
         adminTaHiredJobsItems.setAll(display.getHiredJobs());
@@ -387,9 +398,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
             return;
         }
         Mo mo = display.getMo();
-        adminMoNameLabel.setText(mo.getDisplayLabel() + " (" + mo.getMoId() + ")");
-        adminMoInfoLabel.setText(String.format("Phone: %s | Email: %s | Modules: %s",
-                safeText(mo.getPhone()), safeText(mo.getEmail()), safeText(mo.getResponsibleModules())));
+        adminMoNameLabel.setText("Email: " + safeText(mo.getEmail()));
+        adminMoInfoLabel.setText(String.format("Name: %s | Phone: %s | Modules: %s",
+                mo.getDisplayLabel(), safeText(mo.getPhone()), safeText(mo.getResponsibleModules())));
 
         List<AdminJobDisplay> jobDisplays = display.getJobs().stream()
                 .map(job -> new AdminJobDisplay(job, services.applicationService().countHiredForJob(job.getJobId())))
@@ -434,6 +445,8 @@ public class MoDashboardController extends BaseController implements SessionAwar
         setupAdminVisibility(adminMode);
         if (adminMode && tabPane != null && adminTaTab != null) {
             tabPane.getSelectionModel().select(adminTaTab);
+        } else if (tabPane != null && applicantsTab != null) {
+            tabPane.getSelectionModel().select(applicantsTab);
         }
         loadData();
     }
@@ -539,9 +552,8 @@ public class MoDashboardController extends BaseController implements SessionAwar
         applicantStatusLabel.setText(display.getStatus());
         applicantProfileArea.setText("""
 Name: %s
-User ID: %s
-Phone: %s
 Email: %s
+Phone: %s
 Major: %s
 Skills: %s
 Experience: %s
@@ -549,9 +561,8 @@ Self-eval: %s
 CV: %s
 """.formatted(
                 ta.getDisplayLabel(),
-                ta.getTaId(),
-                safeText(ta.getPhone()),
                 safeText(ta.getEmail()),
+                safeText(ta.getPhone()),
                 safeText(ta.getMajor()),
                 safeText(ta.getSkills()),
                 safeText(ta.getExperience()),
@@ -610,7 +621,9 @@ CV: %s
             return;
         }
         populateJobForm(selected);
-        tabPane.getSelectionModel().select(1);
+        if (postEditJobTab != null) {
+            tabPane.getSelectionModel().select(postEditJobTab);
+        }
     }
 
     @FXML
@@ -683,7 +696,7 @@ CV: %s
             if (result.success()) {
                 services.applicationService().rejectPendingApplicationsForJob(job.getJobId());
                 // Log the action to JobLog
-                String moId = session.moOptional().map(Mo::getMoId).orElse("admin");
+                String moId = session.moOptional().map(Mo::getMoId).orElse("admin@bupt.edu.cn");
                 JobLog log = new JobLog();
                 log.setLogId(generateLogId());
                 log.setAdminId(moId);
@@ -713,7 +726,7 @@ CV: %s
             return;
         }
         if (DialogUtil.confirm("Re-open this job?", navigator.getPrimaryStage())) {
-            String moId = session.moOptional().map(Mo::getMoId).orElse("admin");
+            String moId = session.moOptional().map(Mo::getMoId).orElse("admin@bupt.edu.cn");
             OperationResult<Void> result = services.jobService().openJob(job.getJobId());
             if (result.success()) {
                 // Log the action to JobLog
@@ -740,7 +753,9 @@ CV: %s
         if (job != null) {
             jobSelector.getSelectionModel().select(job);
             loadApplicants(job);
-            tabPane.getSelectionModel().select(2);
+            if (applicantsTab != null) {
+                tabPane.getSelectionModel().select(applicantsTab);
+            }
         }
     }
 
@@ -841,7 +856,6 @@ CV: %s
         }
         mo.setFullName(moFullNameField.getText() == null ? "" : moFullNameField.getText().trim());
         mo.setPhone(moPhoneField.getText());
-        mo.setEmail(moEmailField.getText());
         mo.setResponsibleModules(moModuleArea.getText());
         OperationResult<Mo> result = services.profileService().updateMo(mo);
         if (result.success()) {
@@ -896,7 +910,7 @@ CV: %s
             DialogUtil.error("Please select a TA user", navigator.getPrimaryStage());
             return;
         }
-        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin@bupt.edu.cn");
         OperationResult<Void> result = services.adminService().resetPassword(Role.TA, ta.getTaId(), adminId);
         DialogUtil.info(result.message(), navigator.getPrimaryStage());
         loadAdminData();
@@ -914,7 +928,7 @@ CV: %s
             DialogUtil.error("Please select a TA user", navigator.getPrimaryStage());
             return;
         }
-        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin@bupt.edu.cn");
         OperationResult<Void> result = services.adminService().toggleStatus(Role.TA, ta.getTaId(), !ta.isDisabled(), adminId);
         DialogUtil.info(result.message(), navigator.getPrimaryStage());
         loadAdminData();
@@ -932,7 +946,7 @@ CV: %s
             DialogUtil.error("Please select an MO user", navigator.getPrimaryStage());
             return;
         }
-        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin@bupt.edu.cn");
         OperationResult<Void> result = services.adminService().resetPassword(Role.MO, mo.getMoId(), adminId);
         DialogUtil.info(result.message(), navigator.getPrimaryStage());
         loadAdminData();
@@ -950,7 +964,7 @@ CV: %s
             DialogUtil.error("Please select an MO user", navigator.getPrimaryStage());
             return;
         }
-        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin@bupt.edu.cn");
         OperationResult<Void> result = services.adminService().toggleStatus(Role.MO, mo.getMoId(), !mo.isDisabled(), adminId);
         DialogUtil.info(result.message(), navigator.getPrimaryStage());
         loadAdminData();
@@ -971,7 +985,7 @@ CV: %s
         if (!DialogUtil.confirm("Close this job?", navigator.getPrimaryStage())) {
             return;
         }
-        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin@bupt.edu.cn");
         OperationResult<Void> result = services.adminService().toggleJobOpenClosed(job.getJobId());
         if (result.success()) {
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
@@ -1008,7 +1022,7 @@ CV: %s
         if (!DialogUtil.confirm("Re-open this job?", navigator.getPrimaryStage())) {
             return;
         }
-        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin");
+        String adminId = session.moOptional().map(Mo::getMoId).orElse("admin@bupt.edu.cn");
         OperationResult<Void> result = services.jobService().openJob(job.getJobId());
         if (result.success()) {
             DialogUtil.info(result.message(), navigator.getPrimaryStage());

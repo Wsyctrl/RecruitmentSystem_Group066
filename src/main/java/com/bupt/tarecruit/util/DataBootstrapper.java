@@ -12,9 +12,9 @@ public class DataBootstrapper {
 
     public void initialize() {
         CsvUtil.ensureFileWithHeader(dataDir.resolve("TA.csv"),
-                new String[]{"ta_id", "password", "full_name", "phone", "email", "major", "skills", "experience", "self_evaluation", "is_disabled", "cv_path"});
+                new String[]{"email", "password", "full_name", "phone", "major", "skills", "experience", "self_evaluation", "is_disabled", "cv_path"});
         CsvUtil.ensureFileWithHeader(dataDir.resolve("MO.csv"),
-                new String[]{"mo_id", "password", "full_name", "responsible_modules", "phone", "email", "is_disabled"});
+                new String[]{"email", "password", "full_name", "responsible_modules", "phone", "is_disabled"});
         CsvUtil.ensureFileWithHeader(dataDir.resolve("Jobs.csv"),
                 new String[]{"job_id", "job_name", "mo_id", "number_of_positions", "module_name", "requirements", "start_date", "end_date", "additional_notes", "status"});
         CsvUtil.ensureFileWithHeader(dataDir.resolve("Applications.csv"),

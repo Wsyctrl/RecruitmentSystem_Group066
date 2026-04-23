@@ -9,10 +9,7 @@ import javafx.stage.Stage;
 import java.nio.file.Path;
 import java.util.Locale;
 
-/**
- * Main JavaFX application bootstrapper.
- */
-public class TaRecruitApplication extends Application {
+public class MoPortalApplication extends Application {
 
     @Override
     public void start(Stage stage) {
@@ -38,7 +35,7 @@ public class TaRecruitApplication extends Application {
 
     public static class Launcher {
         public static void main(String[] args) {
-            TaRecruitApplication.main(args);
+            MoPortalApplication.main(args);
         }
     }
 }

@@ -5,6 +5,15 @@
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.bupt.tarecruit.controller.LoginController"
             styleClass="root">
+    <top>
+        <HBox alignment="CENTER" minHeight="56" prefHeight="56" maxHeight="56">
+            <HBox fx:id="noticeBox" visible="false" managed="false" alignment="CENTER_LEFT"
+                  maxWidth="360"
+                  style="-fx-background-color: #fff3cd; -fx-border-color: #ffe69c; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10 14;">
+                <Label fx:id="noticeLabel" textFill="#664d03" wrapText="true"/>
+            </HBox>
+        </HBox>
+    </top>
     <center>
         <StackPane>
             <padding>
@@ -14,6 +23,10 @@
                 <padding>
                     <Insets top="36" right="36" bottom="36" left="36"/>
                 </padding>
+                <HBox alignment="CENTER_LEFT" maxWidth="Infinity">
+                    <Button fx:id="backButton" text="←" onAction="#handleBackToBrowse"
+                            style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #98a2b3;"/>
+                </HBox>
                 <Label text="TA Recruitment" styleClass="h2">
                     <VBox.margin>
                         <Insets bottom="4"/>
@@ -25,8 +38,8 @@
                     </VBox.margin>
                 </Label>
                 <VBox spacing="6" maxWidth="Infinity">
-                    <Label text="Username" styleClass="form-label"/>
-                    <TextField fx:id="userIdField" promptText="Enter your username"/>
+                    <Label text="BUPT Email" styleClass="form-label"/>
+                    <TextField fx:id="userIdField" promptText="Enter your @bupt.edu.cn email"/>
                 </VBox>
                 <VBox spacing="6" maxWidth="Infinity">
                     <Label text="Password" styleClass="form-label"/>

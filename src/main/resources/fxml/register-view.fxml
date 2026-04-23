@@ -14,23 +14,24 @@
                 <padding>
                     <Insets top="32" right="32" bottom="32" left="32"/>
                 </padding>
+                <HBox alignment="CENTER_LEFT" maxWidth="Infinity">
+                    <Button fx:id="backButton" text="←" onAction="#handleBackToBrowse"
+                            style="-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #98a2b3;"/>
+                </HBox>
                 <Label text="Create Account" styleClass="h2">
                     <VBox.margin>
                         <Insets bottom="4"/>
                     </VBox.margin>
                 </Label>
-                <Label text="Register as TA or MO" styleClass="text-muted">
+                <Label fx:id="registerRoleHintLabel" text="Register as TA" styleClass="text-muted">
                     <VBox.margin>
                         <Insets bottom="20"/>
                     </VBox.margin>
                 </Label>
+                <ChoiceBox fx:id="roleChoice" visible="false" managed="false"/>
                 <VBox spacing="6" maxWidth="Infinity">
-                    <Label text="I am a" styleClass="form-label"/>
-                    <ChoiceBox fx:id="roleChoice" maxWidth="Infinity"/>
-                </VBox>
-                <VBox spacing="6" maxWidth="Infinity">
-                    <Label text="User ID" styleClass="form-label"/>
-                    <TextField fx:id="userIdField" promptText="ta+8 digits or mo+8 digits"/>
+                    <Label text="BUPT Email" styleClass="form-label"/>
+                    <TextField fx:id="userIdField" promptText="Must end with @bupt.edu.cn"/>
                 </VBox>
                 <VBox spacing="6" maxWidth="Infinity">
                     <Label text="Password" styleClass="form-label"/>

@@ -3,9 +3,10 @@ package com.bupt.tarecruit.controller;
 import com.bupt.tarecruit.entity.Role;
 import com.bupt.tarecruit.util.DialogUtil;
 import com.bupt.tarecruit.util.OperationResult;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
@@ -20,6 +21,11 @@ public class RegisterController extends BaseController {
      */
     @FXML
     private ChoiceBox<Role> roleChoice;
+    @FXML
+    private Label registerRoleHintLabel;
+    @FXML
+    private Button backButton;
+    private Role fixedRole = Role.TA;
 
     /**
      * Input field for the user ID.
@@ -45,8 +51,26 @@ public class RegisterController extends BaseController {
      */
     @FXML
     private void initialize() {
-        roleChoice.setItems(FXCollections.observableArrayList(Role.TA, Role.MO));
-        roleChoice.setValue(Role.TA);
+        if (backButton != null) {
+            backButton.setVisible(false);
+            backButton.setManaged(false);
+        }
+    }
+
+    public void configureForPortal(Role defaultRole, boolean showBackButton) {
+        this.fixedRole = defaultRole == null ? Role.TA : defaultRole;
+        if (roleChoice != null) {
+            roleChoice.setVisible(false);
+            roleChoice.setManaged(false);
+            roleChoice.setValue(this.fixedRole);
+        }
+        if (registerRoleHintLabel != null) {
+            registerRoleHintLabel.setText(this.fixedRole == Role.TA ? "Register as TA" : "Register as MO");
+        }
+        if (backButton != null) {
+            backButton.setVisible(showBackButton);
+            backButton.setManaged(showBackButton);
+        }
     }
 
     /**
@@ -55,13 +79,13 @@ public class RegisterController extends BaseController {
      */
     @FXML
     private void handleRegister() {
-        Role role = roleChoice.getValue() == null ? Role.TA : roleChoice.getValue();
+        Role role = fixedRole == null ? Role.TA : fixedRole;
         String userId = userIdField.getText();
         String password = passwordField.getText();
         String confirmPassword = confirmPasswordField.getText();
 
         if (userId == null || userId.trim().isEmpty()) {
-            DialogUtil.error("User ID cannot be empty.", navigator.getPrimaryStage());
+            DialogUtil.error("Email cannot be empty.", navigator.getPrimaryStage());
             return;
         }
 
@@ -92,5 +116,10 @@ public class RegisterController extends BaseController {
     @FXML
     private void handleBackToLogin() {
         navigator.showLogin();
+    }
+
+    @FXML
+    private void handleBackToBrowse() {
+        navigator.showTaGuestDashboard();
     }
 }

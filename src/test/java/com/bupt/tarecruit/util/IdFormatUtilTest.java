@@ -7,24 +7,23 @@ import static org.junit.jupiter.api.Assertions.*;
 class IdFormatUtilTest {
 
     @Test
-    void taStudentId() {
-        assertTrue(IdFormatUtil.isValidTaStudentId("ta20230001"));
-        assertTrue(IdFormatUtil.isValidTaStudentId("ta19991234"));
-        assertFalse(IdFormatUtil.isValidTaStudentId("ta001"));
-        assertFalse(IdFormatUtil.isValidTaStudentId("TA20230001"));
-        assertFalse(IdFormatUtil.isValidTaStudentId("student20230001"));
+    void buptEmail() {
+        assertTrue(IdFormatUtil.isValidBuptEmail("ta20230001@bupt.edu.cn"));
+        assertTrue(IdFormatUtil.isValidBuptEmail("admin@bupt.edu.cn"));
+        assertFalse(IdFormatUtil.isValidBuptEmail("ta20230001@qq.com"));
+        assertFalse(IdFormatUtil.isValidBuptEmail("invalid-email"));
     }
 
     @Test
-    void moStaffId() {
-        assertTrue(IdFormatUtil.isValidMoStaffId("mo20160001"));
-        assertFalse(IdFormatUtil.isValidMoStaffId("admin"));
-        assertFalse(IdFormatUtil.isValidMoStaffId("mo001"));
+    void compatibilityWrappers() {
+        assertTrue(IdFormatUtil.isValidTaStudentId("ta20230001@bupt.edu.cn"));
+        assertTrue(IdFormatUtil.isValidMoStaffId("evans@bupt.edu.cn"));
+        assertFalse(IdFormatUtil.isValidTaStudentId("ta20230001"));
     }
 
     @Test
     void adminFlag() {
-        assertTrue(IdFormatUtil.isAdminUserId("admin"));
-        assertTrue(IdFormatUtil.isAdminUserId("Admin"));
+        assertTrue(IdFormatUtil.isAdminUserId("admin@bupt.edu.cn"));
+        assertTrue(IdFormatUtil.isAdminUserId("Admin@bupt.edu.cn"));
     }
 }
