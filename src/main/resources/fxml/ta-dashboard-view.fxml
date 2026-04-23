@@ -10,12 +10,12 @@
         <ToolBar>
             <Label fx:id="welcomeLabel" text="TA Console" styleClass="h6"/>
             <Pane HBox.hgrow="ALWAYS"/>
-            <Button text="Log out" onAction="#handleLogout"/>
+            <Button fx:id="authButton" text="Log out" onAction="#handleAuthAction"/>
         </ToolBar>
     </top>
     <center>
-        <TabPane tabClosingPolicy="UNAVAILABLE">
-            <Tab text="My applications">
+        <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE">
+            <Tab fx:id="myApplicationsTab" text="My applications">
                 <BorderPane>
                     <center>
                         <TableView fx:id="applicationTable">
@@ -60,7 +60,7 @@
                     </bottom>
                 </BorderPane>
             </Tab>
-            <Tab text="Browse jobs">
+            <Tab fx:id="browseJobsTab" text="Browse jobs">
                 <BorderPane>
                     <top>
                         <HBox spacing="10" styleClass="p-3">
@@ -150,7 +150,7 @@
                     </center>
                 </BorderPane>
             </Tab>
-            <Tab text="My profile">
+            <Tab fx:id="myProfileTab" text="My profile">
                 <BorderPane>
                     <padding>
                         <Insets top="20" right="30" bottom="20" left="30"/>

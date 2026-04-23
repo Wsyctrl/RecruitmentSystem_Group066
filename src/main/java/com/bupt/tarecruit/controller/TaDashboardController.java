@@ -35,12 +35,24 @@ import java.util.stream.Collectors;
 public class TaDashboardController extends BaseController implements SessionAware {
 
     private UserSession session;
+    private boolean guestMode;
+    private boolean suppressTabGuard;
     private final ObservableList<TaJobDisplay> jobItems = FXCollections.observableArrayList();
     private FilteredList<TaJobDisplay> filteredJobs;
     private final ObservableList<ApplicationDisplay> applicationItems = FXCollections.observableArrayList();
 
     @FXML
     private Label welcomeLabel;
+    @FXML
+    private Button authButton;
+    @FXML
+    private TabPane tabPane;
+    @FXML
+    private Tab browseJobsTab;
+    @FXML
+    private Tab myApplicationsTab;
+    @FXML
+    private Tab myProfileTab;
     @FXML
     private TextField jobSearchField;
     @FXML
@@ -102,6 +114,16 @@ public class TaDashboardController extends BaseController implements SessionAwar
         jobTable.getSelectionModel().selectedItemProperty().addListener((obs, old, selected) -> updateJobDetails(selected));
         jobSearchField.textProperty().addListener((obs, old, value) -> applyJobFilter(value));
         applicationTable.setItems(applicationItems);
+        if (tabPane != null) {
+            tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+                if (suppressTabGuard || !guestMode || newTab == null) {
+                    return;
+                }
+                if (newTab == myApplicationsTab || newTab == myProfileTab) {
+                    requireLoginAndRedirect("Please sign in first.");
+                }
+            });
+        }
         updateJobDetails(null);
     }
 /**
@@ -112,18 +134,41 @@ public class TaDashboardController extends BaseController implements SessionAwar
     @Override
     public void setSession(UserSession session) {
         this.session = session;
+        this.guestMode = false;
         welcomeLabel.setText("Welcome, " + session.getDisplayName());
+        if (authButton != null) {
+            authButton.setText("Log out");
+        }
         loadInitialData();
+        selectTab(myApplicationsTab);
+    }
+
+    public void enterGuestMode() {
+        this.session = null;
+        this.guestMode = true;
+        welcomeLabel.setText("Browse jobs as guest");
+        if (authButton != null) {
+            authButton.setText("Log in");
+        }
+        refreshJobs();
+        applicationItems.clear();
+        selectTab(browseJobsTab);
     }
 /**
  * Loads all initial dashboard data, including jobs,
  * existing applications, and profile information.
  */
     private void loadInitialData() {
-        refreshApplications();
+        if (!guestMode) {
+            refreshApplications();
+        } else {
+            applicationItems.clear();
+        }
         refreshJobs();
         updateJobDetails(jobTable.getSelectionModel().getSelectedItem());
-        loadProfile();
+        if (!guestMode) {
+            loadProfile();
+        }
     }
 /**
  * Reloads all open jobs and converts them into display models
@@ -162,6 +207,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
  * Reloads all active applications submitted by the current TA user.
  */
     private void refreshApplications() {
+        if (guestMode || session == null) {
+            applicationItems.clear();
+            return;
+        }
         String taId = session.taOptional().map(Ta::getTaId).orElse("");
         ApplicationService applicationService = services.applicationService();
         Map<String, Job> jobMap = services.jobService().findAllJobs().stream()
@@ -317,6 +366,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
 
     @FXML
     private void handleApply() {
+        if (guestMode) {
+            requireLoginAndRedirect("Please sign in first.");
+            return;
+        }
         TaJobDisplay display = jobTable.getSelectionModel().getSelectedItem();
         if (display == null) {
             DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
@@ -337,6 +390,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
 
     @FXML
     private void handleWithdraw() {
+        if (guestMode) {
+            requireLoginAndRedirect("Please sign in first.");
+            return;
+        }
         ApplicationDisplay display = applicationTable.getSelectionModel().getSelectedItem();
         if (display == null) {
             DialogUtil.error("Please select an application to withdraw", navigator.getPrimaryStage());
@@ -360,6 +417,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
 
     @FXML
     private void handleSaveProfile() {
+        if (guestMode) {
+            requireLoginAndRedirect("Please sign in first.");
+            return;
+        }
         Ta ta = session.taOptional().orElse(null);
         if (ta == null) {
             return;
@@ -381,6 +442,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
 
     @FXML
     private void handleChangePassword() {
+        if (guestMode) {
+            requireLoginAndRedirect("Please sign in first.");
+            return;
+        }
         Ta ta = session.taOptional().orElse(null);
         if (ta == null) {
             return;
@@ -401,6 +466,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
 
     @FXML
     private void handleUploadCv() {
+        if (guestMode) {
+            requireLoginAndRedirect("Please sign in first.");
+            return;
+        }
         Ta ta = session.taOptional().orElse(null);
         if (ta == null) {
             return;
@@ -426,6 +495,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
 
     @FXML
     private void handleDownloadCv() {
+        if (guestMode) {
+            requireLoginAndRedirect("Please sign in first.");
+            return;
+        }
         Ta ta = session.taOptional().orElse(null);
         if (ta == null) {
             return;
@@ -457,12 +530,33 @@ public class TaDashboardController extends BaseController implements SessionAwar
     }
 
     @FXML
-    private void handleLogout() {
-        navigator.showLogin();
+    private void handleAuthAction() {
+        if (guestMode) {
+            navigator.showLogin();
+            return;
+        }
+        if (navigator.isTaPortal()) {
+            navigator.showTaGuestDashboard();
+        } else {
+            navigator.showLogin();
+        }
     }
 
     @FXML
     private void handleRefreshJobs() {
         refreshJobs();
+    }
+
+    private void requireLoginAndRedirect(String message) {
+        navigator.showLoginWithNotice(message);
+    }
+
+    private void selectTab(Tab tab) {
+        if (tabPane == null || tab == null) {
+            return;
+        }
+        suppressTabGuard = true;
+        tabPane.getSelectionModel().select(tab);
+        suppressTabGuard = false;
     }
 }

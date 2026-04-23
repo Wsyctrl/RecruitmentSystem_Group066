@@ -1,7 +1,10 @@
 package com.bupt.tarecruit.util;
 
 import com.bupt.tarecruit.controller.BaseController;
+import com.bupt.tarecruit.controller.LoginController;
+import com.bupt.tarecruit.controller.RegisterController;
 import com.bupt.tarecruit.controller.SessionAware;
+import com.bupt.tarecruit.controller.TaDashboardController;
 import com.bupt.tarecruit.entity.Role;
 import com.bupt.tarecruit.entity.UserSession;
 import com.bupt.tarecruit.service.ServiceRegistry;
@@ -25,13 +28,15 @@ public class SceneNavigator {
 
     private final Stage primaryStage;
     private final ServiceRegistry services;
+    private final PortalMode portalMode;
     private UserSession currentSession;
     /** Reused so width/height follow the stage; avoids tiny pref-sized scenes stuck top-left after setScene. */
     private Scene sharedScene;
 
-    public SceneNavigator(Stage primaryStage, ServiceRegistry services) {
+    public SceneNavigator(Stage primaryStage, ServiceRegistry services, PortalMode portalMode) {
         this.primaryStage = primaryStage;
         this.services = services;
+        this.portalMode = portalMode;
     }
 
     public Stage getPrimaryStage() {
@@ -46,13 +51,51 @@ public class SceneNavigator {
         return currentSession;
     }
 
+    public boolean isTaPortal() {
+        return portalMode == PortalMode.TA_PORTAL;
+    }
+
+    public boolean shouldShowAuthBackButton() {
+        return isTaPortal();
+    }
+
+    public Role getRegisterDefaultRole() {
+        return isTaPortal() ? Role.TA : Role.MO;
+    }
+
     public void showLogin() {
         currentSession = null;
-        loadScene("login-view.fxml", controller -> { });
+        loadScene("login-view.fxml", controller -> {
+            if (controller instanceof LoginController loginController) {
+                loginController.configureForPortal(shouldShowAuthBackButton(), null);
+            }
+        });
+    }
+
+    public void showLoginWithNotice(String notice) {
+        currentSession = null;
+        loadScene("login-view.fxml", controller -> {
+            if (controller instanceof LoginController loginController) {
+                loginController.configureForPortal(shouldShowAuthBackButton(), notice);
+            }
+        });
     }
 
     public void showRegister() {
-        loadScene("register-view.fxml", controller -> { });
+        loadScene("register-view.fxml", controller -> {
+            if (controller instanceof RegisterController registerController) {
+                registerController.configureForPortal(getRegisterDefaultRole(), shouldShowAuthBackButton());
+            }
+        });
+    }
+
+    public void showTaGuestDashboard() {
+        currentSession = null;
+        loadScene("ta-dashboard-view.fxml", controller -> {
+            if (controller instanceof TaDashboardController taDashboardController) {
+                taDashboardController.enterGuestMode();
+            }
+        });
     }
 
     public void showDashboard(UserSession session) {

@@ -9,22 +9,19 @@ import javafx.stage.Stage;
 import java.nio.file.Path;
 import java.util.Locale;
 
-/**
- * Main JavaFX application bootstrapper.
- */
-public class TaRecruitApplication extends Application {
+public class TaPortalApplication extends Application {
 
     @Override
     public void start(Stage stage) {
         Path dataDir = Path.of("data");
         ServiceRegistry serviceRegistry = new ServiceRegistry(dataDir);
-        SceneNavigator navigator = new SceneNavigator(stage, serviceRegistry, PortalMode.MO_PORTAL);
+        SceneNavigator navigator = new SceneNavigator(stage, serviceRegistry, PortalMode.TA_PORTAL);
 
         stage.setTitle("BUPT International School TA Recruitment");
         stage.setMinWidth(1100);
         stage.setMinHeight(720);
 
-        navigator.showLogin();
+        navigator.showTaGuestDashboard();
         stage.show();
     }
 
@@ -38,7 +35,7 @@ public class TaRecruitApplication extends Application {
 
     public static class Launcher {
         public static void main(String[] args) {
-            TaRecruitApplication.main(args);
+            TaPortalApplication.main(args);
         }
     }
 }
