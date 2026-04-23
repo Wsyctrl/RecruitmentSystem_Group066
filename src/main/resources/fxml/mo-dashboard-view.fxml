@@ -15,7 +15,72 @@
     </top>
     <center>
         <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE">
-            <Tab text="My jobs">
+            <Tab text="Applicants" fx:id="applicantsTab">
+                <BorderPane>
+                    <top>
+                        <HBox spacing="10" styleClass="p-3">
+                            <ComboBox fx:id="jobSelector" promptText="Select an open job" prefWidth="220"/>
+                            <TextField fx:id="applicantSearchField" promptText="Search name, ID, phone, email, status" HBox.hgrow="ALWAYS"/>
+                            <Button text="Refresh" onAction="#handleRefreshApplicants"/>
+                        </HBox>
+                    </top>
+                    <center>
+                        <SplitPane dividerPositions="0.52">
+                            <TableView fx:id="applicantTable">
+                                <columns>
+                                    <TableColumn text="Name" prefWidth="100">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="taName"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="TA ID" prefWidth="100">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="taId"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Phone" prefWidth="110">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="phone"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Email" prefWidth="160">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="email"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Status" prefWidth="85">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="status"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                    <TableColumn text="Apply Time" prefWidth="130">
+                                        <cellValueFactory>
+                                            <PropertyValueFactory property="applyTime"/>
+                                        </cellValueFactory>
+                                    </TableColumn>
+                                </columns>
+                            </TableView>
+                            <VBox spacing="12" styleClass="detail-panel">
+                                <padding>
+                                    <Insets top="16" right="16" bottom="16" left="16"/>
+                                </padding>
+                                <Label text="Applicant profile" styleClass="h5"/>
+                                <VBox spacing="2">
+                                    <Label fx:id="applicantNameLabel" styleClass="h6"/>
+                                    <Label fx:id="applicantStatusLabel"/>
+                                </VBox>
+                                <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" prefRowCount="10" VBox.vgrow="ALWAYS"/>
+                                <HBox spacing="8">
+                                    <Button text="Download CV" onAction="#handleDownloadCv" styleClass="btn-outline"/>
+                                    <Button text="Hire" onAction="#handleHireApplicant" styleClass="btn-success"/>
+                                    <Button text="Reject" onAction="#handleRejectApplicant" styleClass="btn-danger"/>
+                                </HBox>
+                            </VBox>
+                        </SplitPane>
+                    </center>
+                </BorderPane>
+            </Tab>
+            <Tab text="My jobs" fx:id="myJobsTab">
                 <BorderPane>
                     <top>
                         <HBox spacing="10" styleClass="p-3">
@@ -87,7 +152,7 @@
                     </center>
                 </BorderPane>
             </Tab>
-            <Tab text="Post / edit job">
+            <Tab text="Post / edit job" fx:id="postEditJobTab">
                 <BorderPane>
                     <center>
                         <GridPane hgap="15" vgap="12" styleClass="form-container" maxWidth="650">
@@ -134,71 +199,6 @@
                                 <Button text="Clear" onAction="#handleCreateNewJob"/>
                             </HBox>
                         </GridPane>
-                    </center>
-                </BorderPane>
-            </Tab>
-            <Tab text="Applicants">
-                <BorderPane>
-                    <top>
-                        <HBox spacing="10" styleClass="p-3">
-                            <ComboBox fx:id="jobSelector" promptText="Select an open job" prefWidth="220"/>
-                            <TextField fx:id="applicantSearchField" promptText="Search name, ID, phone, email, status" HBox.hgrow="ALWAYS"/>
-                            <Button text="Refresh" onAction="#handleRefreshApplicants"/>
-                        </HBox>
-                    </top>
-                    <center>
-                        <SplitPane dividerPositions="0.52">
-                            <TableView fx:id="applicantTable">
-                                <columns>
-                                    <TableColumn text="Name" prefWidth="100">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="taName"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="TA ID" prefWidth="100">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="taId"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Phone" prefWidth="110">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="phone"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Email" prefWidth="160">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="email"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Status" prefWidth="85">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="status"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Apply Time" prefWidth="130">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="applyTime"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                </columns>
-                            </TableView>
-                            <VBox spacing="12" styleClass="detail-panel">
-                                <padding>
-                                    <Insets top="16" right="16" bottom="16" left="16"/>
-                                </padding>
-                                <Label text="Applicant profile" styleClass="h5"/>
-                                <VBox spacing="2">
-                                    <Label fx:id="applicantNameLabel" styleClass="h6"/>
-                                    <Label fx:id="applicantStatusLabel"/>
-                                </VBox>
-                                <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" prefRowCount="10" VBox.vgrow="ALWAYS"/>
-                                <HBox spacing="8">
-                                    <Button text="Download CV" onAction="#handleDownloadCv" styleClass="btn-outline"/>
-                                    <Button text="Hire" onAction="#handleHireApplicant" styleClass="btn-success"/>
-                                    <Button text="Reject" onAction="#handleRejectApplicant" styleClass="btn-danger"/>
-                                </HBox>
-                            </VBox>
-                        </SplitPane>
                     </center>
                 </BorderPane>
             </Tab>

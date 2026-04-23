@@ -57,6 +57,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
     @FXML
     private TabPane tabPane;
     @FXML
+    private Tab applicantsTab;
+    @FXML
+    private Tab myJobsTab;
+    @FXML
+    private Tab postEditJobTab;
+    @FXML
     private Label welcomeLabel;
     @FXML
     private TextField myJobSearchField;
@@ -434,6 +440,8 @@ public class MoDashboardController extends BaseController implements SessionAwar
         setupAdminVisibility(adminMode);
         if (adminMode && tabPane != null && adminTaTab != null) {
             tabPane.getSelectionModel().select(adminTaTab);
+        } else if (tabPane != null && applicantsTab != null) {
+            tabPane.getSelectionModel().select(applicantsTab);
         }
         loadData();
     }
@@ -610,7 +618,9 @@ CV: %s
             return;
         }
         populateJobForm(selected);
-        tabPane.getSelectionModel().select(1);
+        if (postEditJobTab != null) {
+            tabPane.getSelectionModel().select(postEditJobTab);
+        }
     }
 
     @FXML
@@ -740,7 +750,9 @@ CV: %s
         if (job != null) {
             jobSelector.getSelectionModel().select(job);
             loadApplicants(job);
-            tabPane.getSelectionModel().select(2);
+            if (applicantsTab != null) {
+                tabPane.getSelectionModel().select(applicantsTab);
+            }
         }
     }
 

@@ -15,6 +15,51 @@
     </top>
     <center>
         <TabPane tabClosingPolicy="UNAVAILABLE">
+            <Tab text="My applications">
+                <BorderPane>
+                    <center>
+                        <TableView fx:id="applicationTable">
+                            <columns>
+                                <TableColumn text="Application ID" prefWidth="100">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="applyId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Job title" prefWidth="180">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Module" prefWidth="100">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="moduleName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Job Period" prefWidth="140">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="jobPeriod"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Status" prefWidth="85">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="statusLabel"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Hired Time" prefWidth="120">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="hiredTime"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                        </TableView>
+                    </center>
+                    <bottom>
+                        <HBox spacing="10" alignment="CENTER_RIGHT" styleClass="p-3">
+                            <Button fx:id="withdrawButton" text="Withdraw" onAction="#handleWithdraw"/>
+                        </HBox>
+                    </bottom>
+                </BorderPane>
+            </Tab>
             <Tab text="Browse jobs">
                 <BorderPane>
                     <top>
@@ -103,51 +148,6 @@
                             </VBox>
                         </SplitPane>
                     </center>
-                </BorderPane>
-            </Tab>
-            <Tab text="My applications">
-                <BorderPane>
-                    <center>
-                        <TableView fx:id="applicationTable">
-                            <columns>
-                                <TableColumn text="Application ID" prefWidth="100">
-                                    <cellValueFactory>
-                                        <PropertyValueFactory property="applyId"/>
-                                    </cellValueFactory>
-                                </TableColumn>
-                                <TableColumn text="Job title" prefWidth="180">
-                                    <cellValueFactory>
-                                        <PropertyValueFactory property="jobName"/>
-                                    </cellValueFactory>
-                                </TableColumn>
-                                <TableColumn text="Module" prefWidth="100">
-                                    <cellValueFactory>
-                                        <PropertyValueFactory property="moduleName"/>
-                                    </cellValueFactory>
-                                </TableColumn>
-                                <TableColumn text="Job Period" prefWidth="140">
-                                    <cellValueFactory>
-                                        <PropertyValueFactory property="jobPeriod"/>
-                                    </cellValueFactory>
-                                </TableColumn>
-                                <TableColumn text="Status" prefWidth="85">
-                                    <cellValueFactory>
-                                        <PropertyValueFactory property="statusLabel"/>
-                                    </cellValueFactory>
-                                </TableColumn>
-                                <TableColumn text="Hired Time" prefWidth="120">
-                                    <cellValueFactory>
-                                        <PropertyValueFactory property="hiredTime"/>
-                                    </cellValueFactory>
-                                </TableColumn>
-                            </columns>
-                        </TableView>
-                    </center>
-                    <bottom>
-                        <HBox spacing="10" alignment="CENTER_RIGHT" styleClass="p-3">
-                            <Button fx:id="withdrawButton" text="Withdraw" onAction="#handleWithdraw"/>
-                        </HBox>
-                    </bottom>
                 </BorderPane>
             </Tab>
             <Tab text="My profile">

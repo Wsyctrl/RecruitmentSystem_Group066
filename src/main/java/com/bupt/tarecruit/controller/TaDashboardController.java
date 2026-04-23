@@ -120,8 +120,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
  * existing applications, and profile information.
  */
     private void loadInitialData() {
-        refreshJobs();
         refreshApplications();
+        refreshJobs();
+        updateJobDetails(jobTable.getSelectionModel().getSelectedItem());
         loadProfile();
     }
 /**
@@ -169,6 +170,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
                 .map(record -> new ApplicationDisplay(record, jobMap.get(record.getJobId())))
                 .collect(Collectors.toList()));
         applicationTable.refresh();
+        updateJobDetails(jobTable.getSelectionModel().getSelectedItem());
     }
 /**
  * Loads the current TA user's profile data into the profile form fields.
@@ -280,6 +282,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
             jobRequirementsArea.clear();
             jobNotesArea.clear();
             applyButton.setDisable(true);
+            applyButton.setText("Apply");
             return;
         }
         Job job = display.getJob();
@@ -292,7 +295,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
         jobDateLabel.setText(start + " to " + end);
         jobRequirementsArea.setText(safeText(job.getRequirements()));
         jobNotesArea.setText(safeText(job.getAdditionalNotes()));
-        applyButton.setDisable(!job.isOpen() || hasApplied(job.getJobId()));
+        boolean alreadyApplied = hasApplied(job.getJobId());
+        applyButton.setDisable(!job.isOpen() || alreadyApplied);
+        applyButton.setText(alreadyApplied ? "Already Applied" : "Apply");
     }
 /**
  * Checks whether the current TA user has already applied for the given job.
