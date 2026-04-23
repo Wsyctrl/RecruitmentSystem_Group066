@@ -15,6 +15,8 @@ public final class DialogUtil {
     /** Explicit English labels; default ButtonType.OK is localized on non-English OS locales. */
     private static final ButtonType OK_EN = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
     private static final ButtonType CANCEL_EN = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+    private static final ButtonType YES_EN = new ButtonType("Yes", ButtonBar.ButtonData.YES);
+    private static final ButtonType NO_EN = new ButtonType("No", ButtonBar.ButtonData.NO);
 
     private DialogUtil() {
     }
@@ -30,6 +32,13 @@ public final class DialogUtil {
     public static boolean confirm(String content, Window owner) {
         Optional<ButtonType> result = createAlert(Alert.AlertType.CONFIRMATION, "Confirm", content, owner).showAndWait();
         return result.map(bt -> bt.getButtonData() == ButtonBar.ButtonData.OK_DONE).orElse(false);
+    }
+
+    public static boolean confirmYesNo(String content, Window owner) {
+        Alert alert = createAlert(Alert.AlertType.CONFIRMATION, "Confirm", content, owner);
+        alert.getButtonTypes().setAll(YES_EN, NO_EN);
+        Optional<ButtonType> result = alert.showAndWait();
+        return result.map(bt -> bt.getButtonData() == ButtonBar.ButtonData.YES).orElse(false);
     }
 
     private static Alert createAlert(Alert.AlertType type, String title, String content, Window owner) {

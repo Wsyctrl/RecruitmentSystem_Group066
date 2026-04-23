@@ -377,7 +377,8 @@
 }
 
 .combo-box-popup .list-view .list-cell:hover {
-    -fx-background-color: #f7fafc;
+    -fx-background-color: #dbeafe;
+    -fx-text-fill: #1e40af;
 }
 
 .combo-box-popup .list-view .list-cell:filled:selected {

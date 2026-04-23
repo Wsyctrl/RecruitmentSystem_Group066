@@ -5,6 +5,7 @@ import com.bupt.tarecruit.service.ApplicationService;
 import com.bupt.tarecruit.util.DateTimeUtil;
 import com.bupt.tarecruit.util.DialogUtil;
 import com.bupt.tarecruit.util.OperationResult;
+import com.bupt.tarecruit.util.WorkloadRules;
 import com.bupt.tarecruit.viewmodel.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -19,9 +20,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
@@ -230,6 +233,19 @@ public class MoDashboardController extends BaseController implements SessionAwar
         if (adminTaTable != null) {
             adminTaTable.setItems(adminTaItems);
             adminTaTable.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> updateAdminTaDetail(val));
+            adminTaTable.setRowFactory(tv -> new TableRow<>() {
+                @Override
+                protected void updateItem(AdminTaDisplay item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setStyle("");
+                    } else if (item.isOverConcurrentThreshold()) {
+                        setStyle("-fx-background-color: #ffe6e6;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            });
         }
 
         // Set up admin MO table
@@ -249,6 +265,27 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
         if (adminTaHiredJobsTable != null) {
             adminTaHiredJobsTable.setItems(adminTaHiredJobsItems);
+            adminTaHiredJobsTable.setRowFactory(tv -> new TableRow<>() {
+                @Override
+                protected void updateItem(AdminTaDisplay.JobApplicationInfo item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null || item.getJob() == null) {
+                        setStyle("");
+                        return;
+                    }
+                    Job job = item.getJob();
+                    LocalDate now = LocalDate.now();
+                    boolean ongoing = job.getStartDate() != null
+                            && job.getEndDate() != null
+                            && now.isAfter(job.getStartDate())
+                            && now.isBefore(job.getEndDate());
+                    if (ongoing) {
+                        setStyle("-fx-background-color: #e7f5ff;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            });
         }
 
         // Set up admin MO jobs table
@@ -778,6 +815,19 @@ CV: %s
             }
         } else {
             if (DialogUtil.confirm("Hire this applicant?", navigator.getPrimaryStage())) {
+                Optional<Job> currentJobOpt = services.jobService().findById(record.getJobId());
+                if (currentJobOpt.isEmpty()) {
+                    DialogUtil.error("Job not found", navigator.getPrimaryStage());
+                    return;
+                }
+                List<Job> overlappingJobs = services.applicationService()
+                        .findOverlappingHiredJobs(record.getTaId(), record.getJobId());
+                if (overlappingJobs.size() >= WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD) {
+                    String warning = buildConcurrentHireWarning(currentJobOpt.get(), overlappingJobs);
+                    if (!DialogUtil.confirmYesNo(warning, navigator.getPrimaryStage())) {
+                        return;
+                    }
+                }
                 result = services.applicationService().hireApplicant(record.getApplyId());
             } else {
                 return;
@@ -895,6 +945,23 @@ CV: %s
 
     private String safeText(String value) {
         return value == null ? "" : value;
+    }
+
+    private String buildConcurrentHireWarning(Job targetJob, List<Job> overlappingJobs) {
+        String listedJobs = overlappingJobs.stream()
+                .sorted(Comparator.comparing(Job::getStartDate, Comparator.nullsLast(LocalDate::compareTo)))
+                .map(job -> String.format("- %s (%s to %s)",
+                        safeText(job.getJobName()),
+                        DateTimeUtil.formatDate(job.getStartDate()),
+                        DateTimeUtil.formatDate(job.getEndDate())))
+                .collect(Collectors.joining("\n"));
+        return String.format(
+                "This TA already has %d overlapping hired jobs during the period of \"%s\".\n" +
+                        "Do you still want to hire?\n\nExisting overlapping jobs:\n%s",
+                overlappingJobs.size(),
+                safeText(targetJob.getJobName()),
+                listedJobs
+        );
     }
 
     // Admin operations
