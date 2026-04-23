@@ -3,29 +3,28 @@ package com.bupt.tarecruit.entity;
 import java.util.Objects;
 
 public class Mo {
-    private String moId;
+    private String email;
     private String password;
     /** Display name */
     private String fullName;
     private String responsibleModules;
     private String phone;
-    private String email;
     private boolean disabled;
 
     public Mo() {
     }
 
-    public Mo(String moId, String password) {
-        this.moId = moId;
+    public Mo(String email, String password) {
+        this.email = email;
         this.password = password;
     }
 
     public String getMoId() {
-        return moId;
+        return email;
     }
 
     public void setMoId(String moId) {
-        this.moId = moId;
+        this.email = moId;
     }
 
     public String getPassword() {
@@ -44,12 +43,12 @@ public class Mo {
         this.fullName = fullName;
     }
 
-    /** Prefer full name; fallback to user id */
+    /** Prefer full name; fallback to email identity. */
     public String getDisplayLabel() {
         if (fullName != null && !fullName.isBlank()) {
             return fullName;
         }
-        return moId;
+        return email;
     }
 
     public String getResponsibleModules() {
@@ -85,7 +84,7 @@ public class Mo {
     }
 
     public boolean isAdmin() {
-        return "admin".equalsIgnoreCase(moId);
+        return "admin@bupt.edu.cn".equalsIgnoreCase(email);
     }
 
     public String getStatusLabel() {
@@ -96,11 +95,11 @@ public class Mo {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Mo mo)) return false;
-        return Objects.equals(moId, mo.moId);
+        return Objects.equals(email, mo.email);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(moId);
+        return Objects.hash(email);
     }
 }

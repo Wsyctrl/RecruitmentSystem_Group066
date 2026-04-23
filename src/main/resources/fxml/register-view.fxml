@@ -29,8 +29,8 @@
                     <ChoiceBox fx:id="roleChoice" maxWidth="Infinity"/>
                 </VBox>
                 <VBox spacing="6" maxWidth="Infinity">
-                    <Label text="User ID" styleClass="form-label"/>
-                    <TextField fx:id="userIdField" promptText="ta+8 digits or mo+8 digits"/>
+                    <Label text="BUPT Email" styleClass="form-label"/>
+                    <TextField fx:id="userIdField" promptText="Must end with @bupt.edu.cn"/>
                 </VBox>
                 <VBox spacing="6" maxWidth="Infinity">
                     <Label text="Password" styleClass="form-label"/>

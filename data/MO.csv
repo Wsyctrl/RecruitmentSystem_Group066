@@ -1,5 +1,5 @@
-mo_id,password,full_name,responsible_modules,phone,email,is_disabled
-admin,Admin@123,System Administrator,All school-wide TA policy and global job oversight,13900000000,admin@bupt.edu.cn,0
-mo20160001,Pass@123,Dr. Richard Evans,Data Structures;Algorithms;Discrete Mathematics,13900001001,evans@bupt.edu.cn,0
-mo20180002,Pass@123,Dr. Sarah Lin,Software Engineering;Web Technologies,13900001002,slin@bupt.edu.cn,1
-mo20200003,Pass@123,Dr. Kevin Zhang,Computer Networks;Distributed Systems,13900001003,kzhang@bupt.edu.cn,0
+email,password,full_name,responsible_modules,phone,is_disabled
+admin@bupt.edu.cn,Admin@123,System Administrator,All school-wide TA policy and global job oversight,13900000000,0
+evans@bupt.edu.cn,Pass@123,Dr. Richard Evans,Data Structures;Algorithms;Discrete Mathematics,13900001001,0
+slin@bupt.edu.cn,Pass@123,Dr. Sarah Lin,Software Engineering;Web Technologies,13900001002,1
+kzhang@bupt.edu.cn,Pass@123,Dr. Kevin Zhang,Computer Networks;Distributed Systems,13900001003,0

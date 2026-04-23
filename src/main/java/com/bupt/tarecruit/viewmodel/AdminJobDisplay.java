@@ -24,6 +24,13 @@ public class AdminJobDisplay {
         return job.getMoId();
     }
 
+    public String getMoName() {
+        if (job.getMoName() == null || job.getMoName().isBlank()) {
+            return "-";
+        }
+        return job.getMoName();
+    }
+
     public String getModuleName() {
         return job.getModuleName();
     }

@@ -61,7 +61,7 @@ public class RegisterController extends BaseController {
         String confirmPassword = confirmPasswordField.getText();
 
         if (userId == null || userId.trim().isEmpty()) {
-            DialogUtil.error("User ID cannot be empty.", navigator.getPrimaryStage());
+            DialogUtil.error("Email cannot be empty.", navigator.getPrimaryStage());
             return;
         }
 

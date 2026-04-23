@@ -47,8 +47,11 @@ public class AuthService {
      * @return operation result containing the authenticated user session on success
      */
     public OperationResult<UserSession> login(String userId, String password) {
-        ValidationUtil.requireNonBlank(userId, "Please enter your username");
+        ValidationUtil.requireNonBlank(userId, "Please enter your email");
         ValidationUtil.requireNonBlank(password, "Please enter your password");
+        if (!IdFormatUtil.isValidBuptEmail(userId)) {
+            return OperationResult.failure("Please use a valid @bupt.edu.cn email");
+        }
 
         Optional<Ta> taOptional = taDao.findById(userId);
         if (taOptional.isPresent()) {
@@ -88,31 +91,28 @@ public class AuthService {
      * @return operation result describing whether the registration succeeded
      */
     public OperationResult<Void> register(Role role, String userId, String password, String confirmPassword) {
-        ValidationUtil.requireNonBlank(userId, "Username is required");
+        ValidationUtil.requireNonBlank(userId, "Email is required");
         ValidationUtil.requireNonBlank(password, "Password is required");
+        if (!IdFormatUtil.isValidBuptEmail(userId)) {
+            return OperationResult.failure("Please use a valid @bupt.edu.cn email");
+        }
         if (!password.equals(confirmPassword)) {
             return OperationResult.failure("Passwords do not match");
         }
         boolean exists = taDao.findById(userId).isPresent() || moDao.findById(userId).isPresent();
         if (exists) {
-            return OperationResult.failure("Username already exists");
+            return OperationResult.failure("Email already exists");
         }
         switch (role) {
             case TA -> {
-                if (!IdFormatUtil.isValidTaStudentId(userId)) {
-                    return OperationResult.failure(
-                            "Invalid student ID format. Use ta plus eight digits where the first four digits after \"ta\" are your enrollment year (e.g. ta20230001).");
-                }
                 Ta ta = new Ta(userId, password);
+                ta.setEmail(userId);
                 ta.setDisabled(false);
                 taDao.save(ta);
             }
             case MO -> {
-                if (!IdFormatUtil.isValidMoStaffId(userId)) {
-                    return OperationResult.failure(
-                            "Invalid staff ID format. Use mo plus eight digits where the first four digits after \"mo\" are your hire year (e.g. mo20160001).");
-                }
                 Mo mo = new Mo(userId, password);
+                mo.setEmail(userId);
                 mo.setDisabled(false);
                 moDao.save(mo);
             }

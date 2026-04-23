@@ -287,7 +287,13 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
         Job job = display.getJob();
         jobNameLabel.setText(job.getJobName());
-        jobMoNameLabel.setText(job.getMoName() == null || job.getMoName().isBlank() ? job.getMoId() : job.getMoName());
+        String moEmail = safeText(job.getMoId());
+        String moName = safeText(job.getMoName());
+        if (moName.isBlank() || moName.equalsIgnoreCase(moEmail)) {
+            jobMoNameLabel.setText(moEmail);
+        } else {
+            jobMoNameLabel.setText(moName + " (" + moEmail + ")");
+        }
         jobModuleLabel.setText(job.getModuleName());
         jobPositionsLabel.setText("Positions: " + job.getNumberOfPositions());
         String start = formatDateOrPlaceholder(DateTimeUtil.formatDate(job.getStartDate()));
@@ -360,7 +366,6 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
         ta.setFullName(fullNameField.getText() == null ? "" : fullNameField.getText().trim());
         ta.setPhone(phoneField.getText());
-        ta.setEmail(emailField.getText());
         ta.setMajor(majorField.getText());
         ta.setSkills(skillsArea.getText());
         ta.setExperience(experienceArea.getText());

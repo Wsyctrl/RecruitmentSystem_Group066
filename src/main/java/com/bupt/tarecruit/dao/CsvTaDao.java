@@ -11,7 +11,7 @@ import java.util.Optional;
 public class CsvTaDao implements TaDao {
 
     private static final String[] HEADER = {
-            "ta_id", "password", "full_name", "phone", "email", "major", "skills", "experience", "self_evaluation", "is_disabled", "cv_path"
+            "email", "password", "full_name", "phone", "major", "skills", "experience", "self_evaluation", "is_disabled", "cv_path"
     };
     private final Path filePath;
 
@@ -32,7 +32,7 @@ public class CsvTaDao implements TaDao {
 
     @Override
     public Optional<Ta> findById(String taId) {
-        return findAll().stream().filter(ta -> ta.getTaId().equalsIgnoreCase(taId)).findFirst();
+        return findAll().stream().filter(ta -> ta.getEmail().equalsIgnoreCase(taId)).findFirst();
     }
 
     @Override
@@ -46,7 +46,7 @@ public class CsvTaDao implements TaDao {
     public void update(Ta ta) {
         List<String[]> rows = CsvUtil.readDataRows(filePath);
         for (int i = 0; i < rows.size(); i++) {
-            if (rows.get(i)[0].equalsIgnoreCase(ta.getTaId())) {
+            if (rows.get(i)[0].equalsIgnoreCase(ta.getEmail())) {
                 rows.set(i, mapToRow(ta));
                 break;
             }
@@ -56,12 +56,23 @@ public class CsvTaDao implements TaDao {
 
     private Ta mapRow(String[] row) {
         Ta ta = new Ta();
-        ta.setTaId(rowAt(row, 0));
+        ta.setEmail(rowAt(row, 0));
         ta.setPassword(rowAt(row, 1));
-        if (row.length >= 11) {
+        // New schema: email,password,full_name,phone,major,skills,experience,self_evaluation,is_disabled,cv_path
+        if (row.length >= 10 && rowAt(row, 0).contains("@")) {
             ta.setFullName(rowAt(row, 2));
             ta.setPhone(rowAt(row, 3));
+            ta.setMajor(rowAt(row, 4));
+            ta.setSkills(rowAt(row, 5));
+            ta.setExperience(rowAt(row, 6));
+            ta.setSelfEvaluation(rowAt(row, 7));
+            ta.setDisabled("1".equals(rowAt(row, 8)));
+            ta.setCvPath(rowAt(row, 9));
+        } else if (row.length >= 11) {
+            // Legacy schema: ta_id,password,full_name,phone,email,major,skills,experience,self_evaluation,is_disabled,cv_path
             ta.setEmail(rowAt(row, 4));
+            ta.setFullName(rowAt(row, 2));
+            ta.setPhone(rowAt(row, 3));
             ta.setMajor(rowAt(row, 5));
             ta.setSkills(rowAt(row, 6));
             ta.setExperience(rowAt(row, 7));
@@ -85,11 +96,10 @@ public class CsvTaDao implements TaDao {
 
     private String[] mapToRow(Ta ta) {
         return new String[]{
-                ta.getTaId(),
+                emptyIfNull(ta.getEmail()),
                 emptyIfNull(ta.getPassword()),
                 emptyIfNull(ta.getFullName()),
                 emptyIfNull(ta.getPhone()),
-                emptyIfNull(ta.getEmail()),
                 emptyIfNull(ta.getMajor()),
                 emptyIfNull(ta.getSkills()),
                 emptyIfNull(ta.getExperience()),

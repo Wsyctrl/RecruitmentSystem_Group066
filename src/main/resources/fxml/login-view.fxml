@@ -25,8 +25,8 @@
                     </VBox.margin>
                 </Label>
                 <VBox spacing="6" maxWidth="Infinity">
-                    <Label text="Username" styleClass="form-label"/>
-                    <TextField fx:id="userIdField" promptText="Enter your username"/>
+                    <Label text="BUPT Email" styleClass="form-label"/>
+                    <TextField fx:id="userIdField" promptText="Enter your @bupt.edu.cn email"/>
                 </VBox>
                 <VBox spacing="6" maxWidth="Infinity">
                     <Label text="Password" styleClass="form-label"/>

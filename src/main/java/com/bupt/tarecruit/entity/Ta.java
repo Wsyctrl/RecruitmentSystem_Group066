@@ -3,12 +3,11 @@ package com.bupt.tarecruit.entity;
 import java.util.Objects;
 
 public class Ta {
-    private String taId;
+    private String email;
     private String password;
     /** Display name */
     private String fullName;
     private String phone;
-    private String email;
     private String major;
     private String skills;
     private String experience;
@@ -19,17 +18,17 @@ public class Ta {
     public Ta() {
     }
 
-    public Ta(String taId, String password) {
-        this.taId = taId;
+    public Ta(String email, String password) {
+        this.email = email;
         this.password = password;
     }
 
     public String getTaId() {
-        return taId;
+        return email;
     }
 
     public void setTaId(String taId) {
-        this.taId = taId;
+        this.email = taId;
     }
 
     public String getPassword() {
@@ -48,12 +47,12 @@ public class Ta {
         this.fullName = fullName;
     }
 
-    /** Prefer full name; fallback to user id */
+    /** Prefer full name; fallback to email identity. */
     public String getDisplayLabel() {
         if (fullName != null && !fullName.isBlank()) {
             return fullName;
         }
-        return taId;
+        return email;
     }
 
     public String getPhone() {
@@ -128,11 +127,11 @@ public class Ta {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Ta ta)) return false;
-        return Objects.equals(taId, ta.taId);
+        return Objects.equals(email, ta.email);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(taId);
+        return Objects.hash(email);
     }
 }

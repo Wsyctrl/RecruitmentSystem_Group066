@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public class CsvMoDao implements MoDao {
 
-    private static final String[] HEADER = {"mo_id", "password", "full_name", "responsible_modules", "phone", "email", "is_disabled"};
+    private static final String[] HEADER = {"email", "password", "full_name", "responsible_modules", "phone", "is_disabled"};
     private final Path filePath;
 
     public CsvMoDao(Path filePath) {
@@ -30,7 +30,7 @@ public class CsvMoDao implements MoDao {
 
     @Override
     public Optional<Mo> findById(String moId) {
-        return findAll().stream().filter(mo -> mo.getMoId().equalsIgnoreCase(moId)).findFirst();
+        return findAll().stream().filter(mo -> mo.getEmail().equalsIgnoreCase(moId)).findFirst();
     }
 
     @Override
@@ -44,7 +44,7 @@ public class CsvMoDao implements MoDao {
     public void update(Mo mo) {
         List<String[]> rows = CsvUtil.readDataRows(filePath);
         for (int i = 0; i < rows.size(); i++) {
-            if (rows.get(i)[0].equalsIgnoreCase(mo.getMoId())) {
+            if (rows.get(i)[0].equalsIgnoreCase(mo.getEmail())) {
                 rows.set(i, mapToRow(mo));
                 break;
             }
@@ -54,13 +54,20 @@ public class CsvMoDao implements MoDao {
 
     private Mo mapRow(String[] row) {
         Mo mo = new Mo();
-        mo.setMoId(rowAt(row, 0));
+        mo.setEmail(rowAt(row, 0));
         mo.setPassword(rowAt(row, 1));
-        if (row.length >= 7) {
+        // New schema: email,password,full_name,responsible_modules,phone,is_disabled
+        if (row.length >= 6 && rowAt(row, 0).contains("@")) {
             mo.setFullName(rowAt(row, 2));
             mo.setResponsibleModules(rowAt(row, 3));
             mo.setPhone(rowAt(row, 4));
+            mo.setDisabled("1".equals(rowAt(row, 5)));
+        } else if (row.length >= 7) {
+            // Legacy schema: mo_id,password,full_name,responsible_modules,phone,email,is_disabled
             mo.setEmail(rowAt(row, 5));
+            mo.setFullName(rowAt(row, 2));
+            mo.setResponsibleModules(rowAt(row, 3));
+            mo.setPhone(rowAt(row, 4));
             mo.setDisabled("1".equals(rowAt(row, 6)));
         } else {
             mo.setFullName("");
@@ -74,12 +81,11 @@ public class CsvMoDao implements MoDao {
 
     private String[] mapToRow(Mo mo) {
         return new String[]{
-                mo.getMoId(),
+                emptyIfNull(mo.getEmail()),
                 emptyIfNull(mo.getPassword()),
                 emptyIfNull(mo.getFullName()),
                 emptyIfNull(mo.getResponsibleModules()),
                 emptyIfNull(mo.getPhone()),
-                emptyIfNull(mo.getEmail()),
                 mo.isDisabled() ? "1" : "0"
         };
     }
