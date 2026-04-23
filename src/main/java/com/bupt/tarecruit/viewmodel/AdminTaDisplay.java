@@ -5,7 +5,9 @@ import com.bupt.tarecruit.entity.ApplicationStatus;
 import com.bupt.tarecruit.entity.Job;
 import com.bupt.tarecruit.entity.Ta;
 import com.bupt.tarecruit.util.DateTimeUtil;
+import com.bupt.tarecruit.util.WorkloadRules;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,6 +52,23 @@ public class AdminTaDisplay {
         return (int) applications.stream()
                 .filter(a -> a.getStatus() == ApplicationStatus.HIRED)
                 .count();
+    }
+
+    public int getCurrentOngoingJobsCount() {
+        LocalDate now = LocalDate.now();
+        return (int) applications.stream()
+                .filter(a -> a.getStatus() == ApplicationStatus.HIRED)
+                .map(a -> findJob(a.getJobId()))
+                .filter(job -> job != null
+                        && job.getStartDate() != null
+                        && job.getEndDate() != null
+                        && now.isAfter(job.getStartDate())
+                        && now.isBefore(job.getEndDate()))
+                .count();
+    }
+
+    public boolean isOverConcurrentThreshold() {
+        return getCurrentOngoingJobsCount() > WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD;
     }
 
     public List<JobApplicationInfo> getAppliedJobs() {

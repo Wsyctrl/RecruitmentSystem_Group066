@@ -270,6 +270,11 @@
                                         <PropertyValueFactory property="email"/>
                                     </cellValueFactory>
                                 </TableColumn>
+                                <TableColumn text="Ongoing Jobs" prefWidth="95">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="currentOngoingJobsCount"/>
+                                    </cellValueFactory>
+                                </TableColumn>
                                 <TableColumn text="Applied" prefWidth="60">
                                     <cellValueFactory>
                                         <PropertyValueFactory property="appliedCount"/>

@@ -8,7 +8,9 @@ import com.bupt.tarecruit.entity.Job;
 import com.bupt.tarecruit.entity.JobStatus;
 import com.bupt.tarecruit.util.IdGenerator;
 import com.bupt.tarecruit.util.OperationResult;
+import com.bupt.tarecruit.util.WorkloadRules;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -163,6 +165,63 @@ public class ApplicationService {
     }
 
     /**
+     * Counts hired jobs that are currently ongoing for a TA.
+     *
+     * @param taId TA user identifier
+     * @param now current date used for time-window checks
+     * @return number of currently ongoing hired jobs
+     */
+    public int countCurrentOngoingHiredJobs(String taId, LocalDate now) {
+        return findCurrentOngoingHiredJobs(taId, now).size();
+    }
+
+    /**
+     * Finds hired jobs currently in progress for a TA.
+     *
+     * @param taId TA user identifier
+     * @param now current date used for time-window checks
+     * @return currently ongoing hired jobs
+     */
+    public List<Job> findCurrentOngoingHiredJobs(String taId, LocalDate now) {
+        return applicationDao.findByTaId(taId).stream()
+                .filter(record -> record.getStatus() == ApplicationStatus.HIRED)
+                .map(record -> jobDao.findById(record.getJobId()).orElse(null))
+                .filter(job -> job != null && isDateWithinJobRange(now, job))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Finds existing hired jobs that overlap with the target job period.
+     *
+     * @param taId TA user identifier
+     * @param targetJobId target job identifier
+     * @return overlapping hired jobs, excluding the target job itself
+     */
+    public List<Job> findOverlappingHiredJobs(String taId, String targetJobId) {
+        Job targetJob = jobDao.findById(targetJobId).orElse(null);
+        if (targetJob == null) {
+            return List.of();
+        }
+        return applicationDao.findByTaId(taId).stream()
+                .filter(record -> record.getStatus() == ApplicationStatus.HIRED)
+                .map(record -> jobDao.findById(record.getJobId()).orElse(null))
+                .filter(job -> job != null && !job.getJobId().equalsIgnoreCase(targetJobId))
+                .filter(job -> isOverlapping(job, targetJob))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns whether hiring should show a concurrent-jobs warning.
+     *
+     * @param taId TA user identifier
+     * @param targetJobId target job identifier
+     * @return true when overlap count reaches the warning threshold
+     */
+    public boolean shouldWarnConcurrentHire(String taId, String targetJobId) {
+        return findOverlappingHiredJobs(taId, targetJobId).size() >= WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD;
+    }
+
+    /**
      * Marks an application as hired. If all job positions become filled,
      * the job is closed and remaining pending applications are rejected.
      *
@@ -311,5 +370,24 @@ public class ApplicationService {
                 .map(ApplicationRecord::getApplyId)
                 .collect(Collectors.toList());
         return IdGenerator.nextId("apply", existing);
+    }
+
+    private boolean isDateWithinJobRange(LocalDate date, Job job) {
+        if (date == null || job.getStartDate() == null || job.getEndDate() == null) {
+            return false;
+        }
+        return date.isAfter(job.getStartDate()) && date.isBefore(job.getEndDate());
+    }
+
+    private boolean isOverlapping(Job existingJob, Job targetJob) {
+        if (existingJob.getStartDate() == null || existingJob.getEndDate() == null
+                || targetJob.getStartDate() == null || targetJob.getEndDate() == null) {
+            return false;
+        }
+        LocalDate existingStart = existingJob.getStartDate();
+        LocalDate existingEnd = existingJob.getEndDate();
+        LocalDate targetStart = targetJob.getStartDate();
+        LocalDate targetEnd = targetJob.getEndDate();
+        return existingStart.isBefore(targetEnd) && existingEnd.isAfter(targetStart);
     }
 }
