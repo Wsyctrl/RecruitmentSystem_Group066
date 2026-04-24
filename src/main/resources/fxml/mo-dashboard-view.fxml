@@ -21,6 +21,8 @@
                         <HBox spacing="10" styleClass="p-3">
                             <ComboBox fx:id="jobSelector" promptText="Select an open job" prefWidth="220"/>
                             <TextField fx:id="applicantSearchField" promptText="Search name, ID, phone, email, status" HBox.hgrow="ALWAYS"/>
+                            <Button text="AI Recommend TAs" onAction="#handleAiRecommendApplicants"/>
+                            <Button text="AI Job Keywords" onAction="#handleAiGenerateJobKeywords"/>
                             <Button text="Refresh" onAction="#handleRefreshApplicants"/>
                         </HBox>
                     </top>
@@ -65,6 +67,10 @@
                                     <Label fx:id="applicantStatusLabel"/>
                                 </VBox>
                                 <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" prefRowCount="10" VBox.vgrow="ALWAYS"/>
+                                <Label text="AI Job Keywords" styleClass="text-muted"/>
+                                <TextArea fx:id="aiKeywordsArea" wrapText="true" editable="false" prefRowCount="3"/>
+                                <Label text="AI Applicant Analysis" styleClass="text-muted"/>
+                                <TextArea fx:id="aiApplicantResultArea" wrapText="true" editable="false" prefRowCount="6"/>
                                 <HBox spacing="8">
                                     <Button text="Download CV" onAction="#handleDownloadCv" styleClass="btn-outline"/>
                                     <Button text="Hire" onAction="#handleHireApplicant" styleClass="btn-success"/>
@@ -505,10 +511,17 @@
                     </center>
                     <bottom>
                         <HBox spacing="8" alignment="CENTER_RIGHT" styleClass="p-3">
+                            <Button text="Generate 30-Day Hiring Insights" onAction="#handleAiGenerateInsights"/>
                             <Button text="Close Job" onAction="#handleAdminToggleJob" styleClass="btn-danger"/>
                             <Button text="Open Job" onAction="#handleAdminOpenJob" styleClass="btn-success"/>
                         </HBox>
                     </bottom>
+                    <right>
+                        <VBox spacing="6" styleClass="p-3" prefWidth="340">
+                            <Label text="AI 30-Day Hiring Insights" styleClass="h6"/>
+                            <TextArea fx:id="aiAdminInsightArea" editable="false" wrapText="true" prefRowCount="16"/>
+                        </VBox>
+                    </right>
                 </BorderPane>
             </Tab>
             <Tab text="Account Management" fx:id="adminAccountTab">

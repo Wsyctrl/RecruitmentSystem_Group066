@@ -72,6 +72,7 @@ public class ServiceRegistry {
      * Administrator operation service.
      */
     private final AdminService adminService;
+    private final AiService aiService;
 
     /**
      * Helper for file storage operations such as CV upload and download.
@@ -100,6 +101,7 @@ public class ServiceRegistry {
         this.applicationService.normalizePendingApplicationsForClosedJobs();
         this.profileService = new ProfileService(taDao, moDao);
         this.adminService = new AdminService(taDao, moDao, jobDao, accountLogDao);
+        this.aiService = new AiService();
         this.fileStorageHelper = new FileStorageHelper(dataDir);
     }
 
@@ -155,6 +157,10 @@ public class ServiceRegistry {
      */
     public AdminService adminService() {
         return adminService;
+    }
+
+    public AiService aiService() {
+        return aiService;
     }
 
     /**
