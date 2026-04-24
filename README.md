@@ -36,50 +36,65 @@ git clone https://github.com/Wsyctrl/RecruitmentSystem_Group066.git
 ```
 
 ## 3. Load Maven Dependencies
-### Option 1: Command Line
 Navigate to the project root directory and run:
 ```bash
 mvn clean install
 ```
 
-### Option 2: IntelliJ IDEA
-- Open the **Maven** tool window on the right side
-- Click the **refresh button (🔄)** at the top to automatically download all dependencies
-
 ## 4. Run the Project
-### Option 1: Command Line
+Run different portals with dedicated execution IDs:
+- TA Portal：
 ```bash
-mvn javafx:run
+mvn javafx:run@ta-portal
 ```
-
-### Option 2: IntelliJ IDEA
-- Open the **Maven** tool window on the right side
-- Expand `rec` → `Plugins` → `javafx`
-- Double-click **javafx:run** to start the application
+- MO/Admin Portal：
+```bash
+mvn javafx:run@mo-portal
+```
 
 ---
 
 # Package and Run Executable JAR
 
-### 1. Update version in pom.xml:
+(replace "your-version" with the actual version)
+
+### 1. Update top-level project version in pom.xml:
 ```xml
 <version>your-version</version>
 ```
 
-### 2. Build the package:
+### 2. Build two standalone JARs:
 ```bash
 mvn clean package
 ```
-### 3. Go to the target directory:
-```bash
-cd target
+
+- After build completes, the JAR files will be generated in the `target/` folder:
+    - `tarecruit-ta-your-version.jar` (TA Portal)
+    - `tarecruit-mo-your-version.jar` (MO/Admin Portal)
+
+
+### 3. Prepare release folder
+Create a folder (for example `release/`) and copy these files:
+- Executable JAR files: `tarecruit-ta-your-version.jar` and `tarecruit-mo-your-version.jar`
+- Application data: prebuilt `data/` folder (copy the entire data folder from the project root directory)
+- Startup scripts: `run-ta.bat` and `run-mo.bat`
+
+`run-ta.bat` content:
+```bat
+java -jar tarecruit-ta-your-version.jar
+pause
 ```
 
-### 4. Run the JAR (replace "your-version" with the actual version):
-```bash
-java -jar tarecruit-your-version.jar
+`run-mo.bat` content:
+```bat
+java -jar tarecruit-mo-your-version.jar
+pause
 ```
-Example:
-```bash
-java -jar tarecruit-1.0.0.jar
-```
+
+### 4. Distribute
+Zip the `release/` folder and send it to users.
+
+### 5. Run on user side
+After unzip, run by double-clicking:
+- `run-ta.bat` (TA Portal)
+- `run-mo.bat` (MO/Admin Portal)
