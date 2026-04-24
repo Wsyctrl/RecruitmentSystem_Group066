@@ -27,36 +27,47 @@
                         </HBox>
                     </top>
                     <center>
-                        <SplitPane dividerPositions="0.52">
-                            <TableView fx:id="applicantTable">
-                                <columns>
-                                    <TableColumn text="Email" prefWidth="180">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="email"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Name" prefWidth="100">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="taName"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Phone" prefWidth="110">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="phone"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Status" prefWidth="85">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="status"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Apply Time" prefWidth="130">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="applyTime"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                </columns>
-                            </TableView>
+                        <SplitPane dividerPositions="0.53">
+                            <SplitPane orientation="VERTICAL" dividerPositions="0.62">
+                                <TableView fx:id="applicantTable">
+                                    <columns>
+                                        <TableColumn text="Email" prefWidth="180">
+                                            <cellValueFactory>
+                                                <PropertyValueFactory property="email"/>
+                                            </cellValueFactory>
+                                        </TableColumn>
+                                        <TableColumn text="Name" prefWidth="100">
+                                            <cellValueFactory>
+                                                <PropertyValueFactory property="taName"/>
+                                            </cellValueFactory>
+                                        </TableColumn>
+                                        <TableColumn text="Phone" prefWidth="110">
+                                            <cellValueFactory>
+                                                <PropertyValueFactory property="phone"/>
+                                            </cellValueFactory>
+                                        </TableColumn>
+                                        <TableColumn text="Status" prefWidth="85">
+                                            <cellValueFactory>
+                                                <PropertyValueFactory property="status"/>
+                                            </cellValueFactory>
+                                        </TableColumn>
+                                        <TableColumn text="Apply Time" prefWidth="130">
+                                            <cellValueFactory>
+                                                <PropertyValueFactory property="applyTime"/>
+                                            </cellValueFactory>
+                                        </TableColumn>
+                                    </columns>
+                                </TableView>
+                                <VBox spacing="8" styleClass="detail-panel">
+                                    <padding>
+                                        <Insets top="10" right="10" bottom="10" left="10"/>
+                                    </padding>
+                                    <Label text="AI Job Keywords" styleClass="text-muted"/>
+                                    <TextArea fx:id="aiKeywordsArea" wrapText="true" editable="false" prefRowCount="4" VBox.vgrow="ALWAYS"/>
+                                    <Label text="AI Applicant Analysis" styleClass="text-muted"/>
+                                    <TextArea fx:id="aiApplicantResultArea" wrapText="true" editable="false" prefRowCount="7" VBox.vgrow="ALWAYS"/>
+                                </VBox>
+                            </SplitPane>
                             <VBox spacing="12" styleClass="detail-panel">
                                 <padding>
                                     <Insets top="16" right="16" bottom="16" left="16"/>
@@ -66,11 +77,7 @@
                                     <Label fx:id="applicantNameLabel" styleClass="h6"/>
                                     <Label fx:id="applicantStatusLabel"/>
                                 </VBox>
-                                <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" prefRowCount="10" VBox.vgrow="ALWAYS"/>
-                                <Label text="AI Job Keywords" styleClass="text-muted"/>
-                                <TextArea fx:id="aiKeywordsArea" wrapText="true" editable="false" prefRowCount="3"/>
-                                <Label text="AI Applicant Analysis" styleClass="text-muted"/>
-                                <TextArea fx:id="aiApplicantResultArea" wrapText="true" editable="false" prefRowCount="6"/>
+                                <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" prefRowCount="16" VBox.vgrow="ALWAYS"/>
                                 <HBox spacing="8">
                                     <Button text="Download CV" onAction="#handleDownloadCv" styleClass="btn-outline"/>
                                     <Button text="Hire" onAction="#handleHireApplicant" styleClass="btn-success"/>

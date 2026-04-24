@@ -62,110 +62,117 @@
             </Tab>
             <Tab fx:id="browseJobsTab" text="Browse jobs">
                 <BorderPane>
-                    <top>
-                        <HBox spacing="10" styleClass="p-3">
-                            <TextField fx:id="jobSearchField" promptText="Search title, module, requirements" HBox.hgrow="ALWAYS" styleClass="search-field"/>
-                            <Button text="Refresh" onAction="#handleRefreshJobs"/>
-                        </HBox>
-                    </top>
                     <center>
-                        <SplitPane dividerPositions="0.58">
-                            <TableView fx:id="jobTable">
-                                <columns>
-                                    <TableColumn text="Job ID" prefWidth="90">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="jobId"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Title" prefWidth="180">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="jobName"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Module" prefWidth="110">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="moduleName"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Posted by" prefWidth="100">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="moName"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Positions" prefWidth="65">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="numberOfPositions"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Applicants" prefWidth="70">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="applicantsCount"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                    <TableColumn text="Hired" prefWidth="55">
-                                        <cellValueFactory>
-                                            <PropertyValueFactory property="hiredCount"/>
-                                        </cellValueFactory>
-                                    </TableColumn>
-                                </columns>
-                            </TableView>
-                            <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
-                                <content>
-                                    <VBox spacing="12" styleClass="detail-panel">
-                                        <padding>
-                                            <Insets top="16" right="16" bottom="16" left="16"/>
-                                        </padding>
-                                        <Label text="Job details" styleClass="h5"/>
-                                        <VBox spacing="2">
-                                            <Label text="Title" styleClass="text-muted"/>
-                                            <Label fx:id="jobNameLabel" styleClass="h6" wrapText="true"/>
-                                        </VBox>
-                                        <VBox spacing="2">
-                                            <Label text="Posted by" styleClass="text-muted"/>
-                                            <Label fx:id="jobMoNameLabel" styleClass="h6" wrapText="true"/>
-                                        </VBox>
-                                        <HBox spacing="20">
-                                            <VBox spacing="2">
-                                                <Label text="Module" styleClass="text-muted"/>
-                                                <Label fx:id="jobModuleLabel"/>
-                                            </VBox>
-                                            <VBox spacing="2">
-                                                <Label text="Positions" styleClass="text-muted"/>
-                                                <Label fx:id="jobPositionsLabel"/>
-                                            </VBox>
-                                        </HBox>
-                                        <VBox spacing="2">
-                                            <Label text="Dates" styleClass="text-muted"/>
-                                            <Label fx:id="jobDateLabel"/>
-                                        </VBox>
-                                        <VBox spacing="4">
-                                            <Label text="Requirements" styleClass="text-muted"/>
-                                            <TextArea fx:id="jobRequirementsArea" editable="false" wrapText="true" prefRowCount="5"/>
-                                        </VBox>
-                                        <VBox spacing="4">
-                                            <Label text="Notes" styleClass="text-muted"/>
-                                            <TextArea fx:id="jobNotesArea" editable="false" wrapText="true" prefRowCount="3"/>
-                                        </VBox>
-                                        <VBox spacing="4">
-                                            <Label text="AI Resume Optimization Advice" styleClass="text-muted"/>
-                                            <TextArea fx:id="aiResumeAdviceArea" editable="false" wrapText="true" prefRowCount="5"/>
-                                        </VBox>
-                                        <Button text="Generate AI Resume Advice" onAction="#handleAiResumeOptimization" maxWidth="Infinity"/>
-                                        <Button fx:id="applyButton" text="Apply" onAction="#handleApply" styleClass="btn-primary" maxWidth="Infinity"/>
-                                    </VBox>
-                                </content>
-                            </ScrollPane>
+                        <SplitPane orientation="VERTICAL" dividerPositions="0.62">
+                            <BorderPane>
+                                <top>
+                                    <HBox spacing="10" styleClass="p-3">
+                                        <TextField fx:id="jobSearchField" promptText="Search title, module, requirements" HBox.hgrow="ALWAYS" styleClass="search-field"/>
+                                        <Button text="Refresh" onAction="#handleRefreshJobs"/>
+                                    </HBox>
+                                </top>
+                                <center>
+                                    <SplitPane dividerPositions="0.58">
+                                        <TableView fx:id="jobTable">
+                                            <columns>
+                                                <TableColumn text="Job ID" prefWidth="90">
+                                                    <cellValueFactory>
+                                                        <PropertyValueFactory property="jobId"/>
+                                                    </cellValueFactory>
+                                                </TableColumn>
+                                                <TableColumn text="Title" prefWidth="180">
+                                                    <cellValueFactory>
+                                                        <PropertyValueFactory property="jobName"/>
+                                                    </cellValueFactory>
+                                                </TableColumn>
+                                                <TableColumn text="Module" prefWidth="110">
+                                                    <cellValueFactory>
+                                                        <PropertyValueFactory property="moduleName"/>
+                                                    </cellValueFactory>
+                                                </TableColumn>
+                                                <TableColumn text="Posted by" prefWidth="100">
+                                                    <cellValueFactory>
+                                                        <PropertyValueFactory property="moName"/>
+                                                    </cellValueFactory>
+                                                </TableColumn>
+                                                <TableColumn text="Positions" prefWidth="65">
+                                                    <cellValueFactory>
+                                                        <PropertyValueFactory property="numberOfPositions"/>
+                                                    </cellValueFactory>
+                                                </TableColumn>
+                                                <TableColumn text="Applicants" prefWidth="70">
+                                                    <cellValueFactory>
+                                                        <PropertyValueFactory property="applicantsCount"/>
+                                                    </cellValueFactory>
+                                                </TableColumn>
+                                                <TableColumn text="Hired" prefWidth="55">
+                                                    <cellValueFactory>
+                                                        <PropertyValueFactory property="hiredCount"/>
+                                                    </cellValueFactory>
+                                                </TableColumn>
+                                            </columns>
+                                        </TableView>
+                                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
+                                            <content>
+                                                <VBox spacing="12" styleClass="detail-panel">
+                                                    <padding>
+                                                        <Insets top="16" right="16" bottom="16" left="16"/>
+                                                    </padding>
+                                                    <Label text="Job details" styleClass="h5"/>
+                                                    <VBox spacing="2">
+                                                        <Label text="Title" styleClass="text-muted"/>
+                                                        <Label fx:id="jobNameLabel" styleClass="h6" wrapText="true"/>
+                                                    </VBox>
+                                                    <VBox spacing="2">
+                                                        <Label text="Posted by" styleClass="text-muted"/>
+                                                        <Label fx:id="jobMoNameLabel" styleClass="h6" wrapText="true"/>
+                                                    </VBox>
+                                                    <HBox spacing="20">
+                                                        <VBox spacing="2">
+                                                            <Label text="Module" styleClass="text-muted"/>
+                                                            <Label fx:id="jobModuleLabel"/>
+                                                        </VBox>
+                                                        <VBox spacing="2">
+                                                            <Label text="Positions" styleClass="text-muted"/>
+                                                            <Label fx:id="jobPositionsLabel"/>
+                                                        </VBox>
+                                                    </HBox>
+                                                    <VBox spacing="2">
+                                                        <Label text="Dates" styleClass="text-muted"/>
+                                                        <Label fx:id="jobDateLabel"/>
+                                                    </VBox>
+                                                    <VBox spacing="4">
+                                                        <Label text="Requirements" styleClass="text-muted"/>
+                                                        <TextArea fx:id="jobRequirementsArea" editable="false" wrapText="true" prefRowCount="5"/>
+                                                    </VBox>
+                                                    <VBox spacing="4">
+                                                        <Label text="Notes" styleClass="text-muted"/>
+                                                        <TextArea fx:id="jobNotesArea" editable="false" wrapText="true" prefRowCount="3"/>
+                                                    </VBox>
+                                                    <VBox spacing="4">
+                                                        <Label text="AI Resume Optimization Advice" styleClass="text-muted"/>
+                                                        <TextArea fx:id="aiResumeAdviceArea" editable="false" wrapText="true" prefRowCount="5"/>
+                                                    </VBox>
+                                                    <Button text="Generate AI Resume Advice" onAction="#handleAiResumeOptimization" maxWidth="Infinity"/>
+                                                    <Button fx:id="applyButton" text="Apply" onAction="#handleApply" styleClass="btn-primary" maxWidth="Infinity"/>
+                                                </VBox>
+                                            </content>
+                                        </ScrollPane>
+                                    </SplitPane>
+                                </center>
+                            </BorderPane>
+                            <VBox spacing="6" styleClass="p-3">
+                                <padding>
+                                    <Insets top="10" right="10" bottom="10" left="10"/>
+                                </padding>
+                                <Label text="Additional preference for AI recommendation (optional)" styleClass="text-muted"/>
+                                <TextArea fx:id="aiJobPreferenceField" wrapText="true" prefRowCount="3"/>
+                                <Button text="AI Recommend Jobs" onAction="#handleAiRecommendJobs" maxWidth="Infinity"/>
+                                <Label text="AI Job Recommendations" styleClass="text-muted"/>
+                                <TextArea fx:id="aiJobRecommendationArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
+                            </VBox>
                         </SplitPane>
                     </center>
-                    <bottom>
-                        <VBox spacing="4" styleClass="p-3">
-                            <Label text="Additional preference for AI recommendation (optional)" styleClass="text-muted"/>
-                            <TextArea fx:id="aiJobPreferenceField" wrapText="true" prefRowCount="3"/>
-                            <Button text="AI Recommend Jobs" onAction="#handleAiRecommendJobs" maxWidth="Infinity"/>
-                            <Label text="AI Job Recommendations" styleClass="text-muted"/>
-                            <TextArea fx:id="aiJobRecommendationArea" editable="false" wrapText="true" prefRowCount="5"/>
-                        </VBox>
-                    </bottom>
                 </BorderPane>
             </Tab>
             <Tab fx:id="myProfileTab" text="My profile">
