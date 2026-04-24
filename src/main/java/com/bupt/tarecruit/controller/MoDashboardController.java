@@ -1,6 +1,7 @@
 package com.bupt.tarecruit.controller;
 
 import com.bupt.tarecruit.entity.*;
+import com.bupt.tarecruit.service.AiService;
 import com.bupt.tarecruit.service.ApplicationService;
 import com.bupt.tarecruit.util.DateTimeUtil;
 import com.bupt.tarecruit.util.DialogUtil;
@@ -14,6 +15,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.stage.FileChooser;
+import javafx.concurrent.Task;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +39,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private UserSession session;
     private boolean adminMode;
     private Job currentEditingJob;
+    private long applicantsAiContextVersion = 0L;
+    private Task<List<AiService.ApplicantRecommendation>> activeRecommendApplicantsTask;
+    private Task<List<AiService.ApplicantRecommendation>> activeSimilarApplicantsTask;
+    private Task<List<String>> activeKeywordTask;
 
     private final ObservableList<Job> myJobs = FXCollections.observableArrayList();
     private FilteredList<Job> filteredMyJobs;
@@ -117,6 +123,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private Label applicantStatusLabel;
     @FXML
     private TextArea applicantProfileArea;
+    @FXML
+    private TextArea aiApplicantResultArea;
+    @FXML
+    private TextArea aiKeywordsArea;
+    @FXML
+    private TextArea aiAdminInsightArea;
 
     @FXML
     private TextField moFullNameField;
@@ -204,7 +216,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
                 setText(empty || item == null ? "" : item.getJobName());
             }
         });
-        jobSelector.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> loadApplicants(val));
+        jobSelector.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
+            invalidateApplicantsAiContext();
+            loadApplicants(val);
+        });
 
         filteredApplicants = new FilteredList<>(applicantItems, item -> true);
         applicantTable.setItems(filteredApplicants);
@@ -306,6 +321,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
         // When switching to admin tabs, refresh data
         if (tabPane != null) {
             tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+                if (oldTab == applicantsTab && newTab != applicantsTab) {
+                    invalidateApplicantsAiContext();
+                }
+                if (newTab == applicantsTab) {
+                    invalidateApplicantsAiContext();
+                }
                 if (newTab != null) {
                     if (newTab == adminJobTab) {
                         refreshAdminJobs();
@@ -545,6 +566,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
     }
 
     private void loadApplicants(Job job) {
+        invalidateApplicantsAiContext();
         if (job == null) {
             applicantItems.clear();
             return;
@@ -575,6 +597,54 @@ public class MoDashboardController extends BaseController implements SessionAwar
                 || (applicant.getPhone() != null && applicant.getPhone().toLowerCase().contains(lower))
                 || (applicant.getEmail() != null && applicant.getEmail().toLowerCase().contains(lower))
                 || applicant.getStatus().contains(raw));
+    }
+
+    private List<ApplicantDisplay> currentApplicants() {
+        Job selectedJob = jobSelector.getSelectionModel().getSelectedItem();
+        if (selectedJob == null) {
+            return List.of();
+        }
+        return services.applicationService().findActiveApplicationsForJob(selectedJob.getJobId()).stream()
+                .map(record -> new ApplicantDisplay(record, services.profileService().findTa(record.getTaId()).orElse(null)))
+                .collect(Collectors.toList());
+    }
+
+    private long captureApplicantsAiContext() {
+        return applicantsAiContextVersion;
+    }
+
+    private boolean isApplicantsAiContextValid(long contextToken, String jobIdSnapshot) {
+        if (contextToken != applicantsAiContextVersion) {
+            return false;
+        }
+        if (tabPane == null || tabPane.getSelectionModel().getSelectedItem() != applicantsTab) {
+            return false;
+        }
+        Job currentJob = jobSelector.getSelectionModel().getSelectedItem();
+        return currentJob != null && currentJob.getJobId().equalsIgnoreCase(jobIdSnapshot);
+    }
+
+    private void invalidateApplicantsAiContext() {
+        applicantsAiContextVersion++;
+        if (activeRecommendApplicantsTask != null && activeRecommendApplicantsTask.isRunning()) {
+            activeRecommendApplicantsTask.cancel(true);
+        }
+        if (activeSimilarApplicantsTask != null && activeSimilarApplicantsTask.isRunning()) {
+            activeSimilarApplicantsTask.cancel(true);
+        }
+        if (activeKeywordTask != null && activeKeywordTask.isRunning()) {
+            activeKeywordTask.cancel(true);
+        }
+        clearApplicantsAiOutputs();
+    }
+
+    private void clearApplicantsAiOutputs() {
+        if (aiApplicantResultArea != null) {
+            aiApplicantResultArea.clear();
+        }
+        if (aiKeywordsArea != null) {
+            aiKeywordsArea.clear();
+        }
     }
 
     private void updateApplicantDetail(ApplicantDisplay display) {
@@ -805,6 +875,7 @@ CV: %s
         }
         ApplicationRecord record = display.getRecord();
         OperationResult<Void> result;
+        boolean promptSimilarAfterIntent = false;
 
         // If already hired, unhire (back to pending)
         if (record.getStatus() == ApplicationStatus.HIRED) {
@@ -825,10 +896,18 @@ CV: %s
                 if (overlappingJobs.size() >= WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD) {
                     String warning = buildConcurrentHireWarning(currentJobOpt.get(), overlappingJobs);
                     if (!DialogUtil.confirmYesNo(warning, navigator.getPrimaryStage())) {
+                        promptSimilarAfterIntent = true;
+                        result = OperationResult.success(null, "Hiring cancelled based on workload warning.");
+                        if (promptSimilarAfterIntent) {
+                            promptFindSimilarByBenchmark(record);
+                        }
                         return;
                     }
                 }
                 result = services.applicationService().hireApplicant(record.getApplyId());
+                if (result.success()) {
+                    promptSimilarAfterIntent = true;
+                }
             } else {
                 return;
             }
@@ -838,6 +917,9 @@ CV: %s
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
             refreshMyJobs();
             loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
+            if (promptSimilarAfterIntent) {
+                promptFindSimilarByBenchmark(record);
+            }
         } else {
             DialogUtil.error(result.message(), navigator.getPrimaryStage());
         }
@@ -895,7 +977,156 @@ CV: %s
 
     @FXML
     private void handleRefreshApplicants() {
+        invalidateApplicantsAiContext();
         loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
+    }
+
+    @FXML
+    private void handleAiRecommendApplicants() {
+        Job job = jobSelector.getSelectionModel().getSelectedItem();
+        if (job == null) {
+            DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
+            return;
+        }
+        List<ApplicantDisplay> applicants = currentApplicants();
+        if (applicants.isEmpty()) {
+            aiApplicantResultArea.setText("There are no applicants for the current job.");
+            return;
+        }
+        long contextToken = captureApplicantsAiContext();
+        String jobIdSnapshot = job.getJobId();
+        aiApplicantResultArea.setText("AI is ranking applicants...");
+        Task<List<AiService.ApplicantRecommendation>> task = new Task<>() {
+            @Override
+            protected List<AiService.ApplicantRecommendation> call() throws Exception {
+                if (isCancelled()) {
+                    return List.of();
+                }
+                return services.aiService().recommendApplicantsForJob(job, applicants);
+            }
+        };
+        activeRecommendApplicantsTask = task;
+        task.setOnSucceeded(evt -> {
+            if (!isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
+                return;
+            }
+            aiApplicantResultArea.setText(formatApplicantRecommendations(task.getValue()));
+        });
+        task.setOnCancelled(evt -> {
+            if (isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
+                aiApplicantResultArea.clear();
+            }
+        });
+        task.setOnFailed(evt -> aiApplicantResultArea.setText("AI ranking failed: " + task.getException().getMessage()));
+        new Thread(task, "ai-recommend-applicants").start();
+    }
+
+    private void promptFindSimilarByBenchmark(ApplicationRecord benchmarkRecord) {
+        boolean shouldSearch = DialogUtil.confirmYesNo(
+                "Do you want to find similar applicants using this candidate as the benchmark?",
+                navigator.getPrimaryStage()
+        );
+        if (!shouldSearch) {
+            return;
+        }
+        Job job = services.jobService().findById(benchmarkRecord.getJobId()).orElse(null);
+        if (job == null) {
+            DialogUtil.error("Job not found for similarity search.", navigator.getPrimaryStage());
+            return;
+        }
+        Ta benchmarkTa = services.profileService().findTa(benchmarkRecord.getTaId()).orElse(null);
+        if (benchmarkTa == null) {
+            DialogUtil.error("Benchmark applicant profile does not exist.", navigator.getPrimaryStage());
+            return;
+        }
+        List<ApplicantDisplay> applicants = currentApplicants();
+        Job currentJob = jobSelector.getSelectionModel().getSelectedItem();
+        if (currentJob == null) {
+            return;
+        }
+        long contextToken = captureApplicantsAiContext();
+        String jobIdSnapshot = currentJob.getJobId();
+        aiApplicantResultArea.setText("AI is searching similar applicants...");
+        Task<List<AiService.ApplicantRecommendation>> task = new Task<>() {
+            @Override
+            protected List<AiService.ApplicantRecommendation> call() throws Exception {
+                if (isCancelled()) {
+                    return List.of();
+                }
+                return services.aiService().findSimilarApplicants(job, benchmarkTa, applicants);
+            }
+        };
+        activeSimilarApplicantsTask = task;
+        task.setOnSucceeded(evt -> {
+            if (!isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
+                return;
+            }
+            aiApplicantResultArea.setText(formatApplicantRecommendations(task.getValue()));
+        });
+        task.setOnCancelled(evt -> {
+            if (isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
+                aiApplicantResultArea.clear();
+            }
+        });
+        task.setOnFailed(evt -> aiApplicantResultArea.setText("AI search failed: " + task.getException().getMessage()));
+        new Thread(task, "ai-find-similar").start();
+    }
+
+    @FXML
+    private void handleAiGenerateJobKeywords() {
+        Job job = jobSelector.getSelectionModel().getSelectedItem();
+        if (job == null) {
+            DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
+            return;
+        }
+        long contextToken = captureApplicantsAiContext();
+        String jobIdSnapshot = job.getJobId();
+        aiKeywordsArea.setText("AI is generating keywords...");
+        Task<List<String>> task = new Task<>() {
+            @Override
+            protected List<String> call() throws Exception {
+                if (isCancelled()) {
+                    return List.of();
+                }
+                return services.aiService().generateJobKeywords(job);
+            }
+        };
+        activeKeywordTask = task;
+        task.setOnSucceeded(evt -> {
+            if (!isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
+                return;
+            }
+            aiKeywordsArea.setText(task.getValue().stream()
+                    .map(k -> "• " + k)
+                    .collect(Collectors.joining("\n")));
+        });
+        task.setOnCancelled(evt -> {
+            if (isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
+                aiKeywordsArea.clear();
+            }
+        });
+        task.setOnFailed(evt -> aiKeywordsArea.setText("Keyword generation failed: " + task.getException().getMessage()));
+        new Thread(task, "ai-job-keywords").start();
+    }
+
+    @FXML
+    private void handleAiGenerateInsights() {
+        aiAdminInsightArea.setText("AI is analyzing the last 30 days...");
+        Task<String> task = new Task<>() {
+            @Override
+            protected String call() throws Exception {
+                List<Job> jobs = services.jobService().findAllJobs();
+                List<ApplicationRecord> applications = jobs.stream()
+                        .flatMap(job -> services.applicationService().findByJob(job.getJobId()).stream())
+                        .collect(Collectors.toList());
+                int hiredCount = (int) applications.stream().filter(ApplicationRecord::isHired).count();
+                int openJobs = (int) jobs.stream().filter(Job::isOpen).count();
+                return services.aiService().generate30DayInsights(jobs, applications, hiredCount, openJobs);
+            }
+        };
+        task.setOnSucceeded(evt -> aiAdminInsightArea.setText(task.getValue()));
+        task.setOnFailed(evt -> aiAdminInsightArea.setText("Insight generation failed: " + task.getException().getMessage()));
+        new Thread(task, "ai-admin-insights").start();
     }
 
     @FXML
@@ -945,6 +1176,15 @@ CV: %s
 
     private String safeText(String value) {
         return value == null ? "" : value;
+    }
+
+    private String formatApplicantRecommendations(List<AiService.ApplicantRecommendation> recommendations) {
+        if (recommendations == null || recommendations.isEmpty()) {
+            return "No AI applicant results were returned.";
+        }
+        return recommendations.stream()
+                .map(item -> "• " + item.taId() + " | Match Score: " + item.score() + "\n  " + item.reason())
+                .collect(Collectors.joining("\n\n"));
     }
 
     private String buildConcurrentHireWarning(Job targetJob, List<Job> overlappingJobs) {

@@ -4,6 +4,7 @@ import com.bupt.tarecruit.entity.Job;
 import com.bupt.tarecruit.entity.Mo;
 import com.bupt.tarecruit.entity.Ta;
 import com.bupt.tarecruit.entity.UserSession;
+import com.bupt.tarecruit.service.AiService;
 import com.bupt.tarecruit.service.ApplicationService;
 import com.bupt.tarecruit.service.JobService;
 import com.bupt.tarecruit.util.DateTimeUtil;
@@ -18,6 +19,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
+import javafx.concurrent.Task;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -34,9 +36,16 @@ import java.util.stream.Collectors;
  */
 public class TaDashboardController extends BaseController implements SessionAware {
 
+    private record ProfileDraft(String fullName, String phone, String major, String skills, String experience, String selfEvaluation) {
+    }
+
     private UserSession session;
     private boolean guestMode;
     private boolean suppressTabGuard;
+    private boolean handlingProfileNavigation;
+    private ProfileDraft persistedProfileDraft;
+    private long resumeAdviceContextVersion = 0L;
+    private Task<String> activeResumeAdviceTask;
     private final ObservableList<TaJobDisplay> jobItems = FXCollections.observableArrayList();
     private FilteredList<TaJobDisplay> filteredJobs;
     private final ObservableList<ApplicationDisplay> applicationItems = FXCollections.observableArrayList();
@@ -73,6 +82,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
     private TextArea jobNotesArea;
     @FXML
     private Button applyButton;
+    @FXML
+    private TextArea aiJobPreferenceField;
+    @FXML
+    private TextArea aiJobRecommendationArea;
+    @FXML
+    private TextArea aiResumeAdviceArea;
 
     @FXML
     private TableView<ApplicationDisplay> applicationTable;
@@ -98,6 +113,8 @@ public class TaDashboardController extends BaseController implements SessionAwar
     @FXML
     private Button downloadCvButton;
     @FXML
+    private Label aiFillStatusLabel;
+    @FXML
     private PasswordField currentPasswordField;
     @FXML
     private PasswordField newPasswordField;
@@ -111,12 +128,29 @@ public class TaDashboardController extends BaseController implements SessionAwar
     protected void onInit() {
         filteredJobs = new FilteredList<>(jobItems, job -> true);
         jobTable.setItems(filteredJobs);
-        jobTable.getSelectionModel().selectedItemProperty().addListener((obs, old, selected) -> updateJobDetails(selected));
+        jobTable.getSelectionModel().selectedItemProperty().addListener((obs, old, selected) -> {
+            if (old != selected) {
+                invalidateResumeAdviceContext();
+            }
+            updateJobDetails(selected);
+        });
         jobSearchField.textProperty().addListener((obs, old, value) -> applyJobFilter(value));
         applicationTable.setItems(applicationItems);
         if (tabPane != null) {
             tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-                if (suppressTabGuard || !guestMode || newTab == null) {
+                if (newTab == null || handlingProfileNavigation) {
+                    return;
+                }
+                if (!guestMode) {
+                    boolean allowSwitch = handleProfileTabSwitch(oldTab, newTab);
+                    if (!allowSwitch) {
+                        return;
+                    }
+                }
+                if (oldTab == browseJobsTab && newTab != browseJobsTab) {
+                    invalidateResumeAdviceContext();
+                }
+                if (suppressTabGuard || !guestMode) {
                     return;
                 }
                 if (newTab == myApplicationsTab || newTab == myProfileTab) {
@@ -236,6 +270,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         skillsArea.setText(ta.getSkills());
         experienceArea.setText(ta.getExperience());
         selfEvalArea.setText(ta.getSelfEvaluation());
+        persistedProfileDraft = snapshotProfileForm();
         updateCvUi(ta);
         clearPasswordFields();
     }
@@ -433,6 +468,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         ta.setSelfEvaluation(selfEvalArea.getText());
         OperationResult<Ta> result = services.profileService().updateTa(ta);
         if (result.success()) {
+            persistedProfileDraft = snapshotProfileForm();
             welcomeLabel.setText("Welcome, " + session.getDisplayName());
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
         } else {
@@ -558,5 +594,212 @@ public class TaDashboardController extends BaseController implements SessionAwar
         suppressTabGuard = true;
         tabPane.getSelectionModel().select(tab);
         suppressTabGuard = false;
+    }
+
+    private ProfileDraft snapshotProfileForm() {
+        return new ProfileDraft(
+                safeText(fullNameField.getText()).trim(),
+                safeText(phoneField.getText()).trim(),
+                safeText(majorField.getText()).trim(),
+                safeText(skillsArea.getText()).trim(),
+                safeText(experienceArea.getText()).trim(),
+                safeText(selfEvalArea.getText()).trim()
+        );
+    }
+
+    private boolean hasUnsavedProfileChanges() {
+        return persistedProfileDraft != null && !persistedProfileDraft.equals(snapshotProfileForm());
+    }
+
+    private boolean handleProfileTabSwitch(Tab oldTab, Tab newTab) {
+        if (myProfileTab == null || tabPane == null) {
+            return true;
+        }
+        if (oldTab == myProfileTab && newTab != myProfileTab) {
+            handlingProfileNavigation = true;
+            tabPane.getSelectionModel().select(myProfileTab);
+            handlingProfileNavigation = false;
+            if (hasUnsavedProfileChanges()) {
+                boolean saveNow = DialogUtil.confirmYesNo(
+                        "You have unsaved profile changes. Save before leaving this page?",
+                        navigator.getPrimaryStage()
+                );
+                if (saveNow) {
+                    handleSaveProfile();
+                } else {
+                    loadProfile();
+                }
+            }
+            handlingProfileNavigation = true;
+            tabPane.getSelectionModel().select(newTab);
+            handlingProfileNavigation = false;
+            return false;
+        }
+        if (newTab == myProfileTab) {
+            handlingProfileNavigation = true;
+            loadProfile();
+            handlingProfileNavigation = false;
+        }
+        return true;
+    }
+
+    private void invalidateResumeAdviceContext() {
+        resumeAdviceContextVersion++;
+        if (activeResumeAdviceTask != null && activeResumeAdviceTask.isRunning()) {
+            activeResumeAdviceTask.cancel(true);
+        }
+        if (aiResumeAdviceArea != null) {
+            aiResumeAdviceArea.clear();
+        }
+    }
+
+    private boolean isResumeAdviceContextValid(long contextToken, String jobIdSnapshot) {
+        if (contextToken != resumeAdviceContextVersion) {
+            return false;
+        }
+        if (tabPane == null || tabPane.getSelectionModel().getSelectedItem() != browseJobsTab) {
+            return false;
+        }
+        TaJobDisplay selected = jobTable.getSelectionModel().getSelectedItem();
+        return selected != null && selected.getJob().getJobId().equalsIgnoreCase(jobIdSnapshot);
+    }
+
+    @FXML
+    private void handleAiRecommendJobs() {
+        if (guestMode) {
+            requireLoginAndRedirect("Please sign in first.");
+            return;
+        }
+        Ta ta = session.taOptional().orElse(null);
+        if (ta == null) {
+            return;
+        }
+        List<Job> jobs = services.jobService().findOpenJobs();
+        if (jobs.isEmpty()) {
+            aiJobRecommendationArea.setText("No open jobs are available.");
+            return;
+        }
+        aiJobRecommendationArea.setText("AI is analyzing...");
+        String preference = aiJobPreferenceField == null ? "" : aiJobPreferenceField.getText();
+        Task<List<AiService.JobRecommendation>> task = new Task<>() {
+            @Override
+            protected List<AiService.JobRecommendation> call() throws Exception {
+                return services.aiService().recommendJobsForTa(ta, jobs, preference);
+            }
+        };
+        task.setOnSucceeded(evt -> {
+            List<AiService.JobRecommendation> items = task.getValue();
+            if (items == null || items.isEmpty()) {
+                aiJobRecommendationArea.setText("No AI recommendations were returned.");
+                return;
+            }
+            Map<String, Job> jobMap = jobs.stream().collect(Collectors.toMap(Job::getJobId, Function.identity(), (a, b) -> a));
+            String text = items.stream()
+                    .map(item -> {
+                        Job job = jobMap.get(item.jobId());
+                        String title = job == null ? item.jobId() : job.getJobName() + " (" + item.jobId() + ")";
+                        return "• " + title + " | Match Score: " + item.score() + "\n  " + item.reason();
+                    })
+                    .collect(Collectors.joining("\n\n"));
+            aiJobRecommendationArea.setText(text);
+        });
+        task.setOnFailed(evt -> aiJobRecommendationArea.setText("AI recommendation failed: " + task.getException().getMessage()));
+        new Thread(task, "ai-recommend-jobs").start();
+    }
+
+    @FXML
+    private void handleAiFillProfileFromCv() {
+        if (guestMode) {
+            requireLoginAndRedirect("Please sign in first.");
+            return;
+        }
+        Ta ta = session.taOptional().orElse(null);
+        if (ta == null) {
+            return;
+        }
+        if (ta.getCvPath() == null || ta.getCvPath().isBlank()) {
+            DialogUtil.error("Please upload CV first", navigator.getPrimaryStage());
+            return;
+        }
+        Path cvFile = services.fileStorageHelper().resolveCvFile(ta.getTaId(), ta.getCvPath());
+        if (!Files.isRegularFile(cvFile)) {
+            DialogUtil.error("CV file not found on disk", navigator.getPrimaryStage());
+            return;
+        }
+        if (aiFillStatusLabel != null) {
+            aiFillStatusLabel.setText("AI is filling profile fields...");
+        }
+        Task<AiService.ResumeDraft> task = new Task<>() {
+            @Override
+            protected AiService.ResumeDraft call() throws Exception {
+                String cvText = Files.readString(cvFile);
+                return services.aiService().draftResumeFromCv(ta, cvText);
+            }
+        };
+        task.setOnSucceeded(evt -> {
+            AiService.ResumeDraft draft = task.getValue();
+            if (!draft.fullName().isBlank()) fullNameField.setText(draft.fullName());
+            if (!draft.phone().isBlank()) phoneField.setText(draft.phone());
+            if (!draft.major().isBlank()) majorField.setText(draft.major());
+            if (!draft.skills().isBlank()) skillsArea.setText(draft.skills());
+            if (!draft.experience().isBlank()) experienceArea.setText(draft.experience());
+            if (!draft.selfEvaluation().isBlank()) selfEvalArea.setText(draft.selfEvaluation());
+            if (aiFillStatusLabel != null) {
+                aiFillStatusLabel.setText("Draft generated. It will be saved only after you click Save profile.");
+            }
+        });
+        task.setOnFailed(evt -> {
+            if (aiFillStatusLabel != null) {
+                aiFillStatusLabel.setText("AI fill failed.");
+            }
+            DialogUtil.error("AI fill failed: " + task.getException().getMessage(), navigator.getPrimaryStage());
+        });
+        new Thread(task, "ai-fill-profile").start();
+    }
+
+    @FXML
+    private void handleAiResumeOptimization() {
+        if (guestMode) {
+            requireLoginAndRedirect("Please sign in first.");
+            return;
+        }
+        Ta ta = session.taOptional().orElse(null);
+        TaJobDisplay display = jobTable.getSelectionModel().getSelectedItem();
+        if (ta == null || display == null) {
+            DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
+            return;
+        }
+        Job job = display.getJob();
+        long contextToken = resumeAdviceContextVersion;
+        String jobIdSnapshot = job.getJobId();
+        aiResumeAdviceArea.setText("AI is generating suggestions...");
+        Task<String> task = new Task<>() {
+            @Override
+            protected String call() throws Exception {
+                if (isCancelled()) {
+                    return "";
+                }
+                return services.aiService().suggestResumeOptimization(ta, job);
+            }
+        };
+        activeResumeAdviceTask = task;
+        task.setOnSucceeded(evt -> {
+            if (!isResumeAdviceContextValid(contextToken, jobIdSnapshot)) {
+                return;
+            }
+            aiResumeAdviceArea.setText(task.getValue());
+        });
+        task.setOnCancelled(evt -> {
+            if (isResumeAdviceContextValid(contextToken, jobIdSnapshot)) {
+                aiResumeAdviceArea.clear();
+            }
+        });
+        task.setOnFailed(evt -> {
+            if (!isResumeAdviceContextValid(contextToken, jobIdSnapshot)) {
+                return;
+            }
+            aiResumeAdviceArea.setText("AI suggestion failed: " + task.getException().getMessage());
+        });
+        new Thread(task, "ai-resume-optimize").start();
     }
 }
