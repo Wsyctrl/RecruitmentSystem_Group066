@@ -15,6 +15,7 @@ public class Job {
     private LocalDate startDate;
     private LocalDate endDate;
     private String additionalNotes;
+    private String keywords;
     private JobStatus status = JobStatus.OPEN;
 
     public String getJobId() {
@@ -95,6 +96,14 @@ public class Job {
 
     public void setAdditionalNotes(String additionalNotes) {
         this.additionalNotes = additionalNotes;
+    }
+
+    public String getKeywords() {
+        return keywords;
+    }
+
+    public void setKeywords(String keywords) {
+        this.keywords = keywords;
     }
 
     public JobStatus getStatus() {

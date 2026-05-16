@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.bupt.tarecruit.controller.InsightsDialogController"
+            styleClass="root"
+            prefWidth="1000" prefHeight="750">
+
+    <top>
+        <VBox spacing="12" styleClass="p-4">
+            <BorderPane>
+                <left>
+                    <Label text="30-Day Hiring Insights" styleClass="h2"/>
+                </left>
+                <right>
+                    <Button text="×" onAction="#handleClose" styleClass="btn-close"
+                            style="-fx-font-size: 20px; -fx-background-color: transparent; -fx-text-fill: #718096;"/>
+                </right>
+            </BorderPane>
+
+            <HBox spacing="10" styleClass="insights-metrics">
+                <VBox spacing="4" styleClass="metric-card" HBox.hgrow="ALWAYS">
+                    <Label text="Total Jobs" styleClass="metric-label"/>
+                    <Label fx:id="totalJobsLabel" text="0" styleClass="metric-value"/>
+                </VBox>
+                <VBox spacing="4" styleClass="metric-card" HBox.hgrow="ALWAYS">
+                    <Label text="Open Jobs" styleClass="metric-label"/>
+                    <Label fx:id="openJobsLabel" text="0" styleClass="metric-value metric-primary"/>
+                </VBox>
+                <VBox spacing="4" styleClass="metric-card" HBox.hgrow="ALWAYS">
+                    <Label text="Applications (30d)" styleClass="metric-label"/>
+                    <Label fx:id="applicationsLabel" text="0" styleClass="metric-value metric-info"/>
+                </VBox>
+                <VBox spacing="4" styleClass="metric-card" HBox.hgrow="ALWAYS">
+                    <Label text="Hired (30d)" styleClass="metric-label"/>
+                    <Label fx:id="hiredLabel" text="0" styleClass="metric-value metric-success"/>
+                </VBox>
+                <VBox spacing="4" styleClass="metric-card" HBox.hgrow="ALWAYS">
+                    <Label text="Hire Rate" styleClass="metric-label"/>
+                    <Label fx:id="hireRateLabel" text="0%" styleClass="metric-value metric-warning"/>
+                </VBox>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16" styleClass="p-4">
+            <!-- Charts Section - Side by Side -->
+            <HBox spacing="16">
+                <!-- Applications by Module List -->
+                <VBox spacing="8" HBox.hgrow="ALWAYS" styleClass="chart-container">
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label text="Applications by Module" styleClass="h5"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Sort by Name" onAction="#handleSortModulesByName" styleClass="btn-sm btn-outline"/>
+                        <Button text="Sort by Count" onAction="#handleSortModulesByCount" styleClass="btn-sm btn-outline"/>
+                    </HBox>
+                    <ScrollPane fitToWidth="true" prefHeight="200" VBox.vgrow="ALWAYS" styleClass="module-stats-scroll">
+                        <VBox fx:id="moduleStatsBox" spacing="6">
+                            <padding>
+                                <Insets top="4" right="4" bottom="4" left="4"/>
+                            </padding>
+                        </VBox>
+                    </ScrollPane>
+                </VBox>
+
+                <!-- Hiring Status Chart -->
+                <VBox spacing="8" HBox.hgrow="ALWAYS" styleClass="chart-container">
+                    <Label text="Hiring Status Distribution" styleClass="h5"/>
+                    <BarChart fx:id="hiringStatusChart" prefHeight="180" VBox.vgrow="ALWAYS">
+                        <xAxis>
+                            <CategoryAxis side="BOTTOM"/>
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis side="LEFT"/>
+                        </yAxis>
+                    </BarChart>
+                </VBox>
+            </HBox>
+
+            <!-- AI Insights Section -->
+            <VBox spacing="8" styleClass="insights-section" VBox.vgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label text="AI Analysis &amp; Recommendations" styleClass="h5"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Refresh" onAction="#handleRefresh" styleClass="btn-sm btn-outline"/>
+                </HBox>
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="insights-scroll">
+                    <VBox fx:id="insightsContentBox" spacing="10">
+                        <padding>
+                            <Insets top="4" right="4" bottom="4" left="4"/>
+                        </padding>
+                        <Label text="Generating AI insights, please wait..." styleClass="text-muted"/>
+                    </VBox>
+                </ScrollPane>
+            </VBox>
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox alignment="CENTER_RIGHT" styleClass="p-3">
+            <Button text="Close" onAction="#handleClose" styleClass="btn-primary"/>
+        </HBox>
+    </bottom>
+</BorderPane>

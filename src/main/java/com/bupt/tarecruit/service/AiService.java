@@ -217,7 +217,7 @@ public class AiService {
         String userPrompt = """
                 Based on the following 30-day hiring data, generate exactly 3 English insights.
                 Each insight must contain a conclusion and one action suggestion, within 2 sentences.
-                
+
                 Metrics:
                 - Applications in last 30 days: %d
                 - Hires in last 30 days: %d
@@ -225,6 +225,24 @@ public class AiService {
                 - Total jobs in history: %d
                 - Total hires in history: %d
                 """.formatted(recentApply, recentHired, openJobs, jobs.size(), hiredCount);
+        return chatText(userPrompt);
+    }
+
+    public String generateApplicantSummary(Ta ta) throws IOException, InterruptedException {
+        String userPrompt = """
+                Summarize this TA applicant in ONE line under 15 words.
+                Format: "Major in [field], skilled in [2-3 key skills]."
+                No extra text, just the summary.
+
+                Profile:
+                Major: %s
+                Skills: %s
+                Experience: %s
+                """.formatted(
+                safe(ta.getMajor()),
+                safe(ta.getSkills()),
+                safe(ta.getExperience())
+        );
         return chatText(userPrompt);
     }
 
