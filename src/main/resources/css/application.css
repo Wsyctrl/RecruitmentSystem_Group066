@@ -578,3 +578,298 @@
 .p-3 { -fx-padding: 12; }
 .p-4 { -fx-padding: 16; }
 .p-5 { -fx-padding: 20; }
+
+/* ========================================
+   Insights Dialog
+   ======================================== */
+
+.insights-metrics {
+    -fx-padding: 8 0;
+}
+
+.metric-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-padding: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 6, 0, 0, 1);
+}
+
+.metric-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #718096;
+    -fx-font-weight: 500;
+}
+
+.metric-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1a202c;
+}
+
+.metric-primary {
+    -fx-text-fill: #667eea;
+}
+
+.metric-info {
+    -fx-text-fill: #4299e1;
+}
+
+.metric-success {
+    -fx-text-fill: #48bb78;
+}
+
+.metric-warning {
+    -fx-text-fill: #ed8936;
+}
+
+.metric-danger {
+    -fx-text-fill: #f56565;
+}
+
+.chart-container {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-padding: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 6, 0, 0, 1);
+}
+
+.chart-container .chart {
+    -fx-padding: 0;
+}
+
+.chart-container .chart-title {
+    -fx-font-size: 0px;
+}
+
+/* Horizontal labels for category axis */
+.chart-container .axis-category {
+    -fx-tick-label-fill: #4a5568;
+    -fx-tick-label-font-size: 11px;
+    -fx-tick-label-gap: 3px;
+}
+
+.chart-container .axis-bottom {
+    -fx-tick-label rotation: 0;
+}
+
+.insights-scroll {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+}
+
+.insights-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.insights-scroll .scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.insights-scroll .scroll-bar .thumb {
+    -fx-background-color: #cbd5e0;
+    -fx-background-radius: 4;
+}
+
+/* ========================================
+   Module Stats List
+   ======================================== */
+
+.module-stats-scroll {
+    -fx-background-color: transparent;
+}
+
+.module-stats-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.module-stats-scroll .scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.module-stats-scroll .scroll-bar .thumb {
+    -fx-background-color: #cbd5e0;
+    -fx-background-radius: 4;
+}
+
+.module-stat-row {
+    -fx-background-color: #f7fafc;
+    -fx-background-radius: 6;
+    -fx-padding: 8 10;
+}
+
+.module-stat-row:hover {
+    -fx-background-color: #edf2f7;
+}
+
+.module-stat-name {
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #2d3748;
+}
+
+.module-stat-bar-container {
+    -fx-background-color: #e2e8f0;
+    -fx-background-radius: 3;
+    -fx-pref-height: 8;
+}
+
+.module-stat-bar-fill {
+    -fx-background-color: #667eea;
+    -fx-background-radius: 3;
+    -fx-background-insets: 0;
+}
+
+.module-stat-count {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #4a5568;
+    -fx-min-width: 50;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+.insights-section {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 6, 0, 0, 1);
+}
+
+.insight-item {
+    -fx-background-color: #f7fafc;
+    -fx-background-radius: 6;
+    -fx-padding: 12;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 0 0 0 4;
+    -fx-border-radius: 6;
+}
+
+.insight-item.positive {
+    -fx-border-color: #48bb78;
+}
+
+.insight-item.warning {
+    -fx-border-color: #ed8936;
+}
+
+.insight-item.neutral {
+    -fx-border-color: #4299e1;
+}
+
+.insight-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #2d3748;
+}
+
+.insight-content {
+    -fx-font-size: 12px;
+    -fx-text-fill: #4a5568;
+    -fx-wrap-text: true;
+}
+
+.btn-close:hover {
+    -fx-background-color: #fed7d7;
+    -fx-text-fill: #c53030;
+}
+
+/* ========================================
+   Applicant Cards
+   ======================================== */
+
+.applicant-card-container {
+    -fx-background-color: #f5f7fa;
+    -fx-padding: 12;
+}
+
+.applicant-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
+    -fx-padding: 14;
+    -fx-cursor: hand;
+    -fx-pref-width: 280;
+    -fx-pref-height: 140;
+}
+
+.applicant-card:hover {
+    -fx-border-color: #667eea;
+    -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.2), 12, 0, 0, 3);
+}
+
+.applicant-card-selected {
+    -fx-border-color: #667eea;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.25), 14, 0, 0, 4);
+}
+
+.applicant-card-hired {
+    -fx-background-color: #fffbeb;
+    -fx-border-color: #fbbf24;
+}
+
+.applicant-card-recommended {
+    -fx-border-color: #10b981;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(16,185,129,0.2), 12, 0, 0, 3);
+}
+
+.applicant-card-name {
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1a202c;
+}
+
+.applicant-card-status {
+    -fx-font-size: 11px;
+    -fx-text-fill: #718096;
+    -fx-padding: 2 6;
+    -fx-background-radius: 4;
+}
+
+.applicant-card-status.hired {
+    -fx-background-color: #fef3c7;
+    -fx-text-fill: #92400e;
+}
+
+.applicant-card-status.pending {
+    -fx-background-color: #e2e8f0;
+    -fx-text-fill: #4a5568;
+}
+
+.applicant-card-status.rejected {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #991b1b;
+}
+
+.applicant-card-summary {
+    -fx-font-size: 12px;
+    -fx-text-fill: #4a5568;
+    -fx-wrap-text: true;
+    -fx-line-spacing: 2;
+}
+
+.applicant-card-recommend-badge {
+    -fx-background-color: linear-gradient(to right, #10b981, #059669);
+    -fx-text-fill: white;
+    -fx-font-size: 10px;
+    -fx-font-weight: 600;
+    -fx-padding: 3 8;
+    -fx-background-radius: 10;
+}
+
+.applicant-card-loading {
+    -fx-opacity: 0.6;
+    -fx_cursor: wait;
+}

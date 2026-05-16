@@ -19,6 +19,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.concurrent.Task;
 
 import java.io.File;
@@ -114,12 +115,6 @@ public class TaDashboardController extends BaseController implements SessionAwar
     private Button downloadCvButton;
     @FXML
     private Label aiFillStatusLabel;
-    @FXML
-    private PasswordField currentPasswordField;
-    @FXML
-    private PasswordField newPasswordField;
-    @FXML
-    private PasswordField confirmPasswordField;
 /**
  * Performs controller-specific initialization after shared dependencies
  * have been injected. Sets up job filtering, table bindings, and selection listeners.
@@ -272,7 +267,6 @@ public class TaDashboardController extends BaseController implements SessionAwar
         selfEvalArea.setText(ta.getSelfEvaluation());
         persistedProfileDraft = snapshotProfileForm();
         updateCvUi(ta);
-        clearPasswordFields();
     }
 /**
  * Updates the CV-related UI controls according to whether
@@ -286,20 +280,6 @@ public class TaDashboardController extends BaseController implements SessionAwar
         if (downloadCvButton != null) {
             downloadCvButton.setVisible(hasCv);
             downloadCvButton.setManaged(hasCv);
-        }
-    }
-/**
- * Clears all password input fields in the profile section.
- */
-    private void clearPasswordFields() {
-        if (currentPasswordField != null) {
-            currentPasswordField.clear();
-        }
-        if (newPasswordField != null) {
-            newPasswordField.clear();
-        }
-        if (confirmPasswordField != null) {
-            confirmPasswordField.clear();
         }
     }
 /**
@@ -477,7 +457,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
     }
 
     @FXML
-    private void handleChangePassword() {
+    private void handleChangePasswordFromProfile() {
         if (guestMode) {
             requireLoginAndRedirect("Please sign in first.");
             return;
@@ -486,17 +466,38 @@ public class TaDashboardController extends BaseController implements SessionAwar
         if (ta == null) {
             return;
         }
-        String cur = currentPasswordField.getText() == null ? "" : currentPasswordField.getText();
-        String nw = newPasswordField.getText() == null ? "" : newPasswordField.getText();
-        String cf = confirmPasswordField.getText() == null ? "" : confirmPasswordField.getText();
-        OperationResult<Void> result = services.profileService()
-                .changeTaPassword(ta.getTaId(), cur, nw, cf);
-        if (result.success()) {
-            ta.setPassword(nw);
-            clearPasswordFields();
-            DialogUtil.info(result.message(), navigator.getPrimaryStage());
-        } else {
-            DialogUtil.error(result.message(), navigator.getPrimaryStage());
+
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/fxml/change-password-dialog.fxml"));
+            javafx.scene.Parent root = loader.load();
+
+            ChangePasswordDialogController controller = loader.getController();
+            controller.setServices(services);
+
+            // Create dialog stage
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Change Password");
+            dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            dialogStage.initOwner(navigator.getPrimaryStage());
+            dialogStage.setResizable(false);
+
+            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            scene.getStylesheets().add(
+                    getClass().getResource("/css/application.css").toExternalForm());
+            dialogStage.setScene(scene);
+
+            controller.setDialogStage(dialogStage);
+            controller.setTaId(ta.getTaId());
+
+            dialogStage.showAndWait();
+
+            // If password was changed, show success message
+            if (controller.isPasswordChanged()) {
+                DialogUtil.info("Password changed successfully!", navigator.getPrimaryStage());
+            }
+        } catch (Exception e) {
+            DialogUtil.error("Failed to open change password dialog: " + e.getMessage(), navigator.getPrimaryStage());
         }
     }
 

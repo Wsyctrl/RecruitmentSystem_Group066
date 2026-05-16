@@ -14,7 +14,10 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.concurrent.Task;
 
 import java.io.File;
@@ -63,6 +66,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private final ObservableList<AccountLogDisplay> accountLogItems = FXCollections.observableArrayList();
     private final ObservableList<JobLogDisplay> jobLogItems = FXCollections.observableArrayList();
 
+    // Applicant card state
+    private ApplicantDisplay selectedApplicant;
+    private final java.util.Map<String, String> applicantSummaries = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Set<String> top3ApplicantIds = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+    private boolean isTop3FilterActive = false;
+
     @FXML
     private TabPane tabPane;
     @FXML
@@ -105,6 +114,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
     @FXML
     private TextArea requirementsField;
     @FXML
+    private TextArea keywordsField;
+    @FXML
+    private Button generateKeywordsBtn;
+    @FXML
+    private Label keywordsLoadingLabel;
+    @FXML
     private TextArea notesField;
     @FXML
     private Label formStatusLabel;
@@ -118,6 +133,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
     @FXML
     private TableView<ApplicantDisplay> applicantTable;
     @FXML
+    private FlowPane applicantCardPane;
+    @FXML
+    private ScrollPane applicantCardScroll;
+    @FXML
     private Label applicantNameLabel;
     @FXML
     private Label applicantStatusLabel;
@@ -127,8 +146,6 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private TextArea aiApplicantResultArea;
     @FXML
     private TextArea aiKeywordsArea;
-    @FXML
-    private TextArea aiAdminInsightArea;
 
     @FXML
     private TextField moFullNameField;
@@ -138,12 +155,6 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private TextField moEmailField;
     @FXML
     private TextArea moModuleArea;
-    @FXML
-    private PasswordField moCurrentPasswordField;
-    @FXML
-    private PasswordField moNewPasswordField;
-    @FXML
-    private PasswordField moConfirmPasswordField;
 
     @FXML
     private Tab adminUserTab;
@@ -222,24 +233,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         });
 
         filteredApplicants = new FilteredList<>(applicantItems, item -> true);
-        applicantTable.setItems(filteredApplicants);
         applicantSearchField.textProperty().addListener((obs, old, val) -> filterApplicants(val));
-        applicantTable.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> updateApplicantDetail(val));
-
-        // Set row factory to highlight hired rows with yellow background
-        applicantTable.setRowFactory(tv -> new TableRow<>() {
-            @Override
-            protected void updateItem(ApplicantDisplay item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setStyle("");
-                } else if (item.isHired()) {
-                    setStyle("-fx-background-color: #fff9c4;"); // Light yellow
-                } else {
-                    setStyle("");
-                }
-            }
-        });
 
         positionsSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 50, 1));
         setupAdminVisibility(false);
@@ -567,8 +561,14 @@ public class MoDashboardController extends BaseController implements SessionAwar
 
     private void loadApplicants(Job job) {
         invalidateApplicantsAiContext();
+        isTop3FilterActive = false;
+        top3ApplicantIds.clear();
+        applicantSummaries.clear();
+        selectedApplicant = null;
+
         if (job == null) {
             applicantItems.clear();
+            renderApplicantCards();
             return;
         }
         List<Ta> allTa = services.adminService().findAllTa();
@@ -577,26 +577,57 @@ public class MoDashboardController extends BaseController implements SessionAwar
         applicantItems.setAll(applicationService.findActiveApplicationsForJob(job.getJobId()).stream()
                 .map(record -> new ApplicantDisplay(record, taMap.get(record.getTaId())))
                 .collect(Collectors.toList()));
-        filteredApplicants.setPredicate(item -> true);
-        if (!applicantItems.isEmpty()) {
-            applicantTable.getSelectionModel().selectFirst();
-        } else {
-            updateApplicantDetail(null);
+
+        // Pre-load summaries from cache for instant display
+        for (ApplicantDisplay applicant : applicantItems) {
+            if (applicant.getTa() != null) {
+                String cached = services.fileStorageHelper().loadSummary(applicant.getTaId());
+                if (!cached.isEmpty()) {
+                    applicantSummaries.put(applicant.getTaId(), cached);
+                }
+            }
         }
+
+        filteredApplicants.setPredicate(item -> true);
+        renderApplicantCards();
+        generateAllSummariesInBackground();
     }
 
     private void filterApplicants(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             filteredApplicants.setPredicate(item -> true);
-            return;
+        } else {
+            String lower = keyword.toLowerCase().trim();
+            filteredApplicants.setPredicate(applicant -> {
+                // Search in TA ID (case-insensitive)
+                if (applicant.getTaId().toLowerCase().contains(lower)) {
+                    return true;
+                }
+                // Search in name (case-insensitive)
+                if (applicant.getTaName() != null && applicant.getTaName().toLowerCase().contains(lower)) {
+                    return true;
+                }
+                // Search in phone (case-insensitive)
+                if (applicant.getPhone() != null && applicant.getPhone().toLowerCase().contains(lower)) {
+                    return true;
+                }
+                // Search in email (case-insensitive)
+                if (applicant.getEmail() != null && applicant.getEmail().toLowerCase().contains(lower)) {
+                    return true;
+                }
+                // Search in status (case-insensitive)
+                if (applicant.getStatus() != null && applicant.getStatus().toLowerCase().contains(lower)) {
+                    return true;
+                }
+                // Search in major (case-insensitive)
+                if (applicant.getTa() != null && applicant.getTa().getMajor() != null
+                        && applicant.getTa().getMajor().toLowerCase().contains(lower)) {
+                    return true;
+                }
+                return false;
+            });
         }
-        String lower = keyword.toLowerCase();
-        String raw = keyword.trim();
-        filteredApplicants.setPredicate(applicant -> applicant.getTaId().toLowerCase().contains(lower)
-                || applicant.getTaName().contains(raw)
-                || (applicant.getPhone() != null && applicant.getPhone().toLowerCase().contains(lower))
-                || (applicant.getEmail() != null && applicant.getEmail().toLowerCase().contains(lower))
-                || applicant.getStatus().contains(raw));
+        renderApplicantCards();
     }
 
     private List<ApplicantDisplay> currentApplicants() {
@@ -647,37 +678,6 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
-    private void updateApplicantDetail(ApplicantDisplay display) {
-        if (display == null || display.getTa() == null) {
-            applicantNameLabel.setText("None selected");
-            applicantStatusLabel.setText("-");
-            applicantProfileArea.clear();
-            return;
-        }
-        Ta ta = display.getTa();
-        applicantNameLabel.setText(ta.getDisplayLabel() + "  (" + ta.getTaId() + ")");
-        applicantStatusLabel.setText(display.getStatus());
-        applicantProfileArea.setText("""
-Name: %s
-Email: %s
-Phone: %s
-Major: %s
-Skills: %s
-Experience: %s
-Self-eval: %s
-CV: %s
-""".formatted(
-                ta.getDisplayLabel(),
-                safeText(ta.getEmail()),
-                safeText(ta.getPhone()),
-                safeText(ta.getMajor()),
-                safeText(ta.getSkills()),
-                safeText(ta.getExperience()),
-                safeText(ta.getSelfEvaluation()),
-                ta.getCvPath() != null && !ta.getCvPath().isBlank() ? "Uploaded" : "None"
-        ));
-    }
-
     private void loadProfile() {
         Mo mo = session.moOptional().orElse(null);
         if (mo == null) {
@@ -687,15 +687,6 @@ CV: %s
         moPhoneField.setText(mo.getPhone());
         moEmailField.setText(mo.getEmail());
         moModuleArea.setText(mo.getResponsibleModules());
-        if (moCurrentPasswordField != null) {
-            moCurrentPasswordField.clear();
-        }
-        if (moNewPasswordField != null) {
-            moNewPasswordField.clear();
-        }
-        if (moConfirmPasswordField != null) {
-            moConfirmPasswordField.clear();
-        }
     }
 
     private void loadAdminData() {
@@ -742,6 +733,7 @@ CV: %s
         startDatePicker.setValue(null);
         endDatePicker.setValue(null);
         requirementsField.clear();
+        keywordsField.clear();
         notesField.clear();
         formJobIdLabel.setText("New job");
         formStatusLabel.setText("");
@@ -755,6 +747,7 @@ CV: %s
         startDatePicker.setValue(job.getStartDate());
         endDatePicker.setValue(job.getEndDate());
         requirementsField.setText(safeText(job.getRequirements()));
+        keywordsField.setText(safeText(job.getKeywords()));
         notesField.setText(safeText(job.getAdditionalNotes()));
         formJobIdLabel.setText("Edit: " + job.getJobId());
     }
@@ -769,6 +762,7 @@ CV: %s
             job.setStartDate(startDatePicker.getValue());
             job.setEndDate(endDatePicker.getValue());
             job.setRequirements(requirementsField.getText());
+            job.setKeywords(keywordsField.getText());
             job.setAdditionalNotes(notesField.getText());
             job.setMoId(currentMoId());
             OperationResult<Job> result = services.jobService().upsertJob(job);
@@ -867,266 +861,60 @@ CV: %s
     }
 
     @FXML
-    private void handleHireApplicant() {
-        ApplicantDisplay display = applicantTable.getSelectionModel().getSelectedItem();
-        if (display == null) {
-            DialogUtil.error("Please select an applicant", navigator.getPrimaryStage());
-            return;
-        }
-        ApplicationRecord record = display.getRecord();
-        OperationResult<Void> result;
-        boolean promptSimilarAfterIntent = false;
-
-        // If already hired, unhire (back to pending)
-        if (record.getStatus() == ApplicationStatus.HIRED) {
-            if (DialogUtil.confirm("Unhire this applicant? Status will change back to Pending.", navigator.getPrimaryStage())) {
-                result = services.applicationService().unhireApplicant(record.getApplyId());
-            } else {
-                return;
-            }
-        } else {
-            if (DialogUtil.confirm("Hire this applicant?", navigator.getPrimaryStage())) {
-                Optional<Job> currentJobOpt = services.jobService().findById(record.getJobId());
-                if (currentJobOpt.isEmpty()) {
-                    DialogUtil.error("Job not found", navigator.getPrimaryStage());
-                    return;
-                }
-                List<Job> overlappingJobs = services.applicationService()
-                        .findOverlappingHiredJobs(record.getTaId(), record.getJobId());
-                if (overlappingJobs.size() >= WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD) {
-                    String warning = buildConcurrentHireWarning(currentJobOpt.get(), overlappingJobs);
-                    if (!DialogUtil.confirmYesNo(warning, navigator.getPrimaryStage())) {
-                        promptSimilarAfterIntent = true;
-                        result = OperationResult.success(null, "Hiring cancelled based on workload warning.");
-                        if (promptSimilarAfterIntent) {
-                            promptFindSimilarByBenchmark(record);
-                        }
-                        return;
-                    }
-                }
-                result = services.applicationService().hireApplicant(record.getApplyId());
-                if (result.success()) {
-                    promptSimilarAfterIntent = true;
-                }
-            } else {
-                return;
-            }
-        }
-
-        if (result.success()) {
-            DialogUtil.info(result.message(), navigator.getPrimaryStage());
-            refreshMyJobs();
-            loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
-            if (promptSimilarAfterIntent) {
-                promptFindSimilarByBenchmark(record);
-            }
-        } else {
-            DialogUtil.error(result.message(), navigator.getPrimaryStage());
-        }
-    }
-
-    @FXML
-    private void handleRejectApplicant() {
-        ApplicantDisplay display = applicantTable.getSelectionModel().getSelectedItem();
-        if (display == null) {
-            DialogUtil.error("Please select an applicant", navigator.getPrimaryStage());
-            return;
-        }
-        ApplicationRecord record = display.getRecord();
-        OperationResult<Void> result;
-        // If currently rejected, unreject (back to pending)
-        if (record.getStatus() == ApplicationStatus.REJECTED) {
-            result = services.applicationService().unrejectApplicant(record.getApplyId());
-        } else {
-            result = services.applicationService().rejectApplicant(record.getApplyId());
-        }
-        if (result.success()) {
-            DialogUtil.info(result.message(), navigator.getPrimaryStage());
-            loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
-        } else {
-            DialogUtil.error(result.message(), navigator.getPrimaryStage());
-        }
-    }
-
-    @FXML
-    private void handleDownloadCv() {
-        ApplicantDisplay display = applicantTable.getSelectionModel().getSelectedItem();
-        if (display == null || display.getTa() == null) {
-            DialogUtil.error("Please select an applicant first", navigator.getPrimaryStage());
-            return;
-        }
-        Ta ta = display.getTa();
-        Path source = services.fileStorageHelper().resolveCvFile(ta.getTaId(), ta.getCvPath());
-        if (!Files.isRegularFile(source)) {
-            DialogUtil.error("CV file not found. The applicant may not have uploaded a CV yet.", navigator.getPrimaryStage());
-            return;
-        }
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialFileName(ta.getTaId() + "_cv.txt");
-        File dest = fileChooser.showSaveDialog(navigator.getPrimaryStage());
-        if (dest == null) {
-            return;
-        }
-        try {
-            Files.copy(source, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            DialogUtil.info("CV saved to: " + dest.getAbsolutePath(), navigator.getPrimaryStage());
-        } catch (IOException e) {
-            DialogUtil.error("Download failed: " + e.getMessage(), navigator.getPrimaryStage());
-        }
-    }
-
-    @FXML
     private void handleRefreshApplicants() {
         invalidateApplicantsAiContext();
         loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
     }
 
     @FXML
-    private void handleAiRecommendApplicants() {
-        Job job = jobSelector.getSelectionModel().getSelectedItem();
-        if (job == null) {
-            DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
-            return;
-        }
-        List<ApplicantDisplay> applicants = currentApplicants();
-        if (applicants.isEmpty()) {
-            aiApplicantResultArea.setText("There are no applicants for the current job.");
-            return;
-        }
-        long contextToken = captureApplicantsAiContext();
-        String jobIdSnapshot = job.getJobId();
-        aiApplicantResultArea.setText("AI is ranking applicants...");
-        Task<List<AiService.ApplicantRecommendation>> task = new Task<>() {
-            @Override
-            protected List<AiService.ApplicantRecommendation> call() throws Exception {
-                if (isCancelled()) {
-                    return List.of();
-                }
-                return services.aiService().recommendApplicantsForJob(job, applicants);
-            }
-        };
-        activeRecommendApplicantsTask = task;
-        task.setOnSucceeded(evt -> {
-            if (!isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
-                return;
-            }
-            aiApplicantResultArea.setText(formatApplicantRecommendations(task.getValue()));
-        });
-        task.setOnCancelled(evt -> {
-            if (isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
-                aiApplicantResultArea.clear();
-            }
-        });
-        task.setOnFailed(evt -> aiApplicantResultArea.setText("AI ranking failed: " + task.getException().getMessage()));
-        new Thread(task, "ai-recommend-applicants").start();
-    }
-
-    private void promptFindSimilarByBenchmark(ApplicationRecord benchmarkRecord) {
-        boolean shouldSearch = DialogUtil.confirmYesNo(
-                "Do you want to find similar applicants using this candidate as the benchmark?",
-                navigator.getPrimaryStage()
-        );
-        if (!shouldSearch) {
-            return;
-        }
-        Job job = services.jobService().findById(benchmarkRecord.getJobId()).orElse(null);
-        if (job == null) {
-            DialogUtil.error("Job not found for similarity search.", navigator.getPrimaryStage());
-            return;
-        }
-        Ta benchmarkTa = services.profileService().findTa(benchmarkRecord.getTaId()).orElse(null);
-        if (benchmarkTa == null) {
-            DialogUtil.error("Benchmark applicant profile does not exist.", navigator.getPrimaryStage());
-            return;
-        }
-        List<ApplicantDisplay> applicants = currentApplicants();
-        Job currentJob = jobSelector.getSelectionModel().getSelectedItem();
-        if (currentJob == null) {
-            return;
-        }
-        long contextToken = captureApplicantsAiContext();
-        String jobIdSnapshot = currentJob.getJobId();
-        aiApplicantResultArea.setText("AI is searching similar applicants...");
-        Task<List<AiService.ApplicantRecommendation>> task = new Task<>() {
-            @Override
-            protected List<AiService.ApplicantRecommendation> call() throws Exception {
-                if (isCancelled()) {
-                    return List.of();
-                }
-                return services.aiService().findSimilarApplicants(job, benchmarkTa, applicants);
-            }
-        };
-        activeSimilarApplicantsTask = task;
-        task.setOnSucceeded(evt -> {
-            if (!isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
-                return;
-            }
-            aiApplicantResultArea.setText(formatApplicantRecommendations(task.getValue()));
-        });
-        task.setOnCancelled(evt -> {
-            if (isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
-                aiApplicantResultArea.clear();
-            }
-        });
-        task.setOnFailed(evt -> aiApplicantResultArea.setText("AI search failed: " + task.getException().getMessage()));
-        new Thread(task, "ai-find-similar").start();
-    }
-
-    @FXML
-    private void handleAiGenerateJobKeywords() {
-        Job job = jobSelector.getSelectionModel().getSelectedItem();
-        if (job == null) {
-            DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
-            return;
-        }
-        long contextToken = captureApplicantsAiContext();
-        String jobIdSnapshot = job.getJobId();
-        aiKeywordsArea.setText("AI is generating keywords...");
-        Task<List<String>> task = new Task<>() {
-            @Override
-            protected List<String> call() throws Exception {
-                if (isCancelled()) {
-                    return List.of();
-                }
-                return services.aiService().generateJobKeywords(job);
-            }
-        };
-        activeKeywordTask = task;
-        task.setOnSucceeded(evt -> {
-            if (!isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
-                return;
-            }
-            aiKeywordsArea.setText(task.getValue().stream()
-                    .map(k -> "• " + k)
-                    .collect(Collectors.joining("\n")));
-        });
-        task.setOnCancelled(evt -> {
-            if (isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
-                aiKeywordsArea.clear();
-            }
-        });
-        task.setOnFailed(evt -> aiKeywordsArea.setText("Keyword generation failed: " + task.getException().getMessage()));
-        new Thread(task, "ai-job-keywords").start();
+    private void handleClearApplicantSearch() {
+        applicantSearchField.clear();
+        filterApplicants(null);
     }
 
     @FXML
     private void handleAiGenerateInsights() {
-        aiAdminInsightArea.setText("AI is analyzing the last 30 days...");
-        Task<String> task = new Task<>() {
-            @Override
-            protected String call() throws Exception {
-                List<Job> jobs = services.jobService().findAllJobs();
-                List<ApplicationRecord> applications = jobs.stream()
-                        .flatMap(job -> services.applicationService().findByJob(job.getJobId()).stream())
-                        .collect(Collectors.toList());
-                int hiredCount = (int) applications.stream().filter(ApplicationRecord::isHired).count();
-                int openJobs = (int) jobs.stream().filter(Job::isOpen).count();
-                return services.aiService().generate30DayInsights(jobs, applications, hiredCount, openJobs);
+        showInsightsDialog();
+    }
+
+    private void showInsightsDialog() {
+        try {
+            java.net.URL fxmlUrl = getClass().getResource("/fxml/insights-dialog.fxml");
+            if (fxmlUrl == null) {
+                DialogUtil.error("Cannot find insights-dialog.fxml resource", navigator.getPrimaryStage());
+                return;
             }
-        };
-        task.setOnSucceeded(evt -> aiAdminInsightArea.setText(task.getValue()));
-        task.setOnFailed(evt -> aiAdminInsightArea.setText("Insight generation failed: " + task.getException().getMessage()));
-        new Thread(task, "ai-admin-insights").start();
+
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(fxmlUrl);
+            javafx.scene.Parent root = loader.load();
+
+            InsightsDialogController controller = loader.getController();
+            if (controller == null) {
+                DialogUtil.error("Failed to load insights controller", navigator.getPrimaryStage());
+                return;
+            }
+            controller.setServices(services);
+
+            // Create dialog stage
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("30-Day Hiring Insights");
+            dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            dialogStage.initOwner(navigator.getPrimaryStage());
+            dialogStage.setResizable(false);
+
+            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            scene.getStylesheets().add(
+                    getClass().getResource("/css/application.css").toExternalForm());
+            dialogStage.setScene(scene);
+
+            controller.setDialogStage(dialogStage);
+            controller.loadData();
+
+            dialogStage.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+            DialogUtil.error("Failed to open insights: " + e.getClass().getSimpleName() + " - " + e.getMessage(), navigator.getPrimaryStage());
+        }
     }
 
     @FXML
@@ -1148,24 +936,43 @@ CV: %s
     }
 
     @FXML
-    private void handleChangeMoPassword() {
+    private void handleChangePasswordFromProfile() {
         Mo mo = session.moOptional().orElse(null);
         if (mo == null) {
             return;
         }
-        String cur = moCurrentPasswordField.getText() == null ? "" : moCurrentPasswordField.getText();
-        String nw = moNewPasswordField.getText() == null ? "" : moNewPasswordField.getText();
-        String cf = moConfirmPasswordField.getText() == null ? "" : moConfirmPasswordField.getText();
-        OperationResult<Void> result = services.profileService()
-                .changeMoPassword(mo.getMoId(), cur, nw, cf);
-        if (result.success()) {
-            mo.setPassword(nw);
-            moCurrentPasswordField.clear();
-            moNewPasswordField.clear();
-            moConfirmPasswordField.clear();
-            DialogUtil.info(result.message(), navigator.getPrimaryStage());
-        } else {
-            DialogUtil.error(result.message(), navigator.getPrimaryStage());
+
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/fxml/change-password-dialog.fxml"));
+            javafx.scene.Parent root = loader.load();
+
+            ChangePasswordDialogController controller = loader.getController();
+            controller.setServices(services);
+            controller.setMoId(mo.getMoId());
+
+            // Create dialog stage
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Change Password");
+            dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            dialogStage.initOwner(navigator.getPrimaryStage());
+            dialogStage.setResizable(false);
+
+            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            scene.getStylesheets().add(
+                    getClass().getResource("/css/application.css").toExternalForm());
+            dialogStage.setScene(scene);
+
+            controller.setDialogStage(dialogStage);
+
+            dialogStage.showAndWait();
+
+            // If password was changed, show success message
+            if (controller.isPasswordChanged()) {
+                DialogUtil.info("Password changed successfully!", navigator.getPrimaryStage());
+            }
+        } catch (Exception e) {
+            DialogUtil.error("Failed to open change password dialog: " + e.getMessage(), navigator.getPrimaryStage());
         }
     }
 
@@ -1415,5 +1222,444 @@ CV: %s
     @FXML
     private void handleRefreshAccountLogs() {
         refreshAccountLogs();
+    }
+
+    // ========================================
+    // Applicant Card Methods
+    // ========================================
+
+    private void renderApplicantCards() {
+        if (applicantCardPane == null) {
+            return;
+        }
+        applicantCardPane.getChildren().clear();
+
+        // Get the filtered applicants and optionally sort by top 3
+        List<ApplicantDisplay> toRender = new java.util.ArrayList<>(filteredApplicants);
+
+        if (isTop3FilterActive && !top3ApplicantIds.isEmpty()) {
+            toRender.sort((a, b) -> {
+                boolean aTop = top3ApplicantIds.contains(a.getTaId());
+                boolean bTop = top3ApplicantIds.contains(b.getTaId());
+                if (aTop && !bTop) return -1;
+                if (!aTop && bTop) return 1;
+                return 0;
+            });
+        }
+
+        for (ApplicantDisplay applicant : toRender) {
+            applicantCardPane.getChildren().add(createApplicantCard(applicant));
+        }
+    }
+
+    private javafx.scene.layout.VBox createApplicantCard(ApplicantDisplay applicant) {
+        javafx.scene.layout.VBox card = new javafx.scene.layout.VBox();
+        card.setSpacing(8);
+        card.getStyleClass().addAll("applicant-card");
+
+        if (applicant.isHired()) {
+            card.getStyleClass().add("applicant-card-hired");
+        }
+        if (top3ApplicantIds.contains(applicant.getTaId())) {
+            card.getStyleClass().add("applicant-card-recommended");
+        }
+        if (selectedApplicant != null && selectedApplicant.getTaId().equals(applicant.getTaId())) {
+            card.getStyleClass().add("applicant-card-selected");
+        }
+
+        // Header with name and status
+        javafx.scene.layout.HBox header = new javafx.scene.layout.HBox();
+        header.setSpacing(8);
+        header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        Label nameLabel = new Label(applicant.getTaName());
+        nameLabel.getStyleClass().add("applicant-card-name");
+
+        Label statusLabel = new Label(applicant.getStatus());
+        statusLabel.getStyleClass().addAll("applicant-card-status");
+        if (applicant.isHired()) {
+            statusLabel.getStyleClass().add("hired");
+        } else if (applicant.getStatus().equalsIgnoreCase("Rejected")) {
+            statusLabel.getStyleClass().add("rejected");
+        } else {
+            statusLabel.getStyleClass().add("pending");
+        }
+
+        header.getChildren().addAll(nameLabel, statusLabel);
+
+        // AI Summary
+        String summary = applicantSummaries.get(applicant.getTaId());
+        Label summaryLabel = new Label(summary != null ? summary : "Analyzing profile...");
+        summaryLabel.getStyleClass().add("applicant-card-summary");
+        summaryLabel.setWrapText(true);
+
+        // Recommend badge
+        javafx.scene.layout.VBox content = new javafx.scene.layout.VBox();
+        content.setSpacing(6);
+        content.getChildren().add(header);
+
+        if (top3ApplicantIds.contains(applicant.getTaId())) {
+            Label badge = new Label("★ TOP MATCH");
+            badge.getStyleClass().add("applicant-card-recommend-badge");
+            content.getChildren().add(badge);
+        }
+
+        content.getChildren().add(summaryLabel);
+
+        card.getChildren().add(content);
+
+        // Click handler
+        card.setOnMouseClicked(e -> {
+            selectedApplicant = applicant;
+            updateApplicantDetail(applicant);
+            renderApplicantCards();
+        });
+
+        return card;
+    }
+
+    private void generateAllSummariesInBackground() {
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                for (ApplicantDisplay applicant : applicantItems) {
+                    if (isCancelled()) break;
+                    if (applicant.getTa() == null) continue;
+                    String taId = applicant.getTaId();
+
+                    // Skip if already loaded
+                    if (applicantSummaries.containsKey(taId)) continue;
+
+                    // Try loading from cache first
+                    String cached = services.fileStorageHelper().loadSummary(taId);
+                    if (!cached.isEmpty()) {
+                        applicantSummaries.put(taId, cached);
+                        javafx.application.Platform.runLater(() -> renderApplicantCards());
+                        continue;
+                    }
+
+                    // Generate new summary
+                    try {
+                        String summary = services.aiService().generateApplicantSummary(applicant.getTa());
+                        applicantSummaries.put(taId, summary);
+                        // Save to cache
+                        services.fileStorageHelper().saveSummary(taId, summary);
+                        javafx.application.Platform.runLater(() -> renderApplicantCards());
+                    } catch (Exception ex) {
+                        // Fallback summary
+                        String fallback = applicant.getTa().getMajor() + " major with skills in " +
+                                (applicant.getTa().getSkills() != null && !applicant.getTa().getSkills().isBlank()
+                                        ? applicant.getTa().getSkills().split(",")[0] : "various areas");
+                        applicantSummaries.put(taId, fallback);
+                        javafx.application.Platform.runLater(() -> renderApplicantCards());
+                    }
+                }
+                return null;
+            }
+        };
+        new Thread(task, "applicant-summary-generator").start();
+    }
+
+    @FXML
+    private void handleAiTop3Filter() {
+        Job job = jobSelector.getSelectionModel().getSelectedItem();
+        if (job == null) {
+            DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
+            return;
+        }
+        List<ApplicantDisplay> applicants = currentApplicants();
+        if (applicants.isEmpty()) {
+            DialogUtil.error("No applicants for this job", navigator.getPrimaryStage());
+            return;
+        }
+
+        aiKeywordsArea.setText("AI is selecting top 3 candidates...");
+        Task<List<AiService.ApplicantRecommendation>> task = new Task<>() {
+            @Override
+            protected List<AiService.ApplicantRecommendation> call() throws Exception {
+                return services.aiService().recommendApplicantsForJob(job, applicants);
+            }
+        };
+
+        task.setOnSucceeded(evt -> {
+            List<AiService.ApplicantRecommendation> recommendations = task.getValue();
+            top3ApplicantIds.clear();
+            if (recommendations.size() >= 3) {
+                for (int i = 0; i < 3; i++) {
+                    top3ApplicantIds.add(recommendations.get(i).taId());
+                }
+            } else {
+                for (AiService.ApplicantRecommendation rec : recommendations) {
+                    top3ApplicantIds.add(rec.taId());
+                }
+            }
+            isTop3FilterActive = true;
+
+            // Apply current search filter with reordering
+            filterApplicants(applicantSearchField.getText());
+
+            StringBuilder sb = new StringBuilder("Top Candidates:\n\n");
+            for (int i = 0; i < Math.min(3, recommendations.size()); i++) {
+                AiService.ApplicantRecommendation rec = recommendations.get(i);
+                sb.append(String.format("%d. %s (Score: %d)\n   %s\n\n",
+                        i + 1, rec.taId(), rec.score(), rec.reason()));
+            }
+            aiKeywordsArea.setText(sb.toString());
+        });
+
+        task.setOnFailed(evt -> {
+            aiKeywordsArea.setText("AI selection failed: " + task.getException().getMessage());
+        });
+
+        new Thread(task, "ai-top3-filter").start();
+    }
+
+    private void updateApplicantDetail(ApplicantDisplay display) {
+        if (display == null || display.getTa() == null) {
+            applicantNameLabel.setText("None selected");
+            applicantStatusLabel.setText("-");
+            applicantProfileArea.clear();
+            return;
+        }
+        Ta ta = display.getTa();
+        applicantNameLabel.setText(ta.getDisplayLabel() + "  (" + ta.getTaId() + ")");
+        applicantStatusLabel.setText(display.getStatus());
+        applicantProfileArea.setText("""
+Name: %s
+Email: %s
+Phone: %s
+Major: %s
+Skills: %s
+Experience: %s
+Self-eval: %s
+CV: %s
+""".formatted(
+                ta.getDisplayLabel(),
+                safeText(ta.getEmail()),
+                safeText(ta.getPhone()),
+                safeText(ta.getMajor()),
+                safeText(ta.getSkills()),
+                safeText(ta.getExperience()),
+                safeText(ta.getSelfEvaluation()),
+                ta.getCvPath() != null && !ta.getCvPath().isBlank() ? "Uploaded" : "None"
+        ));
+    }
+
+    @FXML
+    private void handleHireApplicant() {
+        if (selectedApplicant == null) {
+            DialogUtil.error("Please select an applicant first", navigator.getPrimaryStage());
+            return;
+        }
+        ApplicantDisplay display = selectedApplicant;
+        ApplicationRecord record = display.getRecord();
+        OperationResult<Void> result;
+
+        if (record.getStatus() == ApplicationStatus.HIRED) {
+            if (DialogUtil.confirm("Unhire this applicant? Status will change back to Pending.", navigator.getPrimaryStage())) {
+                result = services.applicationService().unhireApplicant(record.getApplyId());
+            } else {
+                return;
+            }
+        } else {
+            if (DialogUtil.confirm("Hire this applicant?", navigator.getPrimaryStage())) {
+                Optional<Job> currentJobOpt = services.jobService().findById(record.getJobId());
+                if (currentJobOpt.isEmpty()) {
+                    DialogUtil.error("Job not found", navigator.getPrimaryStage());
+                    return;
+                }
+                List<Job> overlappingJobs = services.applicationService()
+                        .findOverlappingHiredJobs(record.getTaId(), record.getJobId());
+                if (overlappingJobs.size() >= WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD) {
+                    String warning = buildConcurrentHireWarning(currentJobOpt.get(), overlappingJobs);
+                    if (!DialogUtil.confirmYesNo(warning, navigator.getPrimaryStage())) {
+                        return;
+                    }
+                }
+                result = services.applicationService().hireApplicant(record.getApplyId());
+            } else {
+                return;
+            }
+        }
+
+        if (result.success()) {
+            DialogUtil.info(result.message(), navigator.getPrimaryStage());
+            refreshMyJobs();
+            loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
+        } else {
+            DialogUtil.error(result.message(), navigator.getPrimaryStage());
+        }
+    }
+
+    @FXML
+    private void handleRejectApplicant() {
+        if (selectedApplicant == null) {
+            DialogUtil.error("Please select an applicant first", navigator.getPrimaryStage());
+            return;
+        }
+        ApplicantDisplay display = selectedApplicant;
+        ApplicationRecord record = display.getRecord();
+        OperationResult<Void> result;
+        if (record.getStatus() == ApplicationStatus.REJECTED) {
+            result = services.applicationService().unrejectApplicant(record.getApplyId());
+        } else {
+            result = services.applicationService().rejectApplicant(record.getApplyId());
+        }
+        if (result.success()) {
+            DialogUtil.info(result.message(), navigator.getPrimaryStage());
+            loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
+        } else {
+            DialogUtil.error(result.message(), navigator.getPrimaryStage());
+        }
+    }
+
+    @FXML
+    private void handleDownloadCv() {
+        if (selectedApplicant == null || selectedApplicant.getTa() == null) {
+            DialogUtil.error("Please select an applicant first", navigator.getPrimaryStage());
+            return;
+        }
+        ApplicantDisplay display = selectedApplicant;
+        Ta ta = display.getTa();
+        Path source = services.fileStorageHelper().resolveCvFile(ta.getTaId(), ta.getCvPath());
+        if (!Files.isRegularFile(source)) {
+            DialogUtil.error("CV file not found", navigator.getPrimaryStage());
+            return;
+        }
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialFileName(ta.getTaId() + "_cv.txt");
+        File dest = fileChooser.showSaveDialog(navigator.getPrimaryStage());
+        if (dest == null) {
+            return;
+        }
+        try {
+            Files.copy(source, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            DialogUtil.info("CV saved to: " + dest.getAbsolutePath(), navigator.getPrimaryStage());
+        } catch (IOException e) {
+            DialogUtil.error("Download failed: " + e.getMessage(), navigator.getPrimaryStage());
+        }
+    }
+
+    @FXML
+    private void handleAiGenerateJobKeywords() {
+        Job job = jobSelector.getSelectionModel().getSelectedItem();
+        if (job == null) {
+            DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
+            return;
+        }
+        long contextToken = captureApplicantsAiContext();
+        String jobIdSnapshot = job.getJobId();
+        aiKeywordsArea.setText("AI is generating keywords...");
+        Task<List<String>> task = new Task<>() {
+            @Override
+            protected List<String> call() throws Exception {
+                if (isCancelled()) {
+                    return List.of();
+                }
+                return services.aiService().generateJobKeywords(job);
+            }
+        };
+        activeKeywordTask = task;
+        task.setOnSucceeded(evt -> {
+            if (!isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
+                return;
+            }
+            aiKeywordsArea.setText(task.getValue().stream()
+                    .map(k -> "• " + k)
+                    .collect(Collectors.joining("\n")));
+        });
+        task.setOnCancelled(evt -> {
+            if (isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
+                aiKeywordsArea.clear();
+            }
+        });
+        task.setOnFailed(evt -> aiKeywordsArea.setText("Keyword generation failed: " + task.getException().getMessage()));
+        new Thread(task, "ai-job-keywords").start();
+    }
+
+    @FXML
+    private void handleAiRecommendApplicants() {
+        Job job = jobSelector.getSelectionModel().getSelectedItem();
+        if (job == null) {
+            DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
+            return;
+        }
+        List<ApplicantDisplay> applicants = currentApplicants();
+        if (applicants.isEmpty()) {
+            aiApplicantResultArea.setText("There are no applicants for the current job.");
+            return;
+        }
+        long contextToken = captureApplicantsAiContext();
+        String jobIdSnapshot = job.getJobId();
+        aiApplicantResultArea.setText("AI is ranking applicants...");
+        Task<List<AiService.ApplicantRecommendation>> task = new Task<>() {
+            @Override
+            protected List<AiService.ApplicantRecommendation> call() throws Exception {
+                if (isCancelled()) {
+                    return List.of();
+                }
+                return services.aiService().recommendApplicantsForJob(job, applicants);
+            }
+        };
+        activeRecommendApplicantsTask = task;
+        task.setOnSucceeded(evt -> {
+            if (!isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
+                return;
+            }
+            aiApplicantResultArea.setText(formatApplicantRecommendations(task.getValue()));
+        });
+        task.setOnCancelled(evt -> {
+            if (isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
+                aiApplicantResultArea.clear();
+            }
+        });
+        task.setOnFailed(evt -> aiApplicantResultArea.setText("AI ranking failed: " + task.getException().getMessage()));
+        new Thread(task, "ai-recommend-applicants").start();
+    }
+
+    @FXML
+    private void handleGenerateJobKeywords() {
+        String requirements = requirementsField.getText();
+        String notes = notesField.getText();
+        String moduleName = moduleField.getText();
+        String jobName = jobNameField.getText();
+
+        if (requirements == null || requirements.isBlank()) {
+            DialogUtil.error("Please enter job requirements first", navigator.getPrimaryStage());
+            return;
+        }
+
+        generateKeywordsBtn.setDisable(true);
+        keywordsLoadingLabel.setVisible(true);
+
+        Task<List<String>> task = new Task<>() {
+            @Override
+            protected List<String> call() throws Exception {
+                // Create a temporary Job object for AI analysis
+                Job tempJob = new Job();
+                tempJob.setJobName(jobName);
+                tempJob.setModuleName(moduleName);
+                tempJob.setRequirements(requirements);
+                tempJob.setAdditionalNotes(notes);
+                return services.aiService().generateJobKeywords(tempJob);
+            }
+        };
+
+        task.setOnSucceeded(evt -> {
+            List<String> keywords = task.getValue();
+            keywordsField.setText(keywords.stream()
+                    .map(k -> "• " + k)
+                    .collect(Collectors.joining("\n")));
+            generateKeywordsBtn.setDisable(false);
+            keywordsLoadingLabel.setVisible(false);
+        });
+
+        task.setOnFailed(evt -> {
+            DialogUtil.error("Failed to generate keywords: " + task.getException().getMessage(), navigator.getPrimaryStage());
+            generateKeywordsBtn.setDisable(false);
+            keywordsLoadingLabel.setVisible(false);
+        });
+
+        new Thread(task, "job-keywords-generator").start();
     }
 }

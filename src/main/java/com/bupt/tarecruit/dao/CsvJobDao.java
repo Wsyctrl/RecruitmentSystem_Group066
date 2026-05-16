@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public class CsvJobDao implements JobDao {
 
-    private static final String[] HEADER = {"job_id", "job_name", "mo_id", "number_of_positions", "module_name", "requirements", "start_date", "end_date", "additional_notes", "status"};
+    private static final String[] HEADER = {"job_id", "job_name", "mo_id", "number_of_positions", "module_name", "requirements", "start_date", "end_date", "additional_notes", "keywords", "status"};
     private final Path filePath;
 
     public CsvJobDao(Path filePath) {
@@ -66,7 +66,8 @@ public class CsvJobDao implements JobDao {
         DateTimeUtil.parseDate(rowAt(row, 6)).ifPresent(job::setStartDate);
         DateTimeUtil.parseDate(rowAt(row, 7)).ifPresent(job::setEndDate);
         job.setAdditionalNotes(rowAt(row, 8));
-        job.setStatus(JobStatus.fromCode(parseInt(rowAt(row, 9))));
+        job.setKeywords(rowAt(row, 9));
+        job.setStatus(JobStatus.fromCode(parseInt(rowAt(row, 10))));
         return job;
     }
 
@@ -81,6 +82,7 @@ public class CsvJobDao implements JobDao {
                 DateTimeUtil.formatDate(job.getStartDate()),
                 DateTimeUtil.formatDate(job.getEndDate()),
                 emptyIfNull(job.getAdditionalNotes()),
+                emptyIfNull(job.getKeywords()),
                 String.valueOf(job.getStatus().getCode())
         };
     }
