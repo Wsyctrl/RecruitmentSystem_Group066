@@ -44,7 +44,12 @@
                                     <Label fx:id="applicantNameLabel" styleClass="h6"/>
                                     <Label fx:id="applicantStatusLabel"/>
                                 </VBox>
-                                <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" prefRowCount="14" VBox.vgrow="ALWAYS"/>
+                                <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" prefRowCount="10"/>
+                                <VBox spacing="4">
+                                    <Label text="AI Analysis" styleClass="h6"/>
+                                    <TextArea fx:id="aiKeywordsArea" wrapText="true" editable="false" prefRowCount="6" promptText="AI Top 3 results will appear here..."/>
+                                </VBox>
+                                <TextArea fx:id="aiApplicantResultArea" wrapText="true" editable="false" prefRowCount="4" visible="false" managed="false"/>
                                 <HBox spacing="8">
                                     <Button text="Download CV" onAction="#handleDownloadCv" styleClass="btn-outline"/>
                                     <Button text="Hire" onAction="#handleHireApplicant" styleClass="btn-success"/>

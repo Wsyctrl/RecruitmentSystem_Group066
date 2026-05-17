@@ -873,3 +873,13 @@
     -fx-opacity: 0.6;
     -fx_cursor: wait;
 }
+
+/* Separator between applicant status groups */
+.applicant-group-separator {
+    -fx-background-color: #cbd5e0;
+    -fx-pref-height: 2;
+    -fx-max-height: 2;
+    -fx-min-height: 2;
+    -fx-pref-width: 580;
+    -fx-max-width: 580;
+}
