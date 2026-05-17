@@ -68,6 +68,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
     @FXML
     private TableView<TaJobDisplay> jobTable;
     @FXML
+    private SplitPane browseJobsVerticalSplit;
+    @FXML
+    private SplitPane browseJobsHorizontalSplit;
+    @FXML
     private Label jobNameLabel;
     @FXML
     private Label jobMoNameLabel;
@@ -81,6 +85,8 @@ public class TaDashboardController extends BaseController implements SessionAwar
     private TextArea jobRequirementsArea;
     @FXML
     private TextArea jobNotesArea;
+    @FXML
+    private TextArea jobKeywordsArea;
     @FXML
     private Button applyButton;
     @FXML
@@ -129,8 +135,18 @@ public class TaDashboardController extends BaseController implements SessionAwar
             }
             updateJobDetails(selected);
         });
-        jobSearchField.textProperty().addListener((obs, old, value) -> applyJobFilter(value));
+        // Search only triggers on Refresh button; do not auto-filter on each keystroke.
         applicationTable.setItems(applicationItems);
+        applicationTable.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
+            // Master-detail behaviour: ensure something stays selected when items exist.
+        });
+        // Lock split-pane dividers at center.
+        if (browseJobsVerticalSplit != null) {
+            lockSplitDivider(browseJobsVerticalSplit, 0.62);
+        }
+        if (browseJobsHorizontalSplit != null) {
+            lockSplitDivider(browseJobsHorizontalSplit, 0.5);
+        }
         if (tabPane != null) {
             tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
                 if (newTab == null || handlingProfileNavigation) {
@@ -145,6 +161,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
                 if (oldTab == browseJobsTab && newTab != browseJobsTab) {
                     invalidateResumeAdviceContext();
                 }
+                if (newTab == myApplicationsTab) {
+                    if (applicationTable.getSelectionModel().getSelectedItem() == null
+                            && !applicationItems.isEmpty()) {
+                        applicationTable.getSelectionModel().selectFirst();
+                    }
+                }
                 if (suppressTabGuard || !guestMode) {
                     return;
                 }
@@ -154,6 +176,18 @@ public class TaDashboardController extends BaseController implements SessionAwar
             });
         }
         updateJobDetails(null);
+    }
+
+    private void lockSplitDivider(SplitPane split, double position) {
+        if (split == null) return;
+        split.setDividerPositions(position);
+        split.getDividers().forEach(d -> d.positionProperty().addListener((obs, oldV, newV) -> {
+            if (Math.abs(newV.doubleValue() - position) > 0.0001) {
+                javafx.application.Platform.runLater(() -> d.setPosition(position));
+            }
+        }));
+        javafx.application.Platform.runLater(() ->
+                split.lookupAll(".split-pane-divider").forEach(node -> node.setMouseTransparent(true)));
     }
 /**
  * Sets the current user session and loads the initial dashboard data.
@@ -208,6 +242,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
         ApplicationService applicationService = services.applicationService();
 
         List<Job> jobs = jobService.findOpenJobs();
+        // Drop jobs posted by a disabled MO: they cannot accept new applications.
+        jobs = jobs.stream()
+                .filter(job -> services.profileService().findMo(job.getMoId())
+                        .map(mo -> !mo.isDisabled())
+                        .orElse(true))
+                .collect(Collectors.toList());
         // Fill MO display names for UI rendering.
         for (Job job : jobs) {
             String moId = job.getMoId();
@@ -248,6 +288,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
                 .map(record -> new ApplicationDisplay(record, jobMap.get(record.getJobId())))
                 .collect(Collectors.toList()));
         applicationTable.refresh();
+        if (!applicationItems.isEmpty()
+                && applicationTable.getSelectionModel().getSelectedItem() == null) {
+            applicationTable.getSelectionModel().selectFirst();
+        }
         updateJobDetails(jobTable.getSelectionModel().getSelectedItem());
     }
 /**
@@ -345,6 +389,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
             jobDateLabel.setText("-");
             jobRequirementsArea.clear();
             jobNotesArea.clear();
+            if (jobKeywordsArea != null) {
+                jobKeywordsArea.clear();
+            }
             applyButton.setDisable(true);
             applyButton.setText("Apply");
             return;
@@ -365,6 +412,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
         jobDateLabel.setText(start + " to " + end);
         jobRequirementsArea.setText(safeText(job.getRequirements()));
         jobNotesArea.setText(safeText(job.getAdditionalNotes()));
+        if (jobKeywordsArea != null) {
+            jobKeywordsArea.setText(safeText(job.getKeywords()));
+        }
         boolean alreadyApplied = hasApplied(job.getJobId());
         applyButton.setDisable(!job.isOpen() || alreadyApplied);
         applyButton.setText(alreadyApplied ? "Already Applied" : "Apply");
@@ -398,6 +448,8 @@ public class TaDashboardController extends BaseController implements SessionAwar
             refreshApplications();
             refreshJobs(); // Refresh to update applicant counts
             updateJobDetails(display);
+            // Keep focus on the job table so the cursor doesn't drift to the AI preference area.
+            javafx.application.Platform.runLater(jobTable::requestFocus);
         } else {
             DialogUtil.error(result.message(), navigator.getPrimaryStage());
         }
@@ -581,7 +633,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
 
     @FXML
     private void handleRefreshJobs() {
-        refreshJobs();
+        applyJobFilter(jobSearchField == null ? "" : jobSearchField.getText());
     }
 
     private void requireLoginAndRedirect(String message) {

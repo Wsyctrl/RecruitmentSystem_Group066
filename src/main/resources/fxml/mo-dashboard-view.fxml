@@ -18,44 +18,49 @@
             <Tab text="Applicants" fx:id="applicantsTab">
                 <BorderPane>
                     <top>
-                        <HBox spacing="10" styleClass="p-3">
+                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="p-3">
                             <ComboBox fx:id="jobSelector" promptText="Select an open job" prefWidth="220"/>
                             <TextField fx:id="applicantSearchField" promptText="Search applicants..." HBox.hgrow="ALWAYS" styleClass="search-field"/>
-                            <Button text="Clear" onAction="#handleClearApplicantSearch" styleClass="btn-sm"/>
-                            <Button text="AI Top 3" onAction="#handleAiTop3Filter" styleClass="btn-primary"/>
                             <Button text="Refresh" onAction="#handleRefreshApplicants"/>
                         </HBox>
                     </top>
                     <center>
-                        <SplitPane dividerPositions="0.55">
-                            <BorderPane>
-                                <center>
-                                    <ScrollPane fx:id="applicantCardScroll" fitToWidth="true" styleClass="applicant-card-container">
-                                        <FlowPane fx:id="applicantCardPane" hgap="12" vgap="12"/>
-                                    </ScrollPane>
-                                </center>
-                            </BorderPane>
-                            <VBox spacing="12" styleClass="detail-panel">
-                                <padding>
-                                    <Insets top="16" right="16" bottom="16" left="16"/>
-                                </padding>
-                                <Label text="Applicant profile" styleClass="h5"/>
-                                <VBox spacing="2">
-                                    <Label fx:id="applicantNameLabel" styleClass="h6"/>
-                                    <Label fx:id="applicantStatusLabel"/>
+                        <SplitPane fx:id="applicantsSplitPane" dividerPositions="0.5">
+                            <StackPane fx:id="applicantsLeftPane">
+                                <ScrollPane fx:id="applicantCardScroll" fitToWidth="true" styleClass="applicant-card-container">
+                                    <FlowPane fx:id="applicantCardPane" hgap="12" vgap="12"/>
+                                </ScrollPane>
+                                <Label fx:id="applicantsEmptyLabel" text="No applicants for this job yet." styleClass="text-muted" visible="false" managed="false"/>
+                            </StackPane>
+                            <SplitPane fx:id="applicantDetailSplit" orientation="VERTICAL" dividerPositions="0.66">
+                                <VBox fx:id="applicantDetailPanel" spacing="12" styleClass="detail-panel">
+                                    <padding>
+                                        <Insets top="16" right="16" bottom="16" left="16"/>
+                                    </padding>
+                                    <Label text="Applicant profile" styleClass="h5"/>
+                                    <VBox spacing="2">
+                                        <Label fx:id="applicantNameLabel" styleClass="h6"/>
+                                        <Label fx:id="applicantStatusLabel"/>
+                                    </VBox>
+                                    <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" VBox.vgrow="ALWAYS"/>
+                                    <HBox spacing="8">
+                                        <Button text="Download CV" onAction="#handleDownloadCv" styleClass="btn-outline"/>
+                                        <Button fx:id="hireButton" text="Hire" onAction="#handleHireApplicant" styleClass="btn-success"/>
+                                        <Button fx:id="rejectButton" text="Reject" onAction="#handleRejectApplicant" styleClass="btn-danger"/>
+                                    </HBox>
                                 </VBox>
-                                <TextArea fx:id="applicantProfileArea" wrapText="true" editable="false" prefRowCount="10"/>
-                                <VBox spacing="4">
+                                <VBox spacing="8" styleClass="detail-panel">
+                                    <padding>
+                                        <Insets top="16" right="16" bottom="16" left="16"/>
+                                    </padding>
                                     <Label text="AI Analysis" styleClass="h6"/>
-                                    <TextArea fx:id="aiKeywordsArea" wrapText="true" editable="false" prefRowCount="6" promptText="AI Top 3 results will appear here..."/>
+                                    <TextArea fx:id="aiKeywordsArea" wrapText="true" editable="false" VBox.vgrow="ALWAYS" promptText="AI Top 3 results will appear here..."/>
+                                    <TextArea fx:id="aiApplicantResultArea" wrapText="true" editable="false" prefRowCount="4" visible="false" managed="false"/>
+                                    <HBox spacing="8" alignment="CENTER_LEFT">
+                                        <Button text="AI Top 3" onAction="#handleAiTop3Filter" styleClass="btn-primary"/>
+                                    </HBox>
                                 </VBox>
-                                <TextArea fx:id="aiApplicantResultArea" wrapText="true" editable="false" prefRowCount="4" visible="false" managed="false"/>
-                                <HBox spacing="8">
-                                    <Button text="Download CV" onAction="#handleDownloadCv" styleClass="btn-outline"/>
-                                    <Button text="Hire" onAction="#handleHireApplicant" styleClass="btn-success"/>
-                                    <Button text="Reject" onAction="#handleRejectApplicant" styleClass="btn-danger"/>
-                                </HBox>
-                            </VBox>
+                            </SplitPane>
                         </SplitPane>
                     </center>
                 </BorderPane>
@@ -63,13 +68,13 @@
             <Tab text="My jobs" fx:id="myJobsTab">
                 <BorderPane>
                     <top>
-                        <HBox spacing="10" styleClass="p-3">
+                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="p-3">
                             <TextField fx:id="myJobSearchField" promptText="Search jobs" HBox.hgrow="ALWAYS"/>
                             <Button text="Refresh" onAction="#handleRefreshMyJobs"/>
                         </HBox>
                     </top>
                     <center>
-                        <SplitPane dividerPositions="0.58">
+                        <SplitPane fx:id="myJobsSplitPane" dividerPositions="0.5">
                             <TableView fx:id="myJobTable">
                                 <columns>
                                     <TableColumn text="ID" prefWidth="85">
@@ -99,7 +104,7 @@
                                     </TableColumn>
                                 </columns>
                             </TableView>
-                            <VBox spacing="12" styleClass="detail-panel">
+                            <VBox fx:id="myJobsDetailPanel" spacing="12" styleClass="detail-panel">
                                 <padding>
                                     <Insets top="16" right="16" bottom="16" left="16"/>
                                 </padding>
@@ -113,13 +118,17 @@
                                     <Label fx:id="selectedJobApplicantsLabel"/>
                                     <Label fx:id="selectedJobHiredLabel"/>
                                 </VBox>
-                                <VBox spacing="4">
+                                <VBox spacing="4" VBox.vgrow="ALWAYS">
                                     <Label text="Requirements" styleClass="text-muted"/>
-                                    <TextArea fx:id="selectedJobRequirementsArea" editable="false" wrapText="true" prefRowCount="4"/>
+                                    <TextArea fx:id="selectedJobRequirementsArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
+                                </VBox>
+                                <VBox spacing="4" VBox.vgrow="ALWAYS">
+                                    <Label text="Notes" styleClass="text-muted"/>
+                                    <TextArea fx:id="selectedJobNotesArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
                                 </VBox>
                                 <VBox spacing="4">
-                                    <Label text="Notes" styleClass="text-muted"/>
-                                    <TextArea fx:id="selectedJobNotesArea" editable="false" wrapText="true" prefRowCount="3"/>
+                                    <Label text="Keywords" styleClass="text-muted"/>
+                                    <TextArea fx:id="selectedJobKeywordsArea" editable="false" wrapText="true" prefRowCount="2"/>
                                 </VBox>
                                 <HBox spacing="8">
                                     <Button text="Edit" onAction="#handleEditFromSelected" styleClass="btn-outline"/>
@@ -182,16 +191,16 @@
                                             <TextArea fx:id="requirementsField" wrapText="true" prefRowCount="5"/>
                                         </VBox>
                                         <VBox spacing="4">
-                                            <Label text="AI Keywords" styleClass="form-label"/>
-                                            <TextArea fx:id="keywordsField" wrapText="true" prefRowCount="2" promptText="Click 'Generate' to extract job keywords"/>
-                                            <HBox spacing="8" alignment="CENTER_LEFT">
-                                                <Button text="Generate AI Keywords" onAction="#handleGenerateJobKeywords" styleClass="btn-sm btn-outline" fx:id="generateKeywordsBtn"/>
-                                                <Label fx:id="keywordsLoadingLabel" text="Generating..." styleClass="text-muted" visible="false"/>
-                                            </HBox>
-                                        </VBox>
-                                        <VBox spacing="4">
                                             <Label text="Notes" styleClass="form-label"/>
                                             <TextArea fx:id="notesField" wrapText="true" prefRowCount="8"/>
+                                        </VBox>
+                                        <VBox spacing="4">
+                                            <Label text="Keywords" styleClass="form-label"/>
+                                            <TextArea fx:id="keywordsField" wrapText="true" prefRowCount="2" promptText="Type keywords manually, or use AI Generate Keywords"/>
+                                            <HBox spacing="8" alignment="CENTER_LEFT">
+                                                <Button text="AI Generate Keywords" onAction="#handleGenerateJobKeywords" styleClass="btn-sm btn-outline" fx:id="generateKeywordsBtn"/>
+                                                <Label fx:id="keywordsLoadingLabel" text="Generating..." styleClass="text-muted" visible="false"/>
+                                            </HBox>
                                         </VBox>
                                     </VBox>
                                 </VBox>
@@ -206,7 +215,7 @@
                     </center>
                 </BorderPane>
             </Tab>
-            <Tab text="My profile">
+            <Tab text="My profile" fx:id="moProfileTab">
                 <BorderPane>
                     <top>
                         <HBox spacing="10" alignment="CENTER_RIGHT" styleClass="p-3">
@@ -215,61 +224,63 @@
                     </top>
                     <center>
                         <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
-                            <VBox spacing="20" styleClass="p-4" maxWidth="700">
-                                <!-- Account Info Section -->
-                                <VBox spacing="12" styleClass="form-section">
-                                    <Label text="Account Information" styleClass="h6"/>
+                            <HBox alignment="TOP_CENTER">
+                                <VBox spacing="20" styleClass="p-4" maxWidth="700" minWidth="560" HBox.hgrow="NEVER">
+                                    <!-- Account Info Section -->
+                                    <VBox spacing="12" styleClass="form-section">
+                                        <Label text="Account Information" styleClass="h6"/>
 
-                                    <GridPane hgap="20" vgap="12">
-                                        <columnConstraints>
-                                            <ColumnConstraints minWidth="120" maxWidth="150" prefWidth="130"/>
-                                            <ColumnConstraints hgrow="ALWAYS"/>
-                                        </columnConstraints>
+                                        <GridPane hgap="20" vgap="12">
+                                            <columnConstraints>
+                                                <ColumnConstraints minWidth="120" maxWidth="150" prefWidth="130"/>
+                                                <ColumnConstraints hgrow="ALWAYS"/>
+                                            </columnConstraints>
 
-                                        <Label text="Email" GridPane.rowIndex="0" styleClass="form-label"/>
-                                        <TextField fx:id="moEmailField" editable="false" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                                            <Label text="Email" GridPane.rowIndex="0" styleClass="form-label"/>
+                                            <TextField fx:id="moEmailField" editable="false" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-                                        <Label text="Full name" GridPane.rowIndex="1" styleClass="form-label"/>
-                                        <TextField fx:id="moFullNameField" promptText="Shown in welcome message" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-                                    </GridPane>
-                                </VBox>
-
-                                <!-- Contact Info Section -->
-                                <VBox spacing="12" styleClass="form-section">
-                                    <Label text="Contact Information" styleClass="h6"/>
-
-                                    <GridPane hgap="20" vgap="12">
-                                        <columnConstraints>
-                                            <ColumnConstraints minWidth="120" maxWidth="150" prefWidth="130"/>
-                                            <ColumnConstraints hgrow="ALWAYS"/>
-                                        </columnConstraints>
-
-                                        <Label text="Phone" GridPane.rowIndex="0" styleClass="form-label"/>
-                                        <TextField fx:id="moPhoneField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-                                    </GridPane>
-                                </VBox>
-
-                                <!-- Professional Info Section -->
-                                <VBox spacing="12" styleClass="form-section">
-                                    <Label text="Professional Information" styleClass="h6"/>
-
-                                    <VBox spacing="8">
-                                        <Label text="Responsible modules" styleClass="form-label"/>
-                                        <TextArea fx:id="moModuleArea" wrapText="true" prefRowCount="4" promptText="Enter the modules you are responsible for"/>
+                                            <Label text="Full name" GridPane.rowIndex="1" styleClass="form-label"/>
+                                            <TextField fx:id="moFullNameField" promptText="Shown in welcome message" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                                        </GridPane>
                                     </VBox>
-                                </VBox>
 
-                                <!-- Action Buttons -->
-                                <HBox spacing="10" alignment="CENTER_RIGHT">
-                                    <Button text="Save profile" onAction="#handleSaveMoProfile" styleClass="btn-primary"/>
-                                </HBox>
-                            </VBox>
+                                    <!-- Contact Info Section -->
+                                    <VBox spacing="12" styleClass="form-section">
+                                        <Label text="Contact Information" styleClass="h6"/>
+
+                                        <GridPane hgap="20" vgap="12">
+                                            <columnConstraints>
+                                                <ColumnConstraints minWidth="120" maxWidth="150" prefWidth="130"/>
+                                                <ColumnConstraints hgrow="ALWAYS"/>
+                                            </columnConstraints>
+
+                                            <Label text="Phone" GridPane.rowIndex="0" styleClass="form-label"/>
+                                            <TextField fx:id="moPhoneField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                                        </GridPane>
+                                    </VBox>
+
+                                    <!-- Professional Info Section -->
+                                    <VBox spacing="12" styleClass="form-section">
+                                        <Label text="Professional Information" styleClass="h6"/>
+
+                                        <VBox spacing="8">
+                                            <Label text="Responsible modules" styleClass="form-label"/>
+                                            <TextArea fx:id="moModuleArea" wrapText="true" prefRowCount="4" promptText="Enter the modules you are responsible for"/>
+                                        </VBox>
+                                    </VBox>
+
+                                    <!-- Action Buttons -->
+                                    <HBox spacing="10" alignment="CENTER">
+                                        <Button text="Save profile" onAction="#handleSaveMoProfile" styleClass="btn-primary"/>
+                                    </HBox>
+                                </VBox>
+                            </HBox>
                         </ScrollPane>
                     </center>
                 </BorderPane>
             </Tab>
             <Tab text="TA admin" fx:id="adminTaTab">
-                <SplitPane dividerPositions="0.5">
+                <SplitPane fx:id="adminTaSplitPane" dividerPositions="0.5">
                     <VBox spacing="8" styleClass="p-3">
                         <Label text="TA accounts" styleClass="h5"/>
                         <TableView fx:id="adminTaTable" VBox.vgrow="ALWAYS">
@@ -373,7 +384,7 @@
                 </SplitPane>
             </Tab>
             <Tab text="MO admin" fx:id="adminMoTab">
-                <SplitPane dividerPositions="0.5">
+                <SplitPane fx:id="adminMoSplitPane" dividerPositions="0.5">
                     <VBox spacing="8" styleClass="p-3">
                         <Label text="MO accounts" styleClass="h5"/>
                         <TableView fx:id="adminMoTable" VBox.vgrow="ALWAYS">
@@ -524,20 +535,22 @@
                     </center>
                     <bottom>
                         <HBox spacing="8" alignment="CENTER_RIGHT" styleClass="p-3">
-                            <Button text="30-Day Hiring Insights" onAction="#handleAiGenerateInsights" styleClass="btn-primary"/>
                             <Button text="Close Job" onAction="#handleAdminToggleJob" styleClass="btn-danger"/>
                             <Button text="Open Job" onAction="#handleAdminOpenJob" styleClass="btn-success"/>
                         </HBox>
                     </bottom>
                 </BorderPane>
             </Tab>
-            <Tab text="Account Management" fx:id="adminAccountTab">
+            <Tab text="30-Day Hiring Insights" fx:id="adminInsightsTab">
+                <fx:include fx:id="insightsView" source="insights-dialog.fxml"/>
+            </Tab>
+            <Tab text="Account Management Log" fx:id="adminAccountTab">
                 <BorderPane>
                     <top>
                         <HBox spacing="10" styleClass="p-3">
                             <Label text="Account Management Log" styleClass="h5"/>
                             <Pane HBox.hgrow="ALWAYS"/>
-                            <Button text="Refresh" onAction="#handleRefreshAccountLogs"/>
+                            <Button text="Clear Log" onAction="#handleClearAccountLogs" styleClass="btn-danger"/>
                         </HBox>
                     </top>
                     <center>
@@ -583,13 +596,13 @@
                     </center>
                 </BorderPane>
             </Tab>
-            <Tab text="Job Management" fx:id="adminJobManagementTab">
+            <Tab text="Job Management Log" fx:id="adminJobManagementTab">
                 <BorderPane>
                     <top>
                         <HBox spacing="10" styleClass="p-3">
                             <Label text="Job Management Log" styleClass="h5"/>
                             <Pane HBox.hgrow="ALWAYS"/>
-                            <Button text="Refresh" onAction="#handleRefreshJobLogs"/>
+                            <Button text="Clear Log" onAction="#handleClearJobLogs" styleClass="btn-danger"/>
                         </HBox>
                     </top>
                     <center>

@@ -186,9 +186,10 @@ public class AiService {
 
     public List<String> generateJobKeywords(Job job) throws IOException, InterruptedException {
         String userPrompt = """
-                Generate 5 to 10 English job requirement keywords for quick hiring review.
-                Return a JSON array of strings.
-                
+                Generate 3 to 5 short English job-requirement keywords for quick hiring review.
+                Each keyword must be 1 to 3 words. Do not include sentences or explanations.
+                Return a JSON array of strings only.
+
                 Job:
                 Name: %s
                 Module: %s

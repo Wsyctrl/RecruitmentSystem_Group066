@@ -256,6 +256,8 @@
     -fx-font-weight: 500;
     -fx-cursor: hand;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 2, 0, 0, 0);
+    -fx-min-height: 34px;
+    -fx-pref-height: 34px;
 }
 
 .button:hover {
@@ -324,9 +326,20 @@
    ======================================== */
 
 .text-field,
-.text-area,
 .password-field,
 .combo-box {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-padding: 8 12;
+    -fx-text-fill: #2d3748;
+    -fx-min-height: 34px;
+    -fx-pref-height: 34px;
+}
+
+.text-area {
     -fx-background-color: white;
     -fx-background-radius: 6;
     -fx-border-color: #e2e8f0;
@@ -357,11 +370,17 @@
    ======================================== */
 
 .combo-box {
-    -fx-padding: 6 10;
+    -fx-padding: 0;
+    -fx-min-height: 34px;
+    -fx-pref-height: 34px;
 }
 
-.combo-box .list-cell {
+.combo-box > .list-cell {
     -fx-padding: 6 10;
+    -fx-min-height: 32px;
+    -fx-pref-height: 32px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-text-fill: #2d3748;
 }
 
 .combo-box-popup .list-view {
@@ -655,7 +674,7 @@
 }
 
 .chart-container .axis-bottom {
-    -fx-tick-label rotation: 0;
+    -fx-tick-label-rotation: 0;
 }
 
 .insights-scroll {
@@ -823,6 +842,16 @@
     -fx-border-color: #10b981;
     -fx-border-width: 2;
     -fx-effect: dropshadow(gaussian, rgba(16,185,129,0.2), 12, 0, 0, 3);
+}
+
+/* Selected outline takes precedence over hired (yellow) and recommended (green) */
+.applicant-card.applicant-card-selected,
+.applicant-card.applicant-card-hired.applicant-card-selected,
+.applicant-card.applicant-card-recommended.applicant-card-selected,
+.applicant-card.applicant-card-hired.applicant-card-recommended.applicant-card-selected {
+    -fx-border-color: #2563eb;
+    -fx-border-width: 3;
+    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.35), 14, 0, 0, 4);
 }
 
 .applicant-card-name {

@@ -70,6 +70,8 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private ApplicantDisplay selectedApplicant;
     private final java.util.Map<String, String> applicantSummaries = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.Set<String> top3ApplicantIds = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+    /** AI Top 3 score for each ranked TA (taId → score). Empty when AI Top 3 hasn't run. */
+    private final java.util.Map<String, Integer> top3Scores = new java.util.concurrent.ConcurrentHashMap<>();
     private boolean isTop3FilterActive = false;
 
     @FXML
@@ -100,6 +102,8 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private TextArea selectedJobRequirementsArea;
     @FXML
     private TextArea selectedJobNotesArea;
+    @FXML
+    private TextArea selectedJobKeywordsArea;
 
     @FXML
     private TextField jobNameField;
@@ -146,6 +150,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private TextArea aiApplicantResultArea;
     @FXML
     private TextArea aiKeywordsArea;
+    @FXML
+    private Button hireButton;
+    @FXML
+    private Button rejectButton;
 
     @FXML
     private TextField moFullNameField;
@@ -165,9 +173,32 @@ public class MoDashboardController extends BaseController implements SessionAwar
     @FXML
     private Tab adminJobTab;
     @FXML
+    private Tab adminInsightsTab;
+    @FXML
     private Tab adminAccountTab;
     @FXML
     private Tab adminJobManagementTab;
+    @FXML
+    private javafx.scene.layout.VBox applicantDetailPanel;
+    @FXML
+    private javafx.scene.layout.VBox myJobsDetailPanel;
+    @FXML
+    private SplitPane applicantsSplitPane;
+    @FXML
+    private SplitPane applicantDetailSplit;
+    @FXML
+    private SplitPane myJobsSplitPane;
+    @FXML
+    private SplitPane adminTaSplitPane;
+    @FXML
+    private SplitPane adminMoSplitPane;
+    @FXML
+    private javafx.scene.layout.StackPane applicantsLeftPane;
+    @FXML
+    private Label applicantsEmptyLabel;
+    @FXML
+    private InsightsDialogController insightsViewController;
+    private boolean insightsLoaded;
     @FXML
     private TableView<Ta> taUserTable;
     @FXML
@@ -209,7 +240,6 @@ public class MoDashboardController extends BaseController implements SessionAwar
     protected void onInit() {
         filteredMyJobs = new FilteredList<>(myJobs, job -> true);
         myJobTable.setItems(filteredMyJobs);
-        myJobSearchField.textProperty().addListener((obs, old, val) -> filterJobs(val));
         myJobTable.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> updateSelectedJob(val));
 
         jobSelector.setItems(jobOptions);
@@ -233,11 +263,21 @@ public class MoDashboardController extends BaseController implements SessionAwar
         });
 
         filteredApplicants = new FilteredList<>(applicantItems, item -> true);
-        applicantSearchField.textProperty().addListener((obs, old, val) -> filterApplicants(val));
+        // Search only triggers on Refresh button; do not auto-filter on each keystroke.
 
-        // Configure FlowPane for 2 cards per row layout
+        // Lock split-pane dividers at center.
+        lockSplitDivider(applicantsSplitPane, 0.5);
+        lockSplitDivider(myJobsSplitPane, 0.5);
+        lockSplitDivider(adminTaSplitPane, 0.5);
+        lockSplitDivider(adminMoSplitPane, 0.5);
+        // Right detail panel uses a 2/3 vs 1/3 vertical split (profile + actions over AI Analysis).
+        lockSplitDivider(applicantDetailSplit, 0.66);
+
+        // Configure FlowPane: cards size themselves relative to the container width.
         if (applicantCardPane != null) {
-            applicantCardPane.setPrefWrapLength(580); // 2 cards * 280px + gaps
+            // A huge wrap length effectively disables FlowPane's own wrap logic; each row holds
+            // exactly two children because the bound card width is paneWidth/2.
+            applicantCardPane.setPrefWrapLength(Double.MAX_VALUE);
         }
         if (applicantCardScroll != null) {
             applicantCardScroll.setFitToWidth(true);
@@ -333,14 +373,23 @@ public class MoDashboardController extends BaseController implements SessionAwar
                 if (newTab != null) {
                     if (newTab == adminJobTab) {
                         refreshAdminJobs();
+                        autoSelectFirst(adminJobTable);
                     } else if (newTab == adminTaTab) {
                         refreshAdminTaData();
+                        autoSelectFirst(adminTaTable);
                     } else if (newTab == adminMoTab) {
                         refreshAdminMoData();
+                        autoSelectFirst(adminMoTable);
                     } else if (newTab == adminAccountTab) {
                         refreshAccountLogs();
                     } else if (newTab == adminJobManagementTab) {
                         refreshJobLogs();
+                    } else if (newTab == adminInsightsTab) {
+                        ensureInsightsLoaded();
+                    } else if (newTab == applicantsTab) {
+                        autoSelectFirstApplicantCard();
+                    } else if (newTab == myJobsTab) {
+                        autoSelectFirst(myJobTable);
                     }
                 }
             });
@@ -483,6 +532,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
             if (!tabPane.getTabs().contains(adminJobTab)) {
                 tabPane.getTabs().add(adminJobTab);
             }
+            if (!tabPane.getTabs().contains(adminInsightsTab)) {
+                tabPane.getTabs().add(adminInsightsTab);
+            }
             if (!tabPane.getTabs().contains(adminAccountTab)) {
                 tabPane.getTabs().add(adminAccountTab);
             }
@@ -493,8 +545,46 @@ public class MoDashboardController extends BaseController implements SessionAwar
             tabPane.getTabs().remove(adminTaTab);
             tabPane.getTabs().remove(adminMoTab);
             tabPane.getTabs().remove(adminJobTab);
+            tabPane.getTabs().remove(adminInsightsTab);
             tabPane.getTabs().remove(adminAccountTab);
             tabPane.getTabs().remove(adminJobManagementTab);
+        }
+    }
+
+    private void lockSplitDivider(SplitPane split, double position) {
+        if (split == null) return;
+        split.setDividerPositions(position);
+        split.getDividers().forEach(d -> d.positionProperty().addListener((obs, oldV, newV) -> {
+            if (Math.abs(newV.doubleValue() - position) > 0.0001) {
+                javafx.application.Platform.runLater(() -> d.setPosition(position));
+            }
+        }));
+        // Defer node lookup until after the scene is laid out.
+        javafx.application.Platform.runLater(() ->
+                split.lookupAll(".split-pane-divider").forEach(node -> node.setMouseTransparent(true)));
+    }
+
+    private <T> void autoSelectFirst(TableView<T> table) {
+        if (table == null || table.getItems() == null || table.getItems().isEmpty()) return;
+        if (table.getSelectionModel().getSelectedItem() == null) {
+            table.getSelectionModel().selectFirst();
+        }
+    }
+
+    private void autoSelectFirstApplicantCard() {
+        if (selectedApplicant == null && !filteredApplicants.isEmpty()) {
+            selectedApplicant = filteredApplicants.get(0);
+            updateApplicantDetail(selectedApplicant);
+            renderApplicantCards();
+        }
+    }
+
+    private void ensureInsightsLoaded() {
+        if (insightsViewController == null) return;
+        if (!insightsLoaded) {
+            insightsViewController.setServices(services);
+            insightsViewController.loadData();
+            insightsLoaded = true;
         }
     }
 
@@ -525,15 +615,40 @@ public class MoDashboardController extends BaseController implements SessionAwar
     }
 
     private void refreshMyJobs() {
+        // Preserve current selections across refresh so hiring/closing actions don't
+        // bounce the MO back to the first job.
+        Job priorJobsSelection = myJobTable.getSelectionModel().getSelectedItem();
+        Job priorSelectorSelection = jobSelector.getSelectionModel().getSelectedItem();
+
         List<Job> jobs = services.jobService().findJobsByMo(currentMoId());
         jobs.sort(Comparator.comparing(Job::getJobId));
         myJobs.setAll(jobs);
-        jobOptions.setAll(jobs);
-        if (!jobs.isEmpty()) {
-            myJobTable.getSelectionModel().selectFirst();
-            jobSelector.getSelectionModel().selectFirst();
-        } else {
+        // Applicants page only acts on open jobs; closed jobs cannot accept new hires.
+        List<Job> openJobs = jobs.stream().filter(Job::isOpen).collect(Collectors.toList());
+        jobOptions.setAll(openJobs);
+        if (jobs.isEmpty()) {
             updateSelectedJob(null);
+            return;
+        }
+        Job restoredTableJob = priorJobsSelection == null
+                ? null
+                : jobs.stream().filter(j -> j.getJobId().equalsIgnoreCase(priorJobsSelection.getJobId())).findFirst().orElse(null);
+        if (restoredTableJob != null) {
+            myJobTable.getSelectionModel().select(restoredTableJob);
+        } else {
+            myJobTable.getSelectionModel().selectFirst();
+        }
+        Job restoredSelectorJob = priorSelectorSelection == null
+                ? null
+                : openJobs.stream().filter(j -> j.getJobId().equalsIgnoreCase(priorSelectorSelection.getJobId())).findFirst().orElse(null);
+        if (restoredSelectorJob != null) {
+            jobSelector.getSelectionModel().select(restoredSelectorJob);
+        } else if (priorSelectorSelection == null && !openJobs.isEmpty()) {
+            jobSelector.getSelectionModel().selectFirst();
+        } else if (priorSelectorSelection != null && restoredSelectorJob == null) {
+            // Previously selected job is no longer open: clear so the Applicants view doesn't
+            // keep showing data from a closed posting.
+            jobSelector.getSelectionModel().clearSelection();
         }
     }
 
@@ -546,6 +661,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
             selectedJobHiredLabel.setText("Current employed: 0");
             selectedJobRequirementsArea.clear();
             selectedJobNotesArea.clear();
+            if (selectedJobKeywordsArea != null) {
+                selectedJobKeywordsArea.clear();
+            }
             return;
         }
         selectedJobNameLabel.setText(job.getJobName());
@@ -557,6 +675,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
         selectedJobHiredLabel.setText("Current employed: " + hiredCount);
         selectedJobRequirementsArea.setText(safeText(job.getRequirements()));
         selectedJobNotesArea.setText(safeText(job.getAdditionalNotes()));
+        if (selectedJobKeywordsArea != null) {
+            selectedJobKeywordsArea.setText(safeText(job.getKeywords()));
+        }
     }
 
     private void filterJobs(String keyword) {
@@ -572,6 +693,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         invalidateApplicantsAiContext();
         isTop3FilterActive = false;
         top3ApplicantIds.clear();
+        top3Scores.clear();
         applicantSummaries.clear();
         selectedApplicant = null;
 
@@ -585,6 +707,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         ApplicationService applicationService = services.applicationService();
         applicantItems.setAll(applicationService.findActiveApplicationsForJob(job.getJobId()).stream()
                 .map(record -> new ApplicantDisplay(record, taMap.get(record.getTaId())))
+                // A disabled TA cannot remain a hire candidate: hide their still-pending entries.
+                // Their historical Hired/Rejected entries stay visible for audit purposes.
+                .filter(display -> !(display.getRecord().getStatus() == ApplicationStatus.PENDING
+                        && display.getTa() != null
+                        && display.getTa().isDisabled()))
                 .collect(Collectors.toList()));
 
         // Pre-load summaries from cache for instant display
@@ -717,7 +844,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
 
     @FXML
     private void handleRefreshMyJobs() {
-        refreshMyJobs();
+        filterJobs(myJobSearchField.getText());
     }
 
     @FXML
@@ -860,69 +987,39 @@ public class MoDashboardController extends BaseController implements SessionAwar
     @FXML
     private void handleJumpToApplicants() {
         Job job = myJobTable.getSelectionModel().getSelectedItem();
-        if (job != null) {
-            jobSelector.getSelectionModel().select(job);
-            loadApplicants(job);
-            if (applicantsTab != null) {
-                tabPane.getSelectionModel().select(applicantsTab);
-            }
+        if (job == null) {
+            return;
+        }
+        if (!job.isOpen()) {
+            DialogUtil.info("This job is closed. Re-open it before reviewing applicants.",
+                    navigator.getPrimaryStage());
+            return;
+        }
+        jobSelector.getSelectionModel().select(job);
+        loadApplicants(job);
+        if (applicantsTab != null) {
+            tabPane.getSelectionModel().select(applicantsTab);
         }
     }
 
     @FXML
     private void handleRefreshApplicants() {
-        invalidateApplicantsAiContext();
-        loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
+        // Apply current search filter; this is the only way to trigger search.
+        filterApplicants(applicantSearchField.getText());
     }
 
     @FXML
     private void handleClearApplicantSearch() {
+        // Retained for backwards compatibility; no longer wired into the FXML.
         applicantSearchField.clear();
         filterApplicants(null);
     }
 
     @FXML
     private void handleAiGenerateInsights() {
-        showInsightsDialog();
-    }
-
-    private void showInsightsDialog() {
-        try {
-            java.net.URL fxmlUrl = getClass().getResource("/fxml/insights-dialog.fxml");
-            if (fxmlUrl == null) {
-                DialogUtil.error("Cannot find insights-dialog.fxml resource", navigator.getPrimaryStage());
-                return;
-            }
-
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(fxmlUrl);
-            javafx.scene.Parent root = loader.load();
-
-            InsightsDialogController controller = loader.getController();
-            if (controller == null) {
-                DialogUtil.error("Failed to load insights controller", navigator.getPrimaryStage());
-                return;
-            }
-            controller.setServices(services);
-
-            // Create dialog stage
-            Stage dialogStage = new Stage();
-            dialogStage.setTitle("30-Day Hiring Insights");
-            dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-            dialogStage.initOwner(navigator.getPrimaryStage());
-            dialogStage.setResizable(false);
-
-            javafx.scene.Scene scene = new javafx.scene.Scene(root);
-            scene.getStylesheets().add(
-                    getClass().getResource("/css/application.css").toExternalForm());
-            dialogStage.setScene(scene);
-
-            controller.setDialogStage(dialogStage);
-            controller.loadData();
-
-            dialogStage.showAndWait();
-        } catch (Exception e) {
-            e.printStackTrace();
-            DialogUtil.error("Failed to open insights: " + e.getClass().getSimpleName() + " - " + e.getMessage(), navigator.getPrimaryStage());
+        // Insights now live as their own admin tab; selecting that tab triggers loading.
+        if (tabPane != null && adminInsightsTab != null) {
+            tabPane.getSelectionModel().select(adminInsightsTab);
         }
     }
 
@@ -1221,6 +1318,40 @@ public class MoDashboardController extends BaseController implements SessionAwar
         refreshJobLogs();
     }
 
+    @FXML
+    private void handleClearAccountLogs() {
+        if (!DialogUtil.confirm("Clear all account-management log entries? This cannot be undone.", navigator.getPrimaryStage())) {
+            return;
+        }
+        try {
+            java.nio.file.Path file = services.getDataDir().resolve("AccountLogs.csv");
+            com.bupt.tarecruit.util.CsvUtil.writeAll(file,
+                    new String[]{"log_id", "admin_id", "target_user_id", "target_role", "action", "previous_state", "new_state", "timestamp"},
+                    new java.util.ArrayList<>());
+            refreshAccountLogs();
+            DialogUtil.info("Account-management log cleared.", navigator.getPrimaryStage());
+        } catch (Exception ex) {
+            DialogUtil.error("Failed to clear log: " + ex.getMessage(), navigator.getPrimaryStage());
+        }
+    }
+
+    @FXML
+    private void handleClearJobLogs() {
+        if (!DialogUtil.confirm("Clear all job-management log entries? This cannot be undone.", navigator.getPrimaryStage())) {
+            return;
+        }
+        try {
+            java.nio.file.Path file = services.getDataDir().resolve("JobLogs.csv");
+            com.bupt.tarecruit.util.CsvUtil.writeAll(file,
+                    new String[]{"log_id", "admin_id", "job_id", "action", "previous_state", "new_state", "timestamp"},
+                    new java.util.ArrayList<>());
+            refreshJobLogs();
+            DialogUtil.info("Job-management log cleared.", navigator.getPrimaryStage());
+        } catch (Exception ex) {
+            DialogUtil.error("Failed to clear log: " + ex.getMessage(), navigator.getPrimaryStage());
+        }
+    }
+
     private String generateLogId() {
         List<String> existing = services.accountLogDao().findAll().stream()
                 .map(com.bupt.tarecruit.entity.AccountLog::getLogId)
@@ -1243,6 +1374,22 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
         applicantCardPane.getChildren().clear();
 
+        // Toggle the empty-state label according to the filtered view; favor the explicit
+        // "no applicants" message when the underlying job has zero applicants at all.
+        if (applicantsEmptyLabel != null) {
+            boolean isEmpty = filteredApplicants == null || filteredApplicants.isEmpty();
+            boolean noUnderlyingApplicants = applicantItems.isEmpty();
+            if (isEmpty) {
+                applicantsEmptyLabel.setText(noUnderlyingApplicants
+                        ? "No applicants for this job yet."
+                        : "No applicants match the current search.");
+            }
+            applicantsEmptyLabel.setVisible(isEmpty);
+            applicantsEmptyLabel.setManaged(isEmpty);
+            applicantCardScroll.setVisible(!isEmpty);
+            applicantCardScroll.setManaged(!isEmpty);
+        }
+
         // Separate applicants by status
         List<ApplicantDisplay> hired = new java.util.ArrayList<>();
         List<ApplicantDisplay> pending = new java.util.ArrayList<>();
@@ -1251,22 +1398,28 @@ public class MoDashboardController extends BaseController implements SessionAwar
         for (ApplicantDisplay applicant : filteredApplicants) {
             if (applicant.isHired()) {
                 hired.add(applicant);
-            } else if (applicant.getRecord().getStatus() == com.bupt.tarecruit.entity.ApplicationStatus.REJECTED) {
+            } else if (applicant.getRecord().getStatus() == ApplicationStatus.REJECTED) {
                 rejected.add(applicant);
             } else {
                 pending.add(applicant);
             }
         }
 
-        // Apply AI Top 3 sorting only to pending applicants
-        if (isTop3FilterActive && !top3ApplicantIds.isEmpty()) {
-            pending.sort((a, b) -> {
-                boolean aTop = top3ApplicantIds.contains(a.getTaId());
-                boolean bTop = top3ApplicantIds.contains(b.getTaId());
-                if (aTop && !bTop) return -1;
-                if (!aTop && bTop) return 1;
-                return 0;
-            });
+        // Earliest apply time first within each group.
+        Comparator<ApplicantDisplay> byApplyTimeAsc = Comparator.comparing(
+                d -> d.getRecord().getApplyTime(),
+                Comparator.nullsLast(java.time.LocalDateTime::compareTo));
+        hired.sort(byApplyTimeAsc);
+        rejected.sort(byApplyTimeAsc);
+
+        if (isTop3FilterActive && !top3Scores.isEmpty()) {
+            // After AI Top 3: sort Pending by score (desc), tie-break by earliest apply time.
+            // Unscored applicants fall to the bottom of the Pending block in apply-time order.
+            pending.sort(Comparator
+                    .comparingInt((ApplicantDisplay d) -> -top3Scores.getOrDefault(d.getTaId(), Integer.MIN_VALUE))
+                    .thenComparing(byApplyTimeAsc));
+        } else {
+            pending.sort(byApplyTimeAsc);
         }
 
         // Add separators between groups and render cards
@@ -1280,29 +1433,55 @@ public class MoDashboardController extends BaseController implements SessionAwar
         boolean hasPending = !pending.isEmpty();
         boolean hasRejected = !rejected.isEmpty();
 
-        // Render hired first (always at top)
-        if (hasHired) {
-            renderGroup.accept(hired);
-        }
-
-        // Add separator after hired if there are other groups
-        if (hasHired && (hasPending || hasRejected)) {
-            applicantCardPane.getChildren().add(createSeparator());
-        }
-
-        // Render pending (with AI Top 3 sorting applied)
+        // Render pending first (with AI Top 3 sorting applied).
         if (hasPending) {
             renderGroup.accept(pending);
         }
 
-        // Add separator after pending if there are rejected
-        if (hasPending && hasRejected) {
+        // Add separator between pending and hired.
+        if (hasPending && (hasHired || hasRejected)) {
             applicantCardPane.getChildren().add(createSeparator());
         }
 
-        // Render rejected last
+        // Render hired second.
+        if (hasHired) {
+            renderGroup.accept(hired);
+        }
+
+        // Add separator between hired and rejected.
+        if (hasHired && hasRejected) {
+            applicantCardPane.getChildren().add(createSeparator());
+        }
+
+        // Render rejected last.
         if (hasRejected) {
             renderGroup.accept(rejected);
+        }
+
+        // Default selection: first Pending → first Hired → first Not Hired.
+        if (selectedApplicant == null) {
+            ApplicantDisplay defaultPick = null;
+            if (!pending.isEmpty()) {
+                defaultPick = pending.get(0);
+            } else if (!hired.isEmpty()) {
+                defaultPick = hired.get(0);
+            } else if (!rejected.isEmpty()) {
+                defaultPick = rejected.get(0);
+            }
+            if (defaultPick != null) {
+                selectedApplicant = defaultPick;
+                updateApplicantDetail(selectedApplicant);
+                String selectedApplyId = selectedApplicant.getRecord() == null
+                        ? null
+                        : selectedApplicant.getRecord().getApplyId();
+                for (javafx.scene.Node node : applicantCardPane.getChildren()) {
+                    if (node.getUserData() instanceof ApplicantDisplay ad
+                            && ad.getRecord() != null
+                            && java.util.Objects.equals(ad.getRecord().getApplyId(), selectedApplyId)) {
+                        node.getStyleClass().add("applicant-card-selected");
+                    }
+                }
+            }
         }
     }
 
@@ -1312,9 +1491,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
         separator.setPrefHeight(2);
         separator.setMaxHeight(2);
         separator.setMinHeight(2);
-        // Set width to match the FlowPane wrap length
-        separator.setPrefWidth(580);
-        separator.setMaxWidth(580);
+        // Stretch the separator to the full width of the container.
+        separator.prefWidthProperty().bind(applicantCardPane.widthProperty().subtract(24));
+        separator.maxWidthProperty().bind(separator.prefWidthProperty());
         return separator;
     }
 
@@ -1322,9 +1501,13 @@ public class MoDashboardController extends BaseController implements SessionAwar
         javafx.scene.layout.VBox card = new javafx.scene.layout.VBox();
         card.setSpacing(8);
         card.getStyleClass().addAll("applicant-card");
-        // Set fixed width to ensure 2 cards per row (280px each + 12px gap = ~572px needed for 2 cards)
-        card.setPrefWidth(280);
-        card.setMaxWidth(280);
+        card.setUserData(applicant);
+        // Two cards per row that grow with the container: (paneWidth - hgap - left/right padding) / 2.
+        // hgap is 12; padding is roughly 12 on each side via .applicant-card-container.
+        card.prefWidthProperty().bind(
+                applicantCardPane.widthProperty().subtract(36).divide(2));
+        card.maxWidthProperty().bind(card.prefWidthProperty());
+        card.setMinWidth(220);
 
         if (applicant.isHired()) {
             card.getStyleClass().add("applicant-card-hired");
@@ -1332,7 +1515,14 @@ public class MoDashboardController extends BaseController implements SessionAwar
         if (top3ApplicantIds.contains(applicant.getTaId())) {
             card.getStyleClass().add("applicant-card-recommended");
         }
-        if (selectedApplicant != null && selectedApplicant.getTaId().equals(applicant.getTaId())) {
+        // Selected style is added LAST so it visually wins via CSS specificity.
+        // Identify by applyId, not taId, so a single TA can never light up two cards.
+        if (selectedApplicant != null
+                && selectedApplicant.getRecord() != null
+                && applicant.getRecord() != null
+                && java.util.Objects.equals(
+                        selectedApplicant.getRecord().getApplyId(),
+                        applicant.getRecord().getApplyId())) {
             card.getStyleClass().add("applicant-card-selected");
         }
 
@@ -1463,24 +1653,28 @@ public class MoDashboardController extends BaseController implements SessionAwar
         task.setOnSucceeded(evt -> {
             List<AiService.ApplicantRecommendation> recommendations = task.getValue();
             top3ApplicantIds.clear();
-            if (recommendations.size() >= 3) {
-                for (int i = 0; i < 3; i++) {
-                    top3ApplicantIds.add(recommendations.get(i).taId());
-                }
-            } else {
-                for (AiService.ApplicantRecommendation rec : recommendations) {
-                    top3ApplicantIds.add(rec.taId());
-                }
+            top3Scores.clear();
+            // Record AI scores for every ranked applicant so we can sort the Pending group by score.
+            for (AiService.ApplicantRecommendation rec : recommendations) {
+                top3Scores.put(rec.taId(), rec.score());
+            }
+            int topN = Math.min(3, recommendations.size());
+            for (int i = 0; i < topN; i++) {
+                top3ApplicantIds.add(recommendations.get(i).taId());
             }
             isTop3FilterActive = true;
+            // Force the next render to re-pick the top match as the selected card.
+            selectedApplicant = null;
 
-            // Apply current search filter with reordering
+            // Apply current search filter; this re-renders the cards with the new sort order
+            // and runs the default-selection logic, which now picks the first Pending entry
+            // (highest score thanks to top3Scores).
             filterApplicants(applicantSearchField.getText());
 
             StringBuilder sb = new StringBuilder("Top Candidates (from pending):\n\n");
-            for (int i = 0; i < Math.min(3, recommendations.size()); i++) {
+            for (int i = 0; i < topN; i++) {
                 AiService.ApplicantRecommendation rec = recommendations.get(i);
-                sb.append(String.format("%d. %s (Score: %d)\n   %s\n\n",
+                sb.append(String.format("%d. %s (Score: %d)%n   %s%n%n",
                         i + 1, rec.taId(), rec.score(), rec.reason()));
             }
             aiKeywordsArea.setText(sb.toString());
@@ -1498,6 +1692,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
             applicantNameLabel.setText("None selected");
             applicantStatusLabel.setText("-");
             applicantProfileArea.clear();
+            updateActionButtons(null);
             return;
         }
         Ta ta = display.getTa();
@@ -1522,6 +1717,19 @@ CV: %s
                 safeText(ta.getSelfEvaluation()),
                 ta.getCvPath() != null && !ta.getCvPath().isBlank() ? "Uploaded" : "None"
         ));
+        updateActionButtons(display);
+    }
+
+    private void updateActionButtons(ApplicantDisplay display) {
+        boolean isPending = display != null
+                && display.getRecord() != null
+                && display.getRecord().getStatus() == ApplicationStatus.PENDING;
+        if (hireButton != null) {
+            hireButton.setDisable(!isPending);
+        }
+        if (rejectButton != null) {
+            rejectButton.setDisable(!isPending);
+        }
     }
 
     @FXML
@@ -1532,42 +1740,29 @@ CV: %s
         }
         ApplicantDisplay display = selectedApplicant;
         ApplicationRecord record = display.getRecord();
-        OperationResult<Void> result;
-
-        if (record.getStatus() == ApplicationStatus.HIRED) {
-            if (DialogUtil.confirm("Unhire this applicant? Status will change back to Pending.", navigator.getPrimaryStage())) {
-                result = services.applicationService().unhireApplicant(record.getApplyId());
-            } else {
-                return;
-            }
-        } else {
-            if (DialogUtil.confirm("Hire this applicant?", navigator.getPrimaryStage())) {
-                Optional<Job> currentJobOpt = services.jobService().findById(record.getJobId());
-                if (currentJobOpt.isEmpty()) {
-                    DialogUtil.error("Job not found", navigator.getPrimaryStage());
-                    return;
-                }
-                List<Job> overlappingJobs = services.applicationService()
-                        .findOverlappingHiredJobs(record.getTaId(), record.getJobId());
-                if (overlappingJobs.size() >= WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD) {
-                    String warning = buildConcurrentHireWarning(currentJobOpt.get(), overlappingJobs);
-                    if (!DialogUtil.confirmYesNo(warning, navigator.getPrimaryStage())) {
-                        return;
-                    }
-                }
-                result = services.applicationService().hireApplicant(record.getApplyId());
-            } else {
+        if (record.getStatus() != ApplicationStatus.PENDING) {
+            DialogUtil.info("This applicant has already been decided.",
+                    navigator.getPrimaryStage());
+            return;
+        }
+        if (!DialogUtil.confirm("Hire this applicant?", navigator.getPrimaryStage())) {
+            return;
+        }
+        Optional<Job> currentJobOpt = services.jobService().findById(record.getJobId());
+        if (currentJobOpt.isEmpty()) {
+            DialogUtil.error("Job not found", navigator.getPrimaryStage());
+            return;
+        }
+        List<Job> overlappingJobs = services.applicationService()
+                .findOverlappingHiredJobs(record.getTaId(), record.getJobId());
+        if (overlappingJobs.size() >= WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD) {
+            String warning = buildConcurrentHireWarning(currentJobOpt.get(), overlappingJobs);
+            if (!DialogUtil.confirmYesNo(warning, navigator.getPrimaryStage())) {
                 return;
             }
         }
-
-        if (result.success()) {
-            DialogUtil.info(result.message(), navigator.getPrimaryStage());
-            refreshMyJobs();
-            loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
-        } else {
-            DialogUtil.error(result.message(), navigator.getPrimaryStage());
-        }
+        OperationResult<Void> result = services.applicationService().hireApplicant(record.getApplyId());
+        finishApplicantAction(result);
     }
 
     @FXML
@@ -1578,15 +1773,39 @@ CV: %s
         }
         ApplicantDisplay display = selectedApplicant;
         ApplicationRecord record = display.getRecord();
-        OperationResult<Void> result;
-        if (record.getStatus() == ApplicationStatus.REJECTED) {
-            result = services.applicationService().unrejectApplicant(record.getApplyId());
-        } else {
-            result = services.applicationService().rejectApplicant(record.getApplyId());
+        if (record.getStatus() != ApplicationStatus.PENDING) {
+            DialogUtil.info("This applicant has already been decided.", navigator.getPrimaryStage());
+            return;
         }
+        OperationResult<Void> result = services.applicationService().rejectApplicant(record.getApplyId());
+        finishApplicantAction(result);
+    }
+
+    /**
+     * Shared post-action flow: report the outcome and reload the applicant list while keeping
+     * the MO on the same job (no jump to the first job).
+     */
+    private void finishApplicantAction(OperationResult<Void> result) {
         if (result.success()) {
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
-            loadApplicants(jobSelector.getSelectionModel().getSelectedItem());
+            Job currentJob = jobSelector.getSelectionModel().getSelectedItem();
+            String currentApplyId = selectedApplicant != null && selectedApplicant.getRecord() != null
+                    ? selectedApplicant.getRecord().getApplyId()
+                    : null;
+            refreshMyJobs();
+            loadApplicants(currentJob);
+            // Try to keep the same applicant card selected so the MO can keep iterating.
+            if (currentApplyId != null) {
+                for (ApplicantDisplay candidate : applicantItems) {
+                    if (candidate.getRecord() != null
+                            && currentApplyId.equals(candidate.getRecord().getApplyId())) {
+                        selectedApplicant = candidate;
+                        updateApplicantDetail(candidate);
+                        renderApplicantCards();
+                        break;
+                    }
+                }
+            }
         } else {
             DialogUtil.error(result.message(), navigator.getPrimaryStage());
         }
@@ -1643,9 +1862,7 @@ CV: %s
             if (!isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
                 return;
             }
-            aiKeywordsArea.setText(task.getValue().stream()
-                    .map(k -> "• " + k)
-                    .collect(Collectors.joining("\n")));
+            aiKeywordsArea.setText(String.join(", ", task.getValue()));
         });
         task.setOnCancelled(evt -> {
             if (isApplicantsAiContextValid(contextToken, jobIdSnapshot)) {
@@ -1698,13 +1915,15 @@ CV: %s
 
     @FXML
     private void handleGenerateJobKeywords() {
-        String requirements = requirementsField.getText();
-        String notes = notesField.getText();
-        String moduleName = moduleField.getText();
-        String jobName = jobNameField.getText();
+        String requirements = requirementsField.getText() == null ? "" : requirementsField.getText().trim();
+        String notes = notesField.getText() == null ? "" : notesField.getText().trim();
+        String moduleName = moduleField.getText() == null ? "" : moduleField.getText().trim();
+        String jobName = jobNameField.getText() == null ? "" : jobNameField.getText().trim();
 
-        if (requirements == null || requirements.isBlank()) {
-            DialogUtil.error("Please enter job requirements first", navigator.getPrimaryStage());
+        if (jobName.isBlank() && requirements.isBlank() && notes.isBlank()) {
+            DialogUtil.error(
+                    "Please fill in at least one of Job title, Requirements, or Notes before generating keywords.",
+                    navigator.getPrimaryStage());
             return;
         }
 
@@ -1714,7 +1933,6 @@ CV: %s
         Task<List<String>> task = new Task<>() {
             @Override
             protected List<String> call() throws Exception {
-                // Create a temporary Job object for AI analysis
                 Job tempJob = new Job();
                 tempJob.setJobName(jobName);
                 tempJob.setModuleName(moduleName);
@@ -1726,9 +1944,7 @@ CV: %s
 
         task.setOnSucceeded(evt -> {
             List<String> keywords = task.getValue();
-            keywordsField.setText(keywords.stream()
-                    .map(k -> "• " + k)
-                    .collect(Collectors.joining("\n")));
+            keywordsField.setText(String.join(", ", keywords));
             generateKeywordsBtn.setDisable(false);
             keywordsLoadingLabel.setVisible(false);
         });
