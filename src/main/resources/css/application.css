@@ -237,21 +237,21 @@
 
 /* AI Recommend Jobs highlight — applied via row factory in TaDashboardController. */
 .table-row-cell.ai-recommended-row {
-    -fx-background-color: #dcfce7;
-    -fx-border-color: #10b981 transparent #10b981 transparent;
+    -fx-background-color: #f5f3ff;
+    -fx-border-color: #c4b5fd transparent #c4b5fd transparent;
     -fx-border-width: 0 0 1 0;
 }
 
 .table-row-cell.ai-recommended-row:odd {
-    -fx-background-color: #d1fae5;
+    -fx-background-color: #ede9fe;
 }
 
 .table-row-cell.ai-recommended-row:hover {
-    -fx-background-color: #bbf7d0;
+    -fx-background-color: #e9d5ff;
 }
 
 .table-row-cell.ai-recommended-row:selected {
-    -fx-background-color: #86efac;
+    -fx-background-color: #ddd6fe;
 }
 
 /* TA Browse jobs — already-applied rows render muted and sink to the bottom. */
