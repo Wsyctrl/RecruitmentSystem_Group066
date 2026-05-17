@@ -87,15 +87,19 @@ public class ApplicationService {
     /**
      * Returns all active applicants for a specific job,
      * excluding withdrawn application records.
+     * If multiple non-withdrawn rows exist for the same TA on the same job
+     * (legacy or hand-edited data), only the most recently updated record is kept.
      *
      * @param jobId target job identifier
      * @return list of active applications for the job
      */
     public List<ApplicationRecord> findActiveApplicationsForJob(String jobId) {
-        return applicationDao.findByJobId(jobId).stream()
+        java.util.LinkedHashMap<String, ApplicationRecord> dedup = new java.util.LinkedHashMap<>();
+        applicationDao.findByJobId(jobId).stream()
                 .filter(r -> r.getStatus() != ApplicationStatus.WITHDRAWN)
                 .sorted(Comparator.comparing(ApplicationRecord::getUpdateTime).reversed())
-                .collect(Collectors.toList());
+                .forEach(r -> dedup.putIfAbsent(r.getTaId().toLowerCase(), r));
+        return new java.util.ArrayList<>(dedup.values());
     }
 
     /**

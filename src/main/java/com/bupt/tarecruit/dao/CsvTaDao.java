@@ -11,7 +11,7 @@ import java.util.Optional;
 public class CsvTaDao implements TaDao {
 
     private static final String[] HEADER = {
-            "email", "password", "full_name", "phone", "major", "skills", "experience", "self_evaluation", "is_disabled", "cv_path"
+            "email", "password", "full_name", "phone", "major", "skills", "experience", "self_evaluation", "is_disabled", "cv_path", "ai_summary"
     };
     private final Path filePath;
 
@@ -58,7 +58,7 @@ public class CsvTaDao implements TaDao {
         Ta ta = new Ta();
         ta.setEmail(rowAt(row, 0));
         ta.setPassword(rowAt(row, 1));
-        // New schema: email,password,full_name,phone,major,skills,experience,self_evaluation,is_disabled,cv_path
+        // New schema: email,password,full_name,phone,major,skills,experience,self_evaluation,is_disabled,cv_path,ai_summary
         if (row.length >= 10 && rowAt(row, 0).contains("@")) {
             ta.setFullName(rowAt(row, 2));
             ta.setPhone(rowAt(row, 3));
@@ -68,6 +68,7 @@ public class CsvTaDao implements TaDao {
             ta.setSelfEvaluation(rowAt(row, 7));
             ta.setDisabled("1".equals(rowAt(row, 8)));
             ta.setCvPath(rowAt(row, 9));
+            ta.setAiSummary(rowAt(row, 10));
         } else if (row.length >= 11) {
             // Legacy schema: ta_id,password,full_name,phone,email,major,skills,experience,self_evaluation,is_disabled,cv_path
             ta.setEmail(rowAt(row, 4));
@@ -79,6 +80,7 @@ public class CsvTaDao implements TaDao {
             ta.setSelfEvaluation(rowAt(row, 8));
             ta.setDisabled("1".equals(rowAt(row, 9)));
             ta.setCvPath(rowAt(row, 10));
+            ta.setAiSummary("");
         } else {
             // Legacy rows without full_name: phone follows password
             ta.setFullName("");
@@ -90,6 +92,7 @@ public class CsvTaDao implements TaDao {
             ta.setSelfEvaluation(rowAt(row, 7));
             ta.setDisabled("1".equals(rowAt(row, 8)));
             ta.setCvPath(rowAt(row, 9));
+            ta.setAiSummary("");
         }
         return ta;
     }
@@ -105,7 +108,8 @@ public class CsvTaDao implements TaDao {
                 emptyIfNull(ta.getExperience()),
                 emptyIfNull(ta.getSelfEvaluation()),
                 ta.isDisabled() ? "1" : "0",
-                emptyIfNull(ta.getCvPath())
+                emptyIfNull(ta.getCvPath()),
+                emptyIfNull(ta.getAiSummary())
         };
     }
 

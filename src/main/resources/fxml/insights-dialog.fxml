@@ -7,20 +7,11 @@
 <?import javafx.scene.chart.NumberAxis?>
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.bupt.tarecruit.controller.InsightsDialogController"
-            styleClass="root"
-            prefWidth="1000" prefHeight="750">
+            styleClass="root">
 
     <top>
         <VBox spacing="12" styleClass="p-4">
-            <BorderPane>
-                <left>
-                    <Label text="30-Day Hiring Insights" styleClass="h2"/>
-                </left>
-                <right>
-                    <Button text="×" onAction="#handleClose" styleClass="btn-close"
-                            style="-fx-font-size: 20px; -fx-background-color: transparent; -fx-text-fill: #718096;"/>
-                </right>
-            </BorderPane>
+            <Label text="30-Day Hiring Insights" styleClass="h2"/>
 
             <HBox spacing="10" styleClass="insights-metrics">
                 <VBox spacing="4" styleClass="metric-card" HBox.hgrow="ALWAYS">
@@ -101,9 +92,4 @@
         </VBox>
     </center>
 
-    <bottom>
-        <HBox alignment="CENTER_RIGHT" styleClass="p-3">
-            <Button text="Close" onAction="#handleClose" styleClass="btn-primary"/>
-        </HBox>
-    </bottom>
 </BorderPane>

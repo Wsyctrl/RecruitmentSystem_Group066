@@ -63,7 +63,7 @@
             <Tab fx:id="browseJobsTab" text="Browse jobs">
                 <BorderPane>
                     <center>
-                        <SplitPane orientation="VERTICAL" dividerPositions="0.62">
+                        <SplitPane fx:id="browseJobsVerticalSplit" orientation="VERTICAL" dividerPositions="0.62">
                             <BorderPane>
                                 <top>
                                     <HBox spacing="10" styleClass="p-3">
@@ -72,7 +72,7 @@
                                     </HBox>
                                 </top>
                                 <center>
-                                    <SplitPane dividerPositions="0.58">
+                                    <SplitPane fx:id="browseJobsHorizontalSplit" dividerPositions="0.5">
                                         <TableView fx:id="jobTable">
                                             <columns>
                                                 <TableColumn text="Job ID" prefWidth="90">
@@ -150,6 +150,10 @@
                                                         <TextArea fx:id="jobNotesArea" editable="false" wrapText="true" prefRowCount="3"/>
                                                     </VBox>
                                                     <VBox spacing="4">
+                                                        <Label text="Keywords" styleClass="text-muted"/>
+                                                        <TextArea fx:id="jobKeywordsArea" editable="false" wrapText="true" prefRowCount="2"/>
+                                                    </VBox>
+                                                    <VBox spacing="4">
                                                         <Label text="AI Resume Optimization Advice" styleClass="text-muted"/>
                                                         <TextArea fx:id="aiResumeAdviceArea" editable="false" wrapText="true" prefRowCount="5"/>
                                                     </VBox>
@@ -184,7 +188,8 @@
                     </top>
                     <center>
                         <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
-                            <VBox spacing="20" styleClass="p-4" maxWidth="750">
+                            <HBox alignment="TOP_CENTER">
+                                <VBox spacing="20" styleClass="p-4" maxWidth="750" minWidth="600" HBox.hgrow="NEVER">
                                 <!-- Account Info Section -->
                                 <VBox spacing="12" styleClass="form-section">
                                     <Label text="Account Information" styleClass="h6"/>
@@ -245,10 +250,11 @@
                                 </VBox>
 
                                 <!-- Action Buttons -->
-                                <HBox spacing="10" alignment="CENTER_RIGHT">
+                                <HBox spacing="10" alignment="CENTER">
                                     <Button text="Save profile" onAction="#handleSaveProfile" styleClass="btn-primary"/>
                                 </HBox>
-                            </VBox>
+                                </VBox>
+                            </HBox>
                         </ScrollPane>
                     </center>
                 </BorderPane>

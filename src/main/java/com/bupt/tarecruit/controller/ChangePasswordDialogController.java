@@ -77,13 +77,12 @@ public class ChangePasswordDialogController {
         }
 
         if (result.success()) {
-            statusLabel.setText(result.message());
-            statusLabel.setStyle("-fx-text-fill: #38a169;");
             passwordChanged = true;
-            // Clear fields
-            currentPasswordField.clear();
-            newPasswordField.clear();
-            confirmPasswordField.clear();
+            // Auto-close; the calling controller surfaces the success dialog so the user
+            // does not see a still-open form behind it.
+            if (dialogStage != null) {
+                dialogStage.close();
+            }
         } else {
             statusLabel.setText(result.message());
             statusLabel.setStyle("-fx-text-fill: #e53e3e;");

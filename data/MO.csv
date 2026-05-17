@@ -1,5 +1,6 @@
 email,password,full_name,responsible_modules,phone,is_disabled
 admin@bupt.edu.cn,Admin@123,System Administrator,All school-wide TA policy and global job oversight,13900000000,0
 evans@bupt.edu.cn,Pass@123,Dr. Richard Evans,Data Structures;Algorithms;Discrete Mathematics,13900001001,0
-slin@bupt.edu.cn,Pass@123,Dr. Sarah Lin,Software Engineering;Web Technologies,13900001002,1
+slin@bupt.edu.cn,Pass@123,Dr. Sarah Lin,Software Engineering;Web Technologies,13900001002,0
 kzhang@bupt.edu.cn,Pass@123,Dr. Kevin Zhang,Computer Networks;Distributed Systems,13900001003,0
+wanghong@bupt.edu.cn,Pass@123,,,,0

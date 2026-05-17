@@ -49,7 +49,7 @@ public class AiService {
         String userPrompt = """
                 Recommend the best jobs for this TA.
                 Return a JSON array. Each item must include: jobId(string), score(int 0-100), reason(string).
-                Return at most 5 items sorted by score descending.
+                Return at most 3 items sorted by score descending.
                 
                 TA profile:
                 %s
@@ -122,20 +122,34 @@ public class AiService {
 
     public List<ApplicantRecommendation> recommendApplicantsForJob(Job job, List<ApplicantDisplay> applicants)
             throws IOException, InterruptedException {
+        // Backwards-compatible default: no extra preference, up to 8 results.
+        return recommendApplicantsForJob(job, applicants, 8, "");
+    }
+
+    public List<ApplicantRecommendation> recommendApplicantsForJob(
+            Job job, List<ApplicantDisplay> applicants, int maxResults, String preference)
+            throws IOException, InterruptedException {
+        int cap = Math.max(1, Math.min(maxResults, applicants.size()));
+        String preferenceText = preference == null ? "" : preference.trim();
         String userPrompt = """
                 You are a recruiting assistant. Rank applicants for this job.
                 Return a JSON array. Each item must include: taId(string), score(int 0-100), reason(string).
-                Return at most 8 items sorted by score descending.
-                
+                Return at most %d items sorted by score descending.
+                The MO has provided extra preference (higher priority when scoring); when blank, ignore it.
+
+                MO preference:
+                %s
+
                 Job:
                 Name: %s
                 Module: %s
                 Requirements: %s
                 Notes: %s
-                
+
                 Applicant list:
                 %s
-                """.formatted(safe(job.getJobName()), safe(job.getModuleName()), safe(job.getRequirements()),
+                """.formatted(cap, preferenceText.isBlank() ? "(none)" : preferenceText,
+                safe(job.getJobName()), safe(job.getModuleName()), safe(job.getRequirements()),
                 safe(job.getAdditionalNotes()), applicantListText(applicants));
         JSONArray arr = asJsonArray(chatJson(userPrompt));
         List<ApplicantRecommendation> result = new ArrayList<>();
@@ -186,9 +200,10 @@ public class AiService {
 
     public List<String> generateJobKeywords(Job job) throws IOException, InterruptedException {
         String userPrompt = """
-                Generate 5 to 10 English job requirement keywords for quick hiring review.
-                Return a JSON array of strings.
-                
+                Generate 3 to 5 short English job-requirement keywords for quick hiring review.
+                Each keyword must be 1 to 3 words. Do not include sentences or explanations.
+                Return a JSON array of strings only.
+
                 Job:
                 Name: %s
                 Module: %s

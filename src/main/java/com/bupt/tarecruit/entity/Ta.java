@@ -14,6 +14,8 @@ public class Ta {
     private String selfEvaluation;
     private boolean disabled;
     private String cvPath;
+    /** AI-generated one-line profile summary cached on the TA record. */
+    private String aiSummary;
 
     public Ta() {
     }
@@ -117,6 +119,14 @@ public class Ta {
 
     public void setCvPath(String cvPath) {
         this.cvPath = cvPath;
+    }
+
+    public String getAiSummary() {
+        return aiSummary;
+    }
+
+    public void setAiSummary(String aiSummary) {
+        this.aiSummary = aiSummary;
     }
 
     public String getStatusLabel() {

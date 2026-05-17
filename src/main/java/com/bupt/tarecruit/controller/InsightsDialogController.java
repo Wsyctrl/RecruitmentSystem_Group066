@@ -305,6 +305,7 @@ public class InsightsDialogController {
         if (dialogStage != null) {
             dialogStage.close();
         }
+        // No-op when the view is embedded as a tab.
     }
 
     @FXML
