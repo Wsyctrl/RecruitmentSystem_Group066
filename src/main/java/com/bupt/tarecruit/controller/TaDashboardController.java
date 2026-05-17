@@ -727,7 +727,13 @@ public class TaDashboardController extends BaseController implements SessionAwar
         if (ta == null) {
             return;
         }
-        List<Job> jobs = services.jobService().findOpenJobs();
+        // Mirror refreshJobs(): jobs posted by a disabled MO can't accept applications, so AI
+        // must not see them either.
+        List<Job> jobs = services.jobService().findOpenJobs().stream()
+                .filter(job -> services.profileService().findMo(job.getMoId())
+                        .map(mo -> !mo.isDisabled())
+                        .orElse(true))
+                .collect(Collectors.toList());
         if (jobs.isEmpty()) {
             aiJobRecommendationArea.setText("No open jobs are available.");
             return;

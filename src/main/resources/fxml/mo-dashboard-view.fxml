@@ -32,7 +32,7 @@
                                 </ScrollPane>
                                 <Label fx:id="applicantsEmptyLabel" text="No applicants for this job yet." styleClass="text-muted" visible="false" managed="false"/>
                             </StackPane>
-                            <SplitPane fx:id="applicantDetailSplit" orientation="VERTICAL" dividerPositions="0.66">
+                            <SplitPane fx:id="applicantDetailSplit" orientation="VERTICAL" dividerPositions="0.5">
                                 <VBox fx:id="applicantDetailPanel" spacing="12" styleClass="detail-panel">
                                     <padding>
                                         <Insets top="16" right="16" bottom="16" left="16"/>
@@ -53,12 +53,19 @@
                                     <padding>
                                         <Insets top="16" right="16" bottom="16" left="16"/>
                                     </padding>
-                                    <Label text="AI Analysis" styleClass="h6"/>
-                                    <TextArea fx:id="aiKeywordsArea" wrapText="true" editable="false" VBox.vgrow="ALWAYS" promptText="AI Top 3 results will appear here..."/>
-                                    <TextArea fx:id="aiApplicantResultArea" wrapText="true" editable="false" prefRowCount="4" visible="false" managed="false"/>
+                                    <Label text="AI Recommend Applicants" styleClass="h6"/>
+                                    <Label text="Additional preference for AI recommendation (optional)" styleClass="text-muted"/>
+                                    <TextArea fx:id="aiPreferenceArea" wrapText="true" prefRowCount="2" promptText="e.g. prioritise applicants with deep-learning experience"/>
                                     <HBox spacing="8" alignment="CENTER_LEFT">
-                                        <Button text="AI Top 3" onAction="#handleAiTop3Filter" styleClass="btn-primary"/>
+                                        <Label text="Top" styleClass="form-label"/>
+                                        <Spinner fx:id="aiTopCountSpinner" prefWidth="80"/>
+                                        <Label text="match(es)" styleClass="form-label"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="AI Recommend Applicants" onAction="#handleAiRecommendApplicants" styleClass="btn-primary"/>
                                     </HBox>
+                                    <Label text="AI Analysis" styleClass="h6"/>
+                                    <TextArea fx:id="aiKeywordsArea" wrapText="true" editable="false" VBox.vgrow="ALWAYS" promptText="AI recommendations will appear here..."/>
+                                    <TextArea fx:id="aiApplicantResultArea" wrapText="true" editable="false" prefRowCount="4" visible="false" managed="false"/>
                                 </VBox>
                             </SplitPane>
                         </SplitPane>
