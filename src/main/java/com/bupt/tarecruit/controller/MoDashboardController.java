@@ -714,13 +714,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
                         && display.getTa().isDisabled()))
                 .collect(Collectors.toList()));
 
-        // Pre-load summaries from cache for instant display
+        // Pre-load summaries from the TA record so the cards render instantly when cached.
         for (ApplicantDisplay applicant : applicantItems) {
-            if (applicant.getTa() != null) {
-                String cached = services.fileStorageHelper().loadSummary(applicant.getTaId());
-                if (!cached.isEmpty()) {
-                    applicantSummaries.put(applicant.getTaId(), cached);
-                }
+            Ta ta = applicant.getTa();
+            if (ta != null && ta.getAiSummary() != null && !ta.getAiSummary().isBlank()) {
+                applicantSummaries.put(applicant.getTaId(), ta.getAiSummary().trim());
             }
         }
 
@@ -1583,32 +1581,33 @@ public class MoDashboardController extends BaseController implements SessionAwar
             protected Void call() {
                 for (ApplicantDisplay applicant : applicantItems) {
                     if (isCancelled()) break;
-                    if (applicant.getTa() == null) continue;
+                    Ta ta = applicant.getTa();
+                    if (ta == null) continue;
                     String taId = applicant.getTaId();
 
-                    // Skip if already loaded
+                    // Skip if already in the in-memory cache for this session.
                     if (applicantSummaries.containsKey(taId)) continue;
 
-                    // Try loading from cache first
-                    String cached = services.fileStorageHelper().loadSummary(taId);
-                    if (!cached.isEmpty()) {
-                        applicantSummaries.put(taId, cached);
+                    // Reuse the AI summary stored on the TA record when present.
+                    String cached = ta.getAiSummary();
+                    if (cached != null && !cached.isBlank()) {
+                        applicantSummaries.put(taId, cached.trim());
                         javafx.application.Platform.runLater(() -> renderApplicantCards());
                         continue;
                     }
 
-                    // Generate new summary
+                    // No persisted summary yet: generate a new one and persist it back to TA.csv.
                     try {
-                        String summary = services.aiService().generateApplicantSummary(applicant.getTa());
+                        String summary = services.aiService().generateApplicantSummary(ta);
                         applicantSummaries.put(taId, summary);
-                        // Save to cache
-                        services.fileStorageHelper().saveSummary(taId, summary);
+                        ta.setAiSummary(summary);
+                        services.profileService().updateTa(ta);
                         javafx.application.Platform.runLater(() -> renderApplicantCards());
                     } catch (Exception ex) {
-                        // Fallback summary
-                        String fallback = applicant.getTa().getMajor() + " major with skills in " +
-                                (applicant.getTa().getSkills() != null && !applicant.getTa().getSkills().isBlank()
-                                        ? applicant.getTa().getSkills().split(",")[0] : "various areas");
+                        // Fallback summary: leave the persisted column blank so the next run retries.
+                        String fallback = ta.getMajor() + " major with skills in " +
+                                (ta.getSkills() != null && !ta.getSkills().isBlank()
+                                        ? ta.getSkills().split(",")[0] : "various areas");
                         applicantSummaries.put(taId, fallback);
                         javafx.application.Platform.runLater(() -> renderApplicantCards());
                     }
