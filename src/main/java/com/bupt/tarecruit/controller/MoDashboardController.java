@@ -235,6 +235,15 @@ public class MoDashboardController extends BaseController implements SessionAwar
         filteredApplicants = new FilteredList<>(applicantItems, item -> true);
         applicantSearchField.textProperty().addListener((obs, old, val) -> filterApplicants(val));
 
+        // Configure FlowPane for 2 cards per row layout
+        if (applicantCardPane != null) {
+            applicantCardPane.setPrefWrapLength(580); // 2 cards * 280px + gaps
+        }
+        if (applicantCardScroll != null) {
+            applicantCardScroll.setFitToWidth(true);
+            applicantCardScroll.setHbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);
+        }
+
         positionsSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 50, 1));
         setupAdminVisibility(false);
 
@@ -1234,11 +1243,24 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
         applicantCardPane.getChildren().clear();
 
-        // Get the filtered applicants and optionally sort by top 3
-        List<ApplicantDisplay> toRender = new java.util.ArrayList<>(filteredApplicants);
+        // Separate applicants by status
+        List<ApplicantDisplay> hired = new java.util.ArrayList<>();
+        List<ApplicantDisplay> pending = new java.util.ArrayList<>();
+        List<ApplicantDisplay> rejected = new java.util.ArrayList<>();
 
+        for (ApplicantDisplay applicant : filteredApplicants) {
+            if (applicant.isHired()) {
+                hired.add(applicant);
+            } else if (applicant.getRecord().getStatus() == com.bupt.tarecruit.entity.ApplicationStatus.REJECTED) {
+                rejected.add(applicant);
+            } else {
+                pending.add(applicant);
+            }
+        }
+
+        // Apply AI Top 3 sorting only to pending applicants
         if (isTop3FilterActive && !top3ApplicantIds.isEmpty()) {
-            toRender.sort((a, b) -> {
+            pending.sort((a, b) -> {
                 boolean aTop = top3ApplicantIds.contains(a.getTaId());
                 boolean bTop = top3ApplicantIds.contains(b.getTaId());
                 if (aTop && !bTop) return -1;
@@ -1247,15 +1269,62 @@ public class MoDashboardController extends BaseController implements SessionAwar
             });
         }
 
-        for (ApplicantDisplay applicant : toRender) {
-            applicantCardPane.getChildren().add(createApplicantCard(applicant));
+        // Add separators between groups and render cards
+        java.util.function.Consumer<List<ApplicantDisplay>> renderGroup = (applicants) -> {
+            for (ApplicantDisplay applicant : applicants) {
+                applicantCardPane.getChildren().add(createApplicantCard(applicant));
+            }
+        };
+
+        boolean hasHired = !hired.isEmpty();
+        boolean hasPending = !pending.isEmpty();
+        boolean hasRejected = !rejected.isEmpty();
+
+        // Render hired first (always at top)
+        if (hasHired) {
+            renderGroup.accept(hired);
         }
+
+        // Add separator after hired if there are other groups
+        if (hasHired && (hasPending || hasRejected)) {
+            applicantCardPane.getChildren().add(createSeparator());
+        }
+
+        // Render pending (with AI Top 3 sorting applied)
+        if (hasPending) {
+            renderGroup.accept(pending);
+        }
+
+        // Add separator after pending if there are rejected
+        if (hasPending && hasRejected) {
+            applicantCardPane.getChildren().add(createSeparator());
+        }
+
+        // Render rejected last
+        if (hasRejected) {
+            renderGroup.accept(rejected);
+        }
+    }
+
+    private javafx.scene.layout.VBox createSeparator() {
+        javafx.scene.layout.VBox separator = new javafx.scene.layout.VBox();
+        separator.getStyleClass().add("applicant-group-separator");
+        separator.setPrefHeight(2);
+        separator.setMaxHeight(2);
+        separator.setMinHeight(2);
+        // Set width to match the FlowPane wrap length
+        separator.setPrefWidth(580);
+        separator.setMaxWidth(580);
+        return separator;
     }
 
     private javafx.scene.layout.VBox createApplicantCard(ApplicantDisplay applicant) {
         javafx.scene.layout.VBox card = new javafx.scene.layout.VBox();
         card.setSpacing(8);
         card.getStyleClass().addAll("applicant-card");
+        // Set fixed width to ensure 2 cards per row (280px each + 12px gap = ~572px needed for 2 cards)
+        card.setPrefWidth(280);
+        card.setMaxWidth(280);
 
         if (applicant.isHired()) {
             card.getStyleClass().add("applicant-card-hired");
@@ -1367,17 +1436,27 @@ public class MoDashboardController extends BaseController implements SessionAwar
             DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
             return;
         }
-        List<ApplicantDisplay> applicants = currentApplicants();
-        if (applicants.isEmpty()) {
+        List<ApplicantDisplay> allApplicants = currentApplicants();
+        if (allApplicants.isEmpty()) {
             DialogUtil.error("No applicants for this job", navigator.getPrimaryStage());
             return;
         }
 
-        aiKeywordsArea.setText("AI is selecting top 3 candidates...");
+        // Filter only pending applicants for AI ranking
+        List<ApplicantDisplay> pendingApplicants = allApplicants.stream()
+                .filter(a -> a.getRecord().getStatus() == com.bupt.tarecruit.entity.ApplicationStatus.PENDING)
+                .collect(java.util.stream.Collectors.toList());
+
+        if (pendingApplicants.isEmpty()) {
+            DialogUtil.error("No pending applicants for this job", navigator.getPrimaryStage());
+            return;
+        }
+
+        aiKeywordsArea.setText("AI is selecting top 3 candidates from pending applicants...");
         Task<List<AiService.ApplicantRecommendation>> task = new Task<>() {
             @Override
             protected List<AiService.ApplicantRecommendation> call() throws Exception {
-                return services.aiService().recommendApplicantsForJob(job, applicants);
+                return services.aiService().recommendApplicantsForJob(job, pendingApplicants);
             }
         };
 
@@ -1398,7 +1477,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
             // Apply current search filter with reordering
             filterApplicants(applicantSearchField.getText());
 
-            StringBuilder sb = new StringBuilder("Top Candidates:\n\n");
+            StringBuilder sb = new StringBuilder("Top Candidates (from pending):\n\n");
             for (int i = 0; i < Math.min(3, recommendations.size()); i++) {
                 AiService.ApplicantRecommendation rec = recommendations.get(i);
                 sb.append(String.format("%d. %s (Score: %d)\n   %s\n\n",
