@@ -235,6 +235,52 @@
     -fx-background-color: #f7fafc;
 }
 
+/* AI Recommend Jobs highlight — applied via row factory in TaDashboardController. */
+.table-row-cell.ai-recommended-row {
+    -fx-background-color: #dcfce7;
+    -fx-border-color: #10b981 transparent #10b981 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.table-row-cell.ai-recommended-row:odd {
+    -fx-background-color: #d1fae5;
+}
+
+.table-row-cell.ai-recommended-row:hover {
+    -fx-background-color: #bbf7d0;
+}
+
+.table-row-cell.ai-recommended-row:selected {
+    -fx-background-color: #86efac;
+}
+
+/* TA Browse jobs — already-applied rows render muted and sink to the bottom. */
+.table-row-cell.applied-job-row {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #94a3b8;
+}
+
+.table-row-cell.applied-job-row:odd {
+    -fx-background-color: #e2e8f0;
+}
+
+.table-row-cell.applied-job-row .table-cell {
+    -fx-text-fill: #94a3b8;
+    -fx-font-style: italic;
+}
+
+.table-row-cell.applied-job-row:hover {
+    -fx-background-color: #e2e8f0;
+}
+
+.table-row-cell.applied-job-row:selected {
+    -fx-background-color: #cbd5e1;
+}
+
+.table-row-cell.applied-job-row:selected .table-cell {
+    -fx-text-fill: #475569;
+}
+
 .table-view .table-cell {
     -fx-text-fill: #2d3748;
     -fx-padding: 0 0 0 8;

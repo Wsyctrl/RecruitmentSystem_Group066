@@ -26,6 +26,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -49,6 +50,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
     private Task<String> activeResumeAdviceTask;
     private final ObservableList<TaJobDisplay> jobItems = FXCollections.observableArrayList();
     private FilteredList<TaJobDisplay> filteredJobs;
+    private javafx.collections.transformation.SortedList<TaJobDisplay> sortedJobs;
+    /** AI-recommended job ids (lowercased) → score, used to surface and sort AI hits at the top. */
+    private final java.util.Map<String, Integer> aiRecommendedJobScores = new java.util.HashMap<>();
     private final ObservableList<ApplicationDisplay> applicationItems = FXCollections.observableArrayList();
 
     @FXML
@@ -128,7 +132,27 @@ public class TaDashboardController extends BaseController implements SessionAwar
     @Override
     protected void onInit() {
         filteredJobs = new FilteredList<>(jobItems, job -> true);
-        jobTable.setItems(filteredJobs);
+        // Sorted view: AI-recommended jobs first (by score desc), then everything else by jobId.
+        sortedJobs = new javafx.collections.transformation.SortedList<>(filteredJobs, this::compareJobsForTable);
+        jobTable.setItems(sortedJobs);
+        jobTable.setRowFactory(tv -> new javafx.scene.control.TableRow<>() {
+            @Override
+            protected void updateItem(TaJobDisplay item, boolean empty) {
+                super.updateItem(item, empty);
+                getStyleClass().remove("ai-recommended-row");
+                getStyleClass().remove("applied-job-row");
+                if (empty || item == null) {
+                    return;
+                }
+                if (isApplied(item)) {
+                    // Already-applied rows render muted at the bottom.
+                    getStyleClass().add("applied-job-row");
+                } else if (isAiRecommended(item)) {
+                    // AI recommendations only apply to jobs the user hasn't applied for.
+                    getStyleClass().add("ai-recommended-row");
+                }
+            }
+        });
         jobTable.getSelectionModel().selectedItemProperty().addListener((obs, old, selected) -> {
             if (old != selected) {
                 invalidateResumeAdviceContext();
@@ -176,6 +200,59 @@ public class TaDashboardController extends BaseController implements SessionAwar
             });
         }
         updateJobDetails(null);
+    }
+
+    private static String normalizeJobId(String jobId) {
+        return jobId == null ? "" : jobId.trim().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private boolean isAiRecommended(TaJobDisplay display) {
+        return display != null
+                && display.getJob() != null
+                && aiRecommendedJobScores.containsKey(normalizeJobId(display.getJob().getJobId()));
+    }
+
+    /**
+     * Table ordering:
+     *   1) Unapplied AI-recommended jobs first, ordered by AI score (desc, jobId tiebreak).
+     *   2) Other unapplied jobs, ordered by jobId ascending.
+     *   3) Already-applied jobs at the bottom, ordered by jobId ascending.
+     * AI hits never appear in tier 3 because handleAiRecommendJobs excludes applied jobs
+     * from the AI pool, but we still treat "applied" as the strongest demotion here.
+     */
+    private int compareJobsForTable(TaJobDisplay a, TaJobDisplay b) {
+        boolean appliedA = isApplied(a);
+        boolean appliedB = isApplied(b);
+        if (appliedA && !appliedB) return 1;
+        if (!appliedA && appliedB) return -1;
+        if (!appliedA) {
+            boolean aiA = isAiRecommended(a);
+            boolean aiB = isAiRecommended(b);
+            if (aiA && !aiB) return -1;
+            if (!aiA && aiB) return 1;
+            if (aiA) {
+                int scoreA = aiRecommendedJobScores.getOrDefault(normalizeJobId(a.getJob().getJobId()), 0);
+                int scoreB = aiRecommendedJobScores.getOrDefault(normalizeJobId(b.getJob().getJobId()), 0);
+                if (scoreA != scoreB) return Integer.compare(scoreB, scoreA);
+            }
+        }
+        return safeText(a.getJob().getJobId()).compareToIgnoreCase(safeText(b.getJob().getJobId()));
+    }
+
+    private boolean isApplied(TaJobDisplay display) {
+        return display != null
+                && display.getJob() != null
+                && hasApplied(display.getJob().getJobId());
+    }
+
+    private void refreshJobTableOrder() {
+        if (sortedJobs != null) {
+            sortedJobs.setComparator(null);
+            sortedJobs.setComparator(this::compareJobsForTable);
+        }
+        if (jobTable != null) {
+            jobTable.refresh();
+        }
     }
 
     private void lockSplitDivider(SplitPane split, double position) {
@@ -266,6 +343,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
                 .collect(Collectors.toList());
 
         jobItems.setAll(displayItems);
+        // A fresh load invalidates any previous AI recommendation highlighting and ordering.
+        aiRecommendedJobScores.clear();
+        refreshJobTableOrder();
         if (!jobItems.isEmpty()) {
             jobTable.getSelectionModel().selectFirst();
         } else {
@@ -292,6 +372,8 @@ public class TaDashboardController extends BaseController implements SessionAwar
                 && applicationTable.getSelectionModel().getSelectedItem() == null) {
             applicationTable.getSelectionModel().selectFirst();
         }
+        // Applied-status changes affect the Browse jobs ordering and styling.
+        refreshJobTableOrder();
         updateJobDetails(jobTable.getSelectionModel().getSelectedItem());
     }
 /**
@@ -328,6 +410,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
     }
 /**
  * Applies a keyword filter to the visible job list.
+ * Search covers all job-related fields the TA can see in the table or detail panel.
  *
  * @param keyword search keyword entered by the user
  */
@@ -335,12 +418,21 @@ public class TaDashboardController extends BaseController implements SessionAwar
         if (filteredJobs == null) {
             return;
         }
-        String lower = keyword == null ? "" : keyword.toLowerCase();
+        String lower = keyword == null ? "" : keyword.trim().toLowerCase();
+        if (lower.isEmpty()) {
+            filteredJobs.setPredicate(display -> true);
+            return;
+        }
         filteredJobs.setPredicate(display -> {
             Job job = display.getJob();
-            return containsIgnoreCase(job.getJobName(), lower)
+            return containsIgnoreCase(job.getJobId(), lower)
+                    || containsIgnoreCase(job.getJobName(), lower)
                     || containsIgnoreCase(job.getModuleName(), lower)
-                    || containsIgnoreCase(job.getRequirements(), lower);
+                    || containsIgnoreCase(job.getMoName(), lower)
+                    || containsIgnoreCase(job.getMoId(), lower)
+                    || containsIgnoreCase(job.getRequirements(), lower)
+                    || containsIgnoreCase(job.getAdditionalNotes(), lower)
+                    || containsIgnoreCase(job.getKeywords(), lower);
         });
     }
 /**
@@ -727,19 +819,25 @@ public class TaDashboardController extends BaseController implements SessionAwar
         if (ta == null) {
             return;
         }
-        // Mirror refreshJobs(): jobs posted by a disabled MO can't accept applications, so AI
-        // must not see them either.
+        // AI pool: open jobs from active MOs that the TA hasn't already applied for.
+        // Disabled MOs and applied jobs are filtered out so they can't be ranked or highlighted.
         List<Job> jobs = services.jobService().findOpenJobs().stream()
                 .filter(job -> services.profileService().findMo(job.getMoId())
                         .map(mo -> !mo.isDisabled())
                         .orElse(true))
+                .filter(job -> !hasApplied(job.getJobId()))
                 .collect(Collectors.toList());
         if (jobs.isEmpty()) {
-            aiJobRecommendationArea.setText("No open jobs are available.");
+            aiRecommendedJobScores.clear();
+            refreshJobTableOrder();
+            aiJobRecommendationArea.setText(
+                    "No open jobs are available to recommend (you may have applied to all eligible postings).");
             return;
         }
         aiJobRecommendationArea.setText("AI is analyzing...");
         String preference = aiJobPreferenceField == null ? "" : aiJobPreferenceField.getText();
+        // The AI service is asked for "the best 3"; we'll cap to whatever the eligible pool allows.
+        final int targetTopN = Math.min(3, jobs.size());
         Task<List<AiService.JobRecommendation>> task = new Task<>() {
             @Override
             protected List<AiService.JobRecommendation> call() throws Exception {
@@ -748,19 +846,59 @@ public class TaDashboardController extends BaseController implements SessionAwar
         };
         task.setOnSucceeded(evt -> {
             List<AiService.JobRecommendation> items = task.getValue();
-            if (items == null || items.isEmpty()) {
-                aiJobRecommendationArea.setText("No AI recommendations were returned.");
+            // Reset previous highlights so stale recommendations don't persist.
+            aiRecommendedJobScores.clear();
+
+            // Map AI ids (case-insensitive) onto the eligible pool only.
+            java.util.Map<String, Job> jobByNormalizedId = new java.util.HashMap<>();
+            for (Job j : jobs) {
+                jobByNormalizedId.put(normalizeJobId(j.getJobId()), j);
+            }
+            java.util.LinkedHashMap<String, AiService.JobRecommendation> validRecs = new java.util.LinkedHashMap<>();
+            if (items != null) {
+                for (AiService.JobRecommendation rec : items) {
+                    String key = normalizeJobId(rec.jobId());
+                    if (jobByNormalizedId.containsKey(key) && !validRecs.containsKey(key)) {
+                        validRecs.put(key, rec);
+                        aiRecommendedJobScores.put(key, rec.score());
+                    }
+                }
+            }
+
+            // Eligible pool < 3 (or AI returned fewer hits than the cap): pad up to targetTopN
+            // by walking the remaining eligible jobs in jobId order with score 0 so they still
+            // surface as TOP MATCH rather than dropping back to the unhighlighted block.
+            if (aiRecommendedJobScores.size() < targetTopN) {
+                List<Job> sortedPool = new java.util.ArrayList<>(jobs);
+                sortedPool.sort(Comparator.comparing(j -> safeText(j.getJobId()), String.CASE_INSENSITIVE_ORDER));
+                for (Job j : sortedPool) {
+                    if (aiRecommendedJobScores.size() >= targetTopN) break;
+                    String key = normalizeJobId(j.getJobId());
+                    aiRecommendedJobScores.putIfAbsent(key, 0);
+                }
+            }
+
+            refreshJobTableOrder();
+
+            if (aiRecommendedJobScores.isEmpty()) {
+                aiJobRecommendationArea.setText("No AI recommendations matched the visible job list.");
                 return;
             }
-            Map<String, Job> jobMap = jobs.stream().collect(Collectors.toMap(Job::getJobId, Function.identity(), (a, b) -> a));
-            String text = items.stream()
-                    .map(item -> {
-                        Job job = jobMap.get(item.jobId());
-                        String title = job == null ? item.jobId() : job.getJobName() + " (" + item.jobId() + ")";
-                        return "• " + title + " | Match Score: " + item.score() + "\n  " + item.reason();
-                    })
-                    .collect(Collectors.joining("\n\n"));
-            aiJobRecommendationArea.setText(text);
+            StringBuilder sb = new StringBuilder("Top " + aiRecommendedJobScores.size() + " match(es):\n\n");
+            int idx = 1;
+            for (AiService.JobRecommendation item : validRecs.values()) {
+                if (idx > targetTopN) break;
+                Job job = jobByNormalizedId.get(normalizeJobId(item.jobId()));
+                String title = job == null ? item.jobId() : job.getJobName() + " (" + item.jobId() + ")";
+                sb.append(idx++).append(". ").append(title)
+                        .append(" | Match Score: ").append(item.score())
+                        .append("\n   ").append(item.reason()).append("\n\n");
+            }
+            if (validRecs.size() < targetTopN) {
+                sb.append("(AI returned only ").append(validRecs.size())
+                        .append(" matches; remaining slots filled from the rest of the eligible pool.)\n");
+            }
+            aiJobRecommendationArea.setText(sb.toString());
         });
         task.setOnFailed(evt -> aiJobRecommendationArea.setText("AI recommendation failed: " + task.getException().getMessage()));
         new Thread(task, "ai-recommend-jobs").start();

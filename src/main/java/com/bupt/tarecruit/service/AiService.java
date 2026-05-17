@@ -49,7 +49,7 @@ public class AiService {
         String userPrompt = """
                 Recommend the best jobs for this TA.
                 Return a JSON array. Each item must include: jobId(string), score(int 0-100), reason(string).
-                Return at most 5 items sorted by score descending.
+                Return at most 3 items sorted by score descending.
                 
                 TA profile:
                 %s
