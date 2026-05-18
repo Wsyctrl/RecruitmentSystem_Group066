@@ -39,7 +39,13 @@ public class AiService {
                               String selfEvaluation) {
     }
 
-    public List<JobRecommendation> recommendJobsForTa(Ta ta, List<Job> jobs, String preference) throws IOException, InterruptedException {
+    public List<JobRecommendation> recommendJobsForTa(Ta ta, List<Job> jobs, String preference)
+            throws IOException, InterruptedException {
+        return recommendJobsForTa(ta, jobs, preference, "");
+    }
+
+    public List<JobRecommendation> recommendJobsForTa(Ta ta, List<Job> jobs, String preference, String cvText)
+            throws IOException, InterruptedException {
         StringBuilder jobsText = new StringBuilder();
         for (Job job : jobs) {
             jobsText.append("- ").append(job.getJobId()).append(" | ")
@@ -51,8 +57,12 @@ public class AiService {
                 Recommend the best jobs for this TA.
                 Return a JSON array. Each item must include: jobId(string), score(int 0-100), reason(string).
                 Return at most 3 items sorted by score descending.
+                Use both the online profile and the attached resume (when provided). If the resume adds skills or experience not in the online profile, weight those facts in scoring.
                 
-                TA profile:
+                TA online profile:
+                %s
+                
+                Attached resume (TXT):
                 %s
                 
                 User preference (higher priority):
@@ -60,7 +70,7 @@ public class AiService {
                 
                 Job list:
                 %s
-                """.formatted(taProfileText(ta), safe(preference), jobsText);
+                """.formatted(taProfileText(ta), attachedResumeText(cvText), safe(preference), jobsText);
         String content = chatJson(userPrompt);
         JSONArray arr = asJsonArray(content);
         List<JobRecommendation> result = new ArrayList<>();
@@ -308,6 +318,13 @@ public class AiService {
                 safe(ta.getExperience()),
                 safe(ta.getSelfEvaluation())
         );
+    }
+
+    private String attachedResumeText(String cvText) {
+        if (cvText == null || cvText.isBlank()) {
+            return "(none uploaded)";
+        }
+        return safe(cvText);
     }
 
     private String chatJson(String userPrompt) throws IOException, InterruptedException {
