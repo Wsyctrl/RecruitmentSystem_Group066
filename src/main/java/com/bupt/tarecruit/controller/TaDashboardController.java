@@ -402,7 +402,17 @@ public class TaDashboardController extends BaseController implements SessionAwar
  */
     private void updateCvUi(Ta ta) {
         boolean hasCv = ta.getCvPath() != null && !ta.getCvPath().isBlank();
-        cvPathLabel.setText(hasCv ? "Uploaded" : "None");
+        if (cvPathLabel != null) {
+            if (hasCv) {
+                cvPathLabel.setText("Uploaded");
+                if (!cvPathLabel.getStyleClass().contains("cv-file-uploaded")) {
+                    cvPathLabel.getStyleClass().add("cv-file-uploaded");
+                }
+            } else {
+                cvPathLabel.setText("No file uploaded");
+                cvPathLabel.getStyleClass().remove("cv-file-uploaded");
+            }
+        }
         if (downloadCvButton != null) {
             downloadCvButton.setVisible(hasCv);
             downloadCvButton.setManaged(hasCv);
@@ -696,7 +706,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
 
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialFileName(ta.getTaId() + "_cv.txt");
+        fileChooser.setInitialFileName(FileStorageHelper.cvFileName(ta.getTaId()));
         File dest = fileChooser.showSaveDialog(navigator.getPrimaryStage());
         if (dest == null) {
             return;

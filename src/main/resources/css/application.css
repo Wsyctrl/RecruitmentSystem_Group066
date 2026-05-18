@@ -602,6 +602,91 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 1);
 }
 
+.form-section {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 4, 0, 0, 1);
+}
+
+/* ========================================
+   TA Profile — CV attachment panel
+   ======================================== */
+
+.cv-attachment-panel {
+    -fx-background-color: linear-gradient(to bottom right, #f5f3ff 0%, #ede9fe 55%, #faf5ff 100%);
+    -fx-background-radius: 12;
+    -fx-border-color: #a78bfa;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(102, 126, 234, 0.18), 18, 0, 0, 4);
+}
+
+.cv-attachment-header {
+    -fx-padding: 12 16 10 16;
+    -fx-background-color: rgba(255, 255, 255, 0.5);
+    -fx-background-radius: 12 12 0 0;
+    -fx-border-color: transparent transparent #ddd6fe transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.cv-attachment-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #4338ca;
+}
+
+.cv-attachment-badge {
+    -fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%);
+    -fx-text-fill: white;
+    -fx-font-size: 10px;
+    -fx-font-weight: 600;
+    -fx-padding: 4 10;
+    -fx-background-radius: 10;
+}
+
+.cv-attachment-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: #5b21b6;
+    -fx-wrap-text: true;
+    -fx-line-spacing: 2;
+}
+
+.cv-attachment-body {
+    -fx-padding: 10 16 12 16;
+}
+
+.cv-file-status-value {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #718096;
+    -fx-min-width: 100;
+}
+
+.cv-file-status-value.cv-file-uploaded {
+    -fx-text-fill: #059669;
+}
+
+.cv-attachment-status {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6d28d9;
+    -fx-wrap-text: true;
+}
+
+.profile-section-separator {
+    -fx-opacity: 0.6;
+}
+
+.profile-online-heading {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #a0aec0;
+    -fx-letter-spacing: 0.5;
+}
+
 /* ========================================
    Detail Panel (Right side of SplitPane)
    ======================================== */
