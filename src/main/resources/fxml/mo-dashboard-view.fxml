@@ -548,7 +548,7 @@
                     </bottom>
                 </BorderPane>
             </Tab>
-            <Tab text="30-Day Hiring Insights" fx:id="adminInsightsTab">
+            <Tab text="Insights" fx:id="adminInsightsTab">
                 <fx:include fx:id="insightsView" source="insights-dialog.fxml"/>
             </Tab>
             <Tab text="Account Management Log" fx:id="adminAccountTab">

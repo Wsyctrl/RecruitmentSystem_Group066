@@ -11,8 +11,6 @@
 
     <top>
         <VBox spacing="12" styleClass="p-4">
-            <Label text="30-Day Hiring Insights" styleClass="h2"/>
-
             <HBox spacing="10" styleClass="insights-metrics">
                 <VBox spacing="4" styleClass="metric-card" HBox.hgrow="ALWAYS">
                     <Label text="Total Jobs" styleClass="metric-label"/>
@@ -23,11 +21,11 @@
                     <Label fx:id="openJobsLabel" text="0" styleClass="metric-value metric-primary"/>
                 </VBox>
                 <VBox spacing="4" styleClass="metric-card" HBox.hgrow="ALWAYS">
-                    <Label text="Applications (30d)" styleClass="metric-label"/>
+                    <Label text="Applications" styleClass="metric-label"/>
                     <Label fx:id="applicationsLabel" text="0" styleClass="metric-value metric-info"/>
                 </VBox>
                 <VBox spacing="4" styleClass="metric-card" HBox.hgrow="ALWAYS">
-                    <Label text="Hired (30d)" styleClass="metric-label"/>
+                    <Label text="Hired" styleClass="metric-label"/>
                     <Label fx:id="hiredLabel" text="0" styleClass="metric-value metric-success"/>
                 </VBox>
                 <VBox spacing="4" styleClass="metric-card" HBox.hgrow="ALWAYS">
@@ -76,7 +74,7 @@
             <!-- AI Insights Section -->
             <VBox spacing="8" styleClass="insights-section" VBox.vgrow="ALWAYS">
                 <HBox alignment="CENTER_LEFT" spacing="8">
-                    <Label text="AI Analysis &amp; Recommendations" styleClass="h5"/>
+                    <Label text="30-Day Insights" styleClass="h5"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button text="Refresh" onAction="#handleRefresh" styleClass="btn-sm btn-outline"/>
                 </HBox>
@@ -85,7 +83,7 @@
                         <padding>
                             <Insets top="4" right="4" bottom="4" left="4"/>
                         </padding>
-                        <Label text="Generating AI insights, please wait..." styleClass="text-muted"/>
+                        <Label text="Generating 30-day insights, please wait..." styleClass="text-muted"/>
                     </VBox>
                 </ScrollPane>
             </VBox>
