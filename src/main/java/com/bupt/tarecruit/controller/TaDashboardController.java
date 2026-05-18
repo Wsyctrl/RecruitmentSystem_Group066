@@ -23,6 +23,7 @@ import javafx.stage.Stage;
 import javafx.concurrent.Task;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -402,7 +403,17 @@ public class TaDashboardController extends BaseController implements SessionAwar
  */
     private void updateCvUi(Ta ta) {
         boolean hasCv = ta.getCvPath() != null && !ta.getCvPath().isBlank();
-        cvPathLabel.setText(hasCv ? "Uploaded" : "None");
+        if (cvPathLabel != null) {
+            if (hasCv) {
+                cvPathLabel.setText("Uploaded");
+                if (!cvPathLabel.getStyleClass().contains("cv-file-uploaded")) {
+                    cvPathLabel.getStyleClass().add("cv-file-uploaded");
+                }
+            } else {
+                cvPathLabel.setText("No file uploaded");
+                cvPathLabel.getStyleClass().remove("cv-file-uploaded");
+            }
+        }
         if (downloadCvButton != null) {
             downloadCvButton.setVisible(hasCv);
             downloadCvButton.setManaged(hasCv);
@@ -696,7 +707,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
 
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialFileName(ta.getTaId() + "_cv.txt");
+        fileChooser.setInitialFileName(FileStorageHelper.cvFileName(ta.getTaId()));
         File dest = fileChooser.showSaveDialog(navigator.getPrimaryStage());
         if (dest == null) {
             return;
@@ -838,10 +849,11 @@ public class TaDashboardController extends BaseController implements SessionAwar
         String preference = aiJobPreferenceField == null ? "" : aiJobPreferenceField.getText();
         // The AI service is asked for "the best 3"; we'll cap to whatever the eligible pool allows.
         final int targetTopN = Math.min(3, jobs.size());
+        final String cvText = readAttachedCvText(ta);
         Task<List<AiService.JobRecommendation>> task = new Task<>() {
             @Override
             protected List<AiService.JobRecommendation> call() throws Exception {
-                return services.aiService().recommendJobsForTa(ta, jobs, preference);
+                return services.aiService().recommendJobsForTa(ta, jobs, preference, cvText);
             }
         };
         task.setOnSucceeded(evt -> {
@@ -902,6 +914,21 @@ public class TaDashboardController extends BaseController implements SessionAwar
         });
         task.setOnFailed(evt -> aiJobRecommendationArea.setText("AI recommendation failed: " + task.getException().getMessage()));
         new Thread(task, "ai-recommend-jobs").start();
+    }
+
+    private String readAttachedCvText(Ta ta) {
+        if (ta.getCvPath() == null || ta.getCvPath().isBlank()) {
+            return "";
+        }
+        Path cvFile = services.fileStorageHelper().resolveCvFile(ta.getTaId(), ta.getCvPath());
+        if (!Files.isRegularFile(cvFile)) {
+            return "";
+        }
+        try {
+            return Files.readString(cvFile);
+        } catch (IOException e) {
+            return "";
+        }
     }
 
     @FXML

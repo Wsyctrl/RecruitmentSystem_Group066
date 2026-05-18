@@ -190,6 +190,34 @@
                         <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
                             <HBox alignment="TOP_CENTER">
                                 <VBox spacing="20" styleClass="p-4" maxWidth="750" minWidth="600" HBox.hgrow="NEVER">
+                                <!-- CV Attachment Panel -->
+                                <VBox spacing="0" styleClass="cv-attachment-panel" maxWidth="Infinity">
+                                    <VBox spacing="8" styleClass="cv-attachment-header">
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                            <Label text="Resume attachment" styleClass="cv-attachment-title"/>
+                                            <Label text="Quick start" styleClass="cv-attachment-badge"/>
+                                        </HBox>
+                                        <Label text="Upload a TXT resume, let AI auto-fill your online profile from the attachment."
+                                               styleClass="cv-attachment-desc" wrapText="true"/>
+                                    </VBox>
+
+                                    <VBox spacing="6" styleClass="cv-attachment-body">
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                            <Label fx:id="cvPathLabel" text="No file uploaded" styleClass="cv-file-status-value"/>
+                                            <Region HBox.hgrow="ALWAYS"/>
+                                            <Button fx:id="downloadCvButton" text="Download" onAction="#handleDownloadCv"
+                                                    styleClass="btn-sm btn-outline" visible="false" managed="false"/>
+                                            <Button text="Upload CV (TXT)" onAction="#handleUploadCv" styleClass="btn-outline btn-sm"/>
+                                            <Button text="AI Fill from CV" onAction="#handleAiFillProfileFromCv"
+                                                    styleClass="btn-primary btn-sm"/>
+                                        </HBox>
+                                        <Label fx:id="aiFillStatusLabel" text="" styleClass="cv-attachment-status" wrapText="true"/>
+                                    </VBox>
+                                </VBox>
+
+                                <Separator styleClass="profile-section-separator"/>
+                                <Label text="Online profile" styleClass="profile-online-heading"/>
+
                                 <!-- Account Info Section -->
                                 <VBox spacing="12" styleClass="form-section">
                                     <Label text="Account Information" styleClass="h6"/>
@@ -204,7 +232,7 @@
                                         <TextField fx:id="emailField" editable="false" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
                                         <Label text="Full name" GridPane.rowIndex="1" styleClass="form-label"/>
-                                        <TextField fx:id="fullNameField" promptText="Shown in welcome message" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                                        <TextField fx:id="fullNameField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
                                         <Label text="Phone" GridPane.rowIndex="2" styleClass="form-label"/>
                                         <TextField fx:id="phoneField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
@@ -227,25 +255,6 @@
 
                                         <Label text="Self evaluation" styleClass="form-label"/>
                                         <TextArea fx:id="selfEvalArea" wrapText="true" prefRowCount="4" promptText="Tell us about yourself"/>
-                                    </VBox>
-                                </VBox>
-
-                                <!-- CV Section -->
-                                <VBox spacing="12" styleClass="form-section">
-                                    <Label text="Resume / CV" styleClass="h6"/>
-
-                                    <VBox spacing="8">
-                                        <HBox spacing="10" alignment="CENTER_LEFT">
-                                            <Label fx:id="cvPathLabel" text="No CV uploaded" styleClass="text-muted"/>
-                                            <Region HBox.hgrow="ALWAYS"/>
-                                            <Button fx:id="downloadCvButton" text="Download CV" onAction="#handleDownloadCv"
-                                                    styleClass="btn-sm btn-outline" visible="false" managed="false"/>
-                                        </HBox>
-                                        <HBox spacing="10">
-                                            <Button text="Upload CV (TXT)" onAction="#handleUploadCv" styleClass="btn-outline"/>
-                                            <Button text="AI Fill Profile from CV" onAction="#handleAiFillProfileFromCv" styleClass="btn-sm"/>
-                                        </HBox>
-                                        <Label fx:id="aiFillStatusLabel" text="" styleClass="text-muted"/>
                                     </VBox>
                                 </VBox>
 

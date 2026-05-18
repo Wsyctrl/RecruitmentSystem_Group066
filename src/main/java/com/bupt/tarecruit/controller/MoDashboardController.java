@@ -5,6 +5,7 @@ import com.bupt.tarecruit.service.AiService;
 import com.bupt.tarecruit.service.ApplicationService;
 import com.bupt.tarecruit.util.DateTimeUtil;
 import com.bupt.tarecruit.util.DialogUtil;
+import com.bupt.tarecruit.util.FileStorageHelper;
 import com.bupt.tarecruit.util.OperationResult;
 import com.bupt.tarecruit.util.WorkloadRules;
 import com.bupt.tarecruit.viewmodel.*;
@@ -1898,7 +1899,7 @@ CV: %s
             return;
         }
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialFileName(ta.getTaId() + "_cv.txt");
+        fileChooser.setInitialFileName(FileStorageHelper.cvFileName(ta.getTaId()));
         File dest = fileChooser.showSaveDialog(navigator.getPrimaryStage());
         if (dest == null) {
             return;
