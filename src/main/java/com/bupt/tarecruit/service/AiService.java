@@ -1,6 +1,7 @@
 package com.bupt.tarecruit.service;
 
 import com.bupt.tarecruit.entity.ApplicationRecord;
+import com.bupt.tarecruit.entity.ApplicationStatus;
 import com.bupt.tarecruit.entity.Job;
 import com.bupt.tarecruit.entity.Ta;
 import com.bupt.tarecruit.viewmodel.ApplicantDisplay;
@@ -221,7 +222,7 @@ public class AiService {
         return result;
     }
 
-    public String generate30DayInsights(List<Job> jobs, List<ApplicationRecord> applications, int hiredCount, int openJobs) throws IOException, InterruptedException {
+    public String generate30DayInsights(List<ApplicationRecord> applications, int openJobs) throws IOException, InterruptedException {
         LocalDateTime boundary = LocalDateTime.now().minusDays(30);
         long recentApply = applications.stream()
                 .filter(r -> r.getApplyTime() != null && r.getApplyTime().isAfter(boundary))
@@ -229,17 +230,31 @@ public class AiService {
         long recentHired = applications.stream()
                 .filter(r -> r.getHiredTime() != null && r.getHiredTime().isAfter(boundary))
                 .count();
+        long recentPending = applications.stream()
+                .filter(r -> r.getApplyTime() != null && r.getApplyTime().isAfter(boundary))
+                .filter(r -> r.getStatus() == ApplicationStatus.PENDING)
+                .count();
+        long recentRejected = applications.stream()
+                .filter(r -> r.getApplyTime() != null && r.getApplyTime().isAfter(boundary))
+                .filter(r -> r.getStatus() == ApplicationStatus.REJECTED)
+                .count();
+        long recentWithdrawn = applications.stream()
+                .filter(r -> r.getApplyTime() != null && r.getApplyTime().isAfter(boundary))
+                .filter(r -> r.getStatus() == ApplicationStatus.WITHDRAWN)
+                .count();
         String userPrompt = """
-                Based on the following 30-day hiring data, generate exactly 3 English insights.
+                Based ONLY on the following last-30-day hiring data, generate exactly 3 English insights.
                 Each insight must contain a conclusion and one action suggestion, within 2 sentences.
+                Do not reference or infer metrics outside this 30-day window.
 
-                Metrics:
-                - Applications in last 30 days: %d
-                - Hires in last 30 days: %d
+                Last 30 days:
+                - Applications: %d
+                - Hires: %d
+                - Pending: %d
+                - Rejected: %d
+                - Withdrawn: %d
                 - Current open jobs: %d
-                - Total jobs in history: %d
-                - Total hires in history: %d
-                """.formatted(recentApply, recentHired, openJobs, jobs.size(), hiredCount);
+                """.formatted(recentApply, recentHired, recentPending, recentRejected, recentWithdrawn, openJobs);
         return chatText(userPrompt);
     }
 

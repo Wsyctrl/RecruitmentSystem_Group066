@@ -20,8 +20,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Controller for the 30-Day Hiring Insights dialog.
- * Displays metrics, charts, and AI-generated insights.
+ * Controller for the admin Insights tab.
+ * Displays all-time metrics and charts; AI section covers the last 30 days only.
  */
 public class InsightsDialogController {
 
@@ -85,31 +85,27 @@ public class InsightsDialogController {
                     .flatMap(job -> services.applicationService().findByJob(job.getJobId()).stream())
                     .collect(Collectors.toList());
 
-            // Calculate 30-day metrics
-            java.time.LocalDateTime boundary = java.time.LocalDateTime.now().minusDays(30);
-            long recentApplications = allApplications.stream()
-                    .filter(r -> r.getApplyTime() != null && r.getApplyTime().isAfter(boundary))
-                    .count();
-            long recentHired = allApplications.stream()
-                    .filter(r -> r.getHiredTime() != null && r.getHiredTime().isAfter(boundary))
-                    .count();
             int openJobsCount = (int) jobs.stream().filter(com.bupt.tarecruit.entity.Job::isOpen).count();
+            long totalApplications = allApplications.size();
+            long totalHired = allApplications.stream()
+                    .filter(a -> a.getStatus() == com.bupt.tarecruit.entity.ApplicationStatus.HIRED)
+                    .count();
 
-            // Update metric labels
+            // Update all-time metric labels
             totalJobsLabel.setText(String.valueOf(jobs.size()));
             openJobsLabel.setText(String.valueOf(openJobsCount));
-            applicationsLabel.setText(String.valueOf(recentApplications));
-            hiredLabel.setText(String.valueOf(recentHired));
+            applicationsLabel.setText(String.valueOf(totalApplications));
+            hiredLabel.setText(String.valueOf(totalHired));
 
-            double hireRate = recentApplications > 0 ? (recentHired * 100.0 / recentApplications) : 0;
+            double hireRate = totalApplications > 0 ? (totalHired * 100.0 / totalApplications) : 0;
             hireRateLabel.setText(String.format("%.1f%%", hireRate));
 
-            // Update charts
+            // Update charts (all-time)
             updateModuleStats(allApplications, jobs);
             updateHiringStatusChart(allApplications);
 
-            // Load AI insights
-            loadAiInsights(jobs, allApplications, (int) recentHired, openJobsCount);
+            // Load AI insights (last 30 days only)
+            loadAiInsights(allApplications, openJobsCount);
 
         } catch (Exception e) {
             DialogUtil.error("Failed to load insights: " + e.getMessage(), dialogStage);
@@ -199,16 +195,15 @@ public class InsightsDialogController {
         hiringStatusChart.getData().add(series);
     }
 
-    private void loadAiInsights(List<com.bupt.tarecruit.entity.Job> jobs,
-                                List<com.bupt.tarecruit.entity.ApplicationRecord> applications,
-                                int hiredCount, int openJobs) {
+    private void loadAiInsights(List<com.bupt.tarecruit.entity.ApplicationRecord> applications,
+                                int openJobs) {
         insightsContentBox.getChildren().clear();
-        insightsContentBox.getChildren().add(new Label("Generating AI insights..."));
+        insightsContentBox.getChildren().add(new Label("Generating 30-day insights..."));
 
         javafx.concurrent.Task<String> task = new javafx.concurrent.Task<>() {
             @Override
             protected String call() throws Exception {
-                return services.aiService().generate30DayInsights(jobs, applications, hiredCount, openJobs);
+                return services.aiService().generate30DayInsights(applications, openJobs);
             }
         };
 
