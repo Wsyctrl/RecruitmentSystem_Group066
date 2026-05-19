@@ -4,7 +4,10 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 
 import java.util.Optional;
@@ -39,6 +42,53 @@ public final class DialogUtil {
         alert.getButtonTypes().setAll(YES_EN, NO_EN);
         Optional<ButtonType> result = alert.showAndWait();
         return result.map(bt -> bt.getButtonData() == ButtonBar.ButtonData.YES).orElse(false);
+    }
+
+    /**
+     * Asks whether to recommend similar pending candidates after a hire decision.
+     *
+     * @return the chosen count (1–10) when the user selects Yes; empty when No or closed
+     */
+    public static Optional<Integer> confirmRecommendSimilarCandidates(String applicantLabel, Window owner) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Recommend Similar Candidates");
+        alert.setHeaderText(null);
+        if (owner != null) {
+            alert.initOwner(owner);
+        }
+        alert.getButtonTypes().setAll(YES_EN, NO_EN);
+
+        Label message = new Label("""
+                Would you like AI to recommend similar candidates based on this applicant's profile?""");
+        message.setWrapText(true);
+        message.setMaxWidth(MESSAGE_MAX_WIDTH);
+
+        Label nameLabel = new Label(applicantLabel == null || applicantLabel.isBlank()
+                ? "Reference applicant: (selected)"
+                : "Reference applicant: " + applicantLabel);
+        nameLabel.setWrapText(true);
+        nameLabel.setMaxWidth(MESSAGE_MAX_WIDTH);
+
+        Label countLabel = new Label("Number of similar candidates to recommend (1–10):");
+        Spinner<Integer> countSpinner = new Spinner<>();
+        countSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10, 3));
+        countSpinner.setEditable(true);
+        countSpinner.setPrefWidth(80);
+
+        VBox content = new VBox(10, message, nameLabel, countLabel, countSpinner);
+        content.setMinWidth(MESSAGE_MAX_WIDTH);
+        alert.getDialogPane().setContent(content);
+        alert.getDialogPane().setMinWidth(MESSAGE_MAX_WIDTH + 80);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isEmpty() || result.get().getButtonData() != ButtonBar.ButtonData.YES) {
+            return Optional.empty();
+        }
+        Integer value = countSpinner.getValue();
+        if (value == null) {
+            return Optional.of(3);
+        }
+        return Optional.of(Math.max(1, Math.min(10, value)));
     }
 
     private static Alert createAlert(Alert.AlertType type, String title, String content, Window owner) {
