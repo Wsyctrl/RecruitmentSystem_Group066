@@ -49,6 +49,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
     private ProfileDraft persistedProfileDraft;
     private long resumeAdviceContextVersion = 0L;
     private Task<String> activeResumeAdviceTask;
+    private Task<List<AiService.JobRecommendation>> activeRecommendJobsTask;
     private final ObservableList<TaJobDisplay> jobItems = FXCollections.observableArrayList();
     private FilteredList<TaJobDisplay> filteredJobs;
     private javafx.collections.transformation.SortedList<TaJobDisplay> sortedJobs;
@@ -859,6 +860,22 @@ public class TaDashboardController extends BaseController implements SessionAwar
     }
 
     @FXML
+    private void handleResetAiJobRecommendations() {
+        if (activeRecommendJobsTask != null && activeRecommendJobsTask.isRunning()) {
+            activeRecommendJobsTask.cancel(true);
+        }
+        aiRecommendedJobScores.clear();
+        clearAiJobRecommendationOutputs();
+        refreshJobTableOrder();
+    }
+
+    private void clearAiJobRecommendationOutputs() {
+        if (aiJobRecommendationArea != null) {
+            aiJobRecommendationArea.clear();
+        }
+    }
+
+    @FXML
     private void handleAiRecommendJobs() {
         if (guestMode) {
             requireLoginAndRedirect("Please sign in first.");
@@ -895,6 +912,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
             }
         };
         task.setOnSucceeded(evt -> {
+            if (task.isCancelled()) {
+                return;
+            }
             List<AiService.JobRecommendation> items = task.getValue();
             // Reset previous highlights so stale recommendations don't persist.
             aiRecommendedJobScores.clear();
@@ -950,7 +970,15 @@ public class TaDashboardController extends BaseController implements SessionAwar
             }
             aiJobRecommendationArea.setText(sb.toString());
         });
-        task.setOnFailed(evt -> aiJobRecommendationArea.setText("AI recommendation failed: " + task.getException().getMessage()));
+        task.setOnFailed(evt -> {
+            if (!task.isCancelled()) {
+                aiJobRecommendationArea.setText("AI recommendation failed: " + task.getException().getMessage());
+            }
+        });
+        if (activeRecommendJobsTask != null && activeRecommendJobsTask.isRunning()) {
+            activeRecommendJobsTask.cancel(true);
+        }
+        activeRecommendJobsTask = task;
         new Thread(task, "ai-recommend-jobs").start();
     }
 
