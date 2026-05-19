@@ -70,11 +70,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
     // Applicant card state
     private ApplicantDisplay selectedApplicant;
     private final java.util.Map<String, String> applicantSummaries = new java.util.concurrent.ConcurrentHashMap<>();
-    /** TA ids that the most recent AI recommendation flagged as top matches (size = MO-chosen N). */
-    private final java.util.Set<String> topMatchApplicantIds = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
-    /** AI score for each ranked TA (taId → score). Empty when AI hasn't run for this job yet. */
-    private final java.util.Map<String, Integer> top3Scores = new java.util.concurrent.ConcurrentHashMap<>();
-    private boolean isTopMatchActive = false;
+    /** Top-match ranking for the current job; survives applicant list reload after hire/reject. */
+    private final ApplicantAiHighlightState aiHighlights = new ApplicantAiHighlightState();
+    /** Blocks job-selector listener while jobOptions is being refreshed (avoids spurious loadApplicants(null)). */
+    private boolean suppressJobSelectorApplicantReload;
 
     @FXML
     private TabPane tabPane;
@@ -264,6 +263,16 @@ public class MoDashboardController extends BaseController implements SessionAwar
             }
         });
         jobSelector.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
+            if (suppressJobSelectorApplicantReload) {
+                return;
+            }
+            // ComboBox.setAll() briefly clears selection; ignore null, not a real job change.
+            if (val == null) {
+                return;
+            }
+            if (old != null && sameJobId(old.getJobId(), val.getJobId())) {
+                return;
+            }
             invalidateApplicantsAiContext();
             loadApplicants(val);
         });
@@ -283,6 +292,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
         if (aiTopCountSpinner != null) {
             aiTopCountSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10, 3));
             aiTopCountSpinner.setEditable(true);
+        }
+        // Avoid stealing focus from applicant cards after hire/confirm dialogs.
+        if (aiPreferenceArea != null) {
+            aiPreferenceArea.setFocusTraversable(false);
         }
 
         // Configure FlowPane: cards size themselves relative to the container width.
@@ -632,35 +645,48 @@ public class MoDashboardController extends BaseController implements SessionAwar
         Job priorJobsSelection = myJobTable.getSelectionModel().getSelectedItem();
         Job priorSelectorSelection = jobSelector.getSelectionModel().getSelectedItem();
 
-        List<Job> jobs = services.jobService().findJobsByMo(currentMoId());
-        jobs.sort(Comparator.comparing(Job::getJobId));
-        myJobs.setAll(jobs);
-        // Applicants page only acts on open jobs; closed jobs cannot accept new hires.
-        List<Job> openJobs = jobs.stream().filter(Job::isOpen).collect(Collectors.toList());
-        jobOptions.setAll(openJobs);
-        if (jobs.isEmpty()) {
-            updateSelectedJob(null);
-            return;
+        suppressJobSelectorApplicantReload = true;
+        try {
+            List<Job> jobs = services.jobService().findJobsByMo(currentMoId());
+            jobs.sort(Comparator.comparing(Job::getJobId));
+            myJobs.setAll(jobs);
+            List<Job> openJobs = jobs.stream().filter(Job::isOpen).collect(Collectors.toList());
+            jobOptions.setAll(openJobs);
+            if (jobs.isEmpty()) {
+                updateSelectedJob(null);
+                return;
+            }
+            Job restoredTableJob = priorJobsSelection == null
+                    ? null
+                    : jobs.stream().filter(j -> j.getJobId().equalsIgnoreCase(priorJobsSelection.getJobId())).findFirst().orElse(null);
+            if (restoredTableJob != null) {
+                myJobTable.getSelectionModel().select(restoredTableJob);
+            } else {
+                myJobTable.getSelectionModel().selectFirst();
+            }
+            Job restoredSelectorJob = priorSelectorSelection == null
+                    ? null
+                    : openJobs.stream().filter(j -> j.getJobId().equalsIgnoreCase(priorSelectorSelection.getJobId())).findFirst().orElse(null);
+            if (restoredSelectorJob != null) {
+                jobSelector.getSelectionModel().select(restoredSelectorJob);
+            } else if (priorSelectorSelection == null && !openJobs.isEmpty()) {
+                jobSelector.getSelectionModel().selectFirst();
+            } else if (priorSelectorSelection != null && restoredSelectorJob == null) {
+                jobSelector.getSelectionModel().clearSelection();
+                aiHighlights.clear();
+                reloadApplicantItems(null);
+                selectedApplicant = null;
+                clearApplicantsAiOutputs();
+                renderApplicantCards();
+            }
+        } finally {
+            suppressJobSelectorApplicantReload = false;
         }
-        Job restoredTableJob = priorJobsSelection == null
-                ? null
-                : jobs.stream().filter(j -> j.getJobId().equalsIgnoreCase(priorJobsSelection.getJobId())).findFirst().orElse(null);
-        if (restoredTableJob != null) {
-            myJobTable.getSelectionModel().select(restoredTableJob);
-        } else {
-            myJobTable.getSelectionModel().selectFirst();
-        }
-        Job restoredSelectorJob = priorSelectorSelection == null
-                ? null
-                : openJobs.stream().filter(j -> j.getJobId().equalsIgnoreCase(priorSelectorSelection.getJobId())).findFirst().orElse(null);
-        if (restoredSelectorJob != null) {
-            jobSelector.getSelectionModel().select(restoredSelectorJob);
-        } else if (priorSelectorSelection == null && !openJobs.isEmpty()) {
-            jobSelector.getSelectionModel().selectFirst();
-        } else if (priorSelectorSelection != null && restoredSelectorJob == null) {
-            // Previously selected job is no longer open: clear so the Applicants view doesn't
-            // keep showing data from a closed posting.
-            jobSelector.getSelectionModel().clearSelection();
+        // selectFirst()/select() above runs while suppressed, so the listener never calls
+        // loadApplicants — reload here on first paint when the list is still empty.
+        Job selected = jobSelector.getSelectionModel().getSelectedItem();
+        if (selected != null && applicantItems.isEmpty()) {
+            loadApplicants(selected);
         }
     }
 
@@ -703,15 +729,29 @@ public class MoDashboardController extends BaseController implements SessionAwar
 
     private void loadApplicants(Job job) {
         invalidateApplicantsAiContext();
-        isTopMatchActive = false;
-        topMatchApplicantIds.clear();
-        top3Scores.clear();
-        applicantSummaries.clear();
-        selectedApplicant = null;
-
         if (job == null) {
+            aiHighlights.clear();
+            applicantSummaries.clear();
+            selectedApplicant = null;
             applicantItems.clear();
             renderApplicantCards();
+            return;
+        }
+        if (!aiHighlights.isForJob(job.getJobId())) {
+            aiHighlights.clear();
+        }
+        applicantSummaries.clear();
+        selectedApplicant = null;
+        reloadApplicantItems(job);
+        filteredApplicants.setPredicate(item -> true);
+        aiHighlights.restoreAnalysisTo(aiKeywordsArea);
+        renderApplicantCards();
+        generateAllSummariesInBackground();
+    }
+
+    private void reloadApplicantItems(Job job) {
+        if (job == null) {
+            applicantItems.clear();
             return;
         }
         List<Ta> allTa = services.adminService().findAllTa();
@@ -719,26 +759,91 @@ public class MoDashboardController extends BaseController implements SessionAwar
         ApplicationService applicationService = services.applicationService();
         applicantItems.setAll(applicationService.findActiveApplicationsForJob(job.getJobId()).stream()
                 .map(record -> new ApplicantDisplay(record, taMap.get(record.getTaId())))
-                // A disabled TA cannot remain a hire candidate: hide their still-pending entries.
-                // Their historical Hired/Rejected entries stay visible for audit purposes.
                 .filter(display -> !(display.getRecord().getStatus() == ApplicationStatus.PENDING
                         && display.getTa() != null
                         && display.getTa().isDisabled()))
                 .collect(Collectors.toList()));
 
-        // Pre-load summaries from the TA record so the cards render instantly when cached.
         for (ApplicantDisplay applicant : applicantItems) {
             Ta ta = applicant.getTa();
-            if (ta == null) continue;
+            if (ta == null) {
+                continue;
+            }
             String cached = ta.getAiSummary();
             if (cached != null && !cached.isBlank()) {
-                applicantSummaries.put(applicant.getTaId(), cached.trim());
+                applicantSummaries.putIfAbsent(applicant.getTaId(), cached.trim());
             }
         }
+    }
 
-        filteredApplicants.setPredicate(item -> true);
-        renderApplicantCards();
-        generateAllSummariesInBackground();
+    private void refreshApplicantsAfterHireOrReject(Job job, String decidedTaId) {
+        if (job == null) {
+            return;
+        }
+        reloadApplicantItems(job);
+        if (aiHighlights.isForJob(job.getJobId())) {
+            java.util.Set<String> pendingIds = applicantItems.stream()
+                    .filter(d -> d.getRecord() != null
+                            && d.getRecord().getStatus() == ApplicationStatus.PENDING)
+                    .map(d -> normalizeTaId(d.getTaId()))
+                    .collect(Collectors.toSet());
+            aiHighlights.afterApplicantDecided(decidedTaId, pendingIds);
+            aiHighlights.restoreAnalysisTo(aiKeywordsArea);
+        }
+        selectNextApplicantForReview();
+        filterApplicants(applicantSearchField == null ? "" : applicantSearchField.getText());
+    }
+
+    private void selectNextApplicantForReview() {
+        Job job = jobSelector.getSelectionModel().getSelectedItem();
+        String jobId = job != null ? job.getJobId() : "";
+        if (aiHighlights.isActive() && aiHighlights.isForJob(jobId)) {
+            Optional<ApplicantDisplay> nextTop = applicantItems.stream()
+                    .filter(d -> d.getRecord() != null
+                            && d.getRecord().getStatus() == ApplicationStatus.PENDING
+                            && aiHighlights.contains(d.getTaId()))
+                    .max(Comparator
+                            .comparingInt((ApplicantDisplay d) -> aiHighlights.scoreOf(d.getTaId()))
+                            .thenComparing(
+                                    d -> d.getRecord().getApplyTime(),
+                                    Comparator.nullsLast(java.time.LocalDateTime::compareTo)));
+            if (nextTop.isPresent()) {
+                selectedApplicant = nextTop.get();
+                updateApplicantDetail(selectedApplicant);
+                return;
+            }
+        }
+        applicantItems.stream()
+                .filter(d -> d.getRecord() != null
+                        && d.getRecord().getStatus() == ApplicationStatus.PENDING)
+                .min(Comparator.comparing(
+                        d -> d.getRecord().getApplyTime(),
+                        Comparator.nullsLast(java.time.LocalDateTime::compareTo)))
+                .ifPresentOrElse(next -> {
+                    selectedApplicant = next;
+                    updateApplicantDetail(next);
+                }, () -> selectedApplicant = null);
+    }
+
+    private static boolean sameJobId(String a, String b) {
+        if (a == null || b == null) {
+            return false;
+        }
+        return a.equalsIgnoreCase(b);
+    }
+
+    @FXML
+    private void handleResetAiRecommendations() {
+        if (activeRecommendApplicantsTask != null && activeRecommendApplicantsTask.isRunning()) {
+            activeRecommendApplicantsTask.cancel(true);
+        }
+        if (activeSimilarApplicantsTask != null && activeSimilarApplicantsTask.isRunning()) {
+            activeSimilarApplicantsTask.cancel(true);
+        }
+        aiHighlights.clear();
+        clearApplicantsAiOutputs();
+        selectedApplicant = null;
+        filterApplicants(applicantSearchField == null ? "" : applicantSearchField.getText());
     }
 
     private void filterApplicants(String keyword) {
@@ -1434,14 +1539,13 @@ public class MoDashboardController extends BaseController implements SessionAwar
         hired.sort(byApplyTimeAsc);
         rejected.sort(byApplyTimeAsc);
 
-        if (isTopMatchActive && !topMatchApplicantIds.isEmpty()) {
-            // TOP MATCH cards float to the top of the Pending block. Order amongst them is by
-            // AI score (desc) with earliest apply-time as the tiebreaker. Everything else stays
-            // in apply-time order at the bottom.
+        Job currentJob = jobSelector.getSelectionModel().getSelectedItem();
+        String currentJobId = currentJob != null ? currentJob.getJobId() : "";
+        boolean aiRankingActive = aiHighlights.isActive() && aiHighlights.isForJob(currentJobId);
+        if (aiRankingActive) {
             pending.sort(Comparator
-                    .comparingInt((ApplicantDisplay d) ->
-                            topMatchApplicantIds.contains(normalizeTaId(d.getTaId())) ? 0 : 1)
-                    .thenComparing(d -> top3Scores.getOrDefault(normalizeTaId(d.getTaId()), 0),
+                    .comparingInt((ApplicantDisplay d) -> aiHighlights.contains(d.getTaId()) ? 0 : 1)
+                    .thenComparing((ApplicantDisplay d) -> aiHighlights.scoreOf(d.getTaId()),
                             Comparator.reverseOrder())
                     .thenComparing(byApplyTimeAsc));
         } else {
@@ -1538,7 +1642,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         if (applicant.isHired()) {
             card.getStyleClass().add("applicant-card-hired");
         }
-        if (topMatchApplicantIds.contains(normalizeTaId(applicant.getTaId()))) {
+        if (aiHighlights.contains(applicant.getTaId())) {
             card.getStyleClass().add("applicant-card-recommended");
         }
         // Selected style is added LAST so it visually wins via CSS specificity.
@@ -1583,7 +1687,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         content.setSpacing(6);
         content.getChildren().add(header);
 
-        if (topMatchApplicantIds.contains(normalizeTaId(applicant.getTaId()))) {
+        if (aiHighlights.contains(applicant.getTaId())) {
             Label badge = new Label("★ TOP MATCH");
             badge.getStyleClass().add("applicant-card-recommend-badge");
             content.getChildren().add(badge);
@@ -1686,79 +1790,162 @@ public class MoDashboardController extends BaseController implements SessionAwar
             }
         };
 
-        task.setOnSucceeded(evt -> {
-            List<AiService.ApplicantRecommendation> recommendations = task.getValue();
-            topMatchApplicantIds.clear();
-            top3Scores.clear();
-
-            // Build a normalized lookup so AI taIds with stray whitespace or different
-            // casing still resolve to a real pending applicant.
-            java.util.Map<String, ApplicantDisplay> pendingByNormalizedId = new java.util.HashMap<>();
-            for (ApplicantDisplay d : pendingApplicants) {
-                pendingByNormalizedId.put(normalizeTaId(d.getTaId()), d);
-            }
-
-            // Keep only AI rows that map to an actual pending applicant. Preserve AI's
-            // ranking; deduplicate on the way in.
-            java.util.LinkedHashMap<String, AiService.ApplicantRecommendation> validRecs =
-                    new java.util.LinkedHashMap<>();
-            for (AiService.ApplicantRecommendation rec : recommendations) {
-                String key = normalizeTaId(rec.taId());
-                if (pendingByNormalizedId.containsKey(key) && !validRecs.containsKey(key)) {
-                    validRecs.put(key, rec);
-                    top3Scores.put(key, rec.score());
-                }
-            }
-
-            // We must mark exactly min(requestedTopN, pendingApplicants.size()) cards.
-            // If the AI returned fewer valid hits than that, fill from the remaining
-            // pending applicants (in apply-time order) at score 0 so they still surface.
-            int targetCount = Math.min(requestedTopN, pendingApplicants.size());
-            java.util.List<String> orderedKeys = new java.util.ArrayList<>(validRecs.keySet());
-            if (orderedKeys.size() < targetCount) {
-                List<ApplicantDisplay> apTime = new java.util.ArrayList<>(pendingApplicants);
-                apTime.sort(Comparator.comparing(
-                        d -> d.getRecord().getApplyTime(),
-                        Comparator.nullsLast(java.time.LocalDateTime::compareTo)));
-                for (ApplicantDisplay d : apTime) {
-                    if (orderedKeys.size() >= targetCount) break;
-                    String key = normalizeTaId(d.getTaId());
-                    if (!validRecs.containsKey(key)) {
-                        orderedKeys.add(key);
-                        top3Scores.putIfAbsent(key, 0);
-                    }
-                }
-            }
-            for (int i = 0; i < Math.min(targetCount, orderedKeys.size()); i++) {
-                topMatchApplicantIds.add(orderedKeys.get(i));
-            }
-
-            isTopMatchActive = true;
-            // Re-pick the top-ranked card on the next render.
-            selectedApplicant = null;
-
-            filterApplicants(applicantSearchField.getText());
-
-            StringBuilder sb = new StringBuilder(
-                    "Top " + topMatchApplicantIds.size() + " candidate(s) (from pending):\n\n");
-            int idx = 1;
-            for (AiService.ApplicantRecommendation rec : validRecs.values()) {
-                if (idx > targetCount) break;
-                sb.append(String.format("%d. %s (Score: %d)%n   %s%n%n",
-                        idx++, rec.taId(), rec.score(), rec.reason()));
-            }
-            if (validRecs.size() < targetCount) {
-                sb.append("(AI returned only ")
-                        .append(validRecs.size())
-                        .append(" matches; remaining slots filled from the rest of the Pending pool.)\n");
-            }
-            aiKeywordsArea.setText(sb.toString());
-        });
+        task.setOnSucceeded(evt -> applyApplicantRecommendationResults(
+                task.getValue(),
+                pendingApplicants,
+                requestedTopN,
+                "Top %d candidate(s) (from pending):"));
 
         task.setOnFailed(evt -> aiKeywordsArea.setText(
                 "AI selection failed: " + task.getException().getMessage()));
 
+        activeRecommendApplicantsTask = task;
         new Thread(task, "ai-recommend-applicants").start();
+    }
+
+    /**
+     * After the MO completes a hire attempt (hired or declined concurrent-job warning),
+     * optionally run AI similar-candidate recommendations based on that applicant.
+     */
+    private void promptRecommendSimilarAfterHire(ApplicantDisplay benchmarkDisplay) {
+        if (benchmarkDisplay == null || benchmarkDisplay.getTa() == null) {
+            return;
+        }
+        Ta benchmark = benchmarkDisplay.getTa();
+        String applicantLabel = benchmark.getDisplayLabel() + " (" + benchmark.getTaId() + ")";
+        Optional<Integer> choice = DialogUtil.confirmRecommendSimilarCandidates(
+                applicantLabel, navigator.getPrimaryStage());
+        if (choice.isEmpty()) {
+            return;
+        }
+        int topN = choice.get();
+        if (aiTopCountSpinner != null) {
+            aiTopCountSpinner.getValueFactory().setValue(topN);
+        }
+        runSimilarApplicantRecommendation(benchmarkDisplay, topN);
+    }
+
+    private void runSimilarApplicantRecommendation(ApplicantDisplay benchmarkDisplay, int topN) {
+        Job job = jobSelector.getSelectionModel().getSelectedItem();
+        if (job == null) {
+            DialogUtil.error("Please select a job first", navigator.getPrimaryStage());
+            return;
+        }
+        Ta benchmark = benchmarkDisplay.getTa();
+        if (benchmark == null) {
+            return;
+        }
+        String benchmarkKey = normalizeTaId(benchmark.getTaId());
+        List<ApplicantDisplay> pendingApplicants = currentApplicants().stream()
+                .filter(a -> a.getRecord() != null
+                        && a.getRecord().getStatus() == ApplicationStatus.PENDING)
+                .filter(a -> !normalizeTaId(a.getTaId()).equals(benchmarkKey))
+                .collect(Collectors.toList());
+        if (pendingApplicants.isEmpty()) {
+            DialogUtil.error("No other pending applicants to recommend", navigator.getPrimaryStage());
+            return;
+        }
+
+        final int requestedTopN = Math.min(Math.max(1, Math.min(10, topN)), pendingApplicants.size());
+        final String benchmarkTaId = benchmark.getTaId();
+        aiKeywordsArea.setText("AI is finding " + requestedTopN
+                + " candidate(s) similar to " + benchmarkTaId + "...");
+
+        Task<List<AiService.ApplicantRecommendation>> task = new Task<>() {
+            @Override
+            protected List<AiService.ApplicantRecommendation> call() throws Exception {
+                return services.aiService().findSimilarApplicants(
+                        job, benchmark, pendingApplicants, requestedTopN);
+            }
+        };
+
+        task.setOnSucceeded(evt -> applyApplicantRecommendationResults(
+                task.getValue(),
+                pendingApplicants,
+                requestedTopN,
+                "Top %d similar candidate(s) (based on " + benchmarkTaId + "):"));
+
+        task.setOnFailed(evt -> aiKeywordsArea.setText(
+                "AI similar-candidate search failed: " + task.getException().getMessage()));
+
+        if (activeSimilarApplicantsTask != null && activeSimilarApplicantsTask.isRunning()) {
+            activeSimilarApplicantsTask.cancel(true);
+        }
+        activeSimilarApplicantsTask = task;
+        new Thread(task, "ai-similar-applicants").start();
+    }
+
+    private void applyApplicantRecommendationResults(
+            List<AiService.ApplicantRecommendation> recommendations,
+            List<ApplicantDisplay> pendingApplicants,
+            int requestedTopN,
+            String resultHeaderFormat) {
+        Job job = jobSelector.getSelectionModel().getSelectedItem();
+        String jobId = job != null ? job.getJobId() : "";
+
+        java.util.Map<String, ApplicantDisplay> pendingByNormalizedId = new java.util.HashMap<>();
+        for (ApplicantDisplay d : pendingApplicants) {
+            pendingByNormalizedId.put(normalizeTaId(d.getTaId()), d);
+        }
+
+        java.util.LinkedHashMap<String, AiService.ApplicantRecommendation> validRecs =
+                new java.util.LinkedHashMap<>();
+        java.util.Map<String, Integer> scoreByTaId = new java.util.HashMap<>();
+        if (recommendations != null) {
+            for (AiService.ApplicantRecommendation rec : recommendations) {
+                String key = normalizeTaId(rec.taId());
+                if (pendingByNormalizedId.containsKey(key) && !validRecs.containsKey(key)) {
+                    validRecs.put(key, rec);
+                    scoreByTaId.put(key, rec.score());
+                }
+            }
+        }
+
+        int targetCount = Math.min(requestedTopN, pendingApplicants.size());
+        java.util.List<String> orderedKeys = new java.util.ArrayList<>(validRecs.keySet());
+        if (orderedKeys.size() < targetCount) {
+            List<ApplicantDisplay> apTime = new java.util.ArrayList<>(pendingApplicants);
+            apTime.sort(Comparator.comparing(
+                    d -> d.getRecord().getApplyTime(),
+                    Comparator.nullsLast(java.time.LocalDateTime::compareTo)));
+            for (ApplicantDisplay d : apTime) {
+                if (orderedKeys.size() >= targetCount) {
+                    break;
+                }
+                String key = normalizeTaId(d.getTaId());
+                if (!validRecs.containsKey(key)) {
+                    orderedKeys.add(key);
+                    scoreByTaId.putIfAbsent(key, 0);
+                }
+            }
+        }
+        java.util.List<String> topIds = new java.util.ArrayList<>();
+        for (int i = 0; i < Math.min(targetCount, orderedKeys.size()); i++) {
+            topIds.add(orderedKeys.get(i));
+        }
+
+        StringBuilder sb = new StringBuilder(
+                String.format(resultHeaderFormat, topIds.size()) + "\n\n");
+        int idx = 1;
+        for (AiService.ApplicantRecommendation rec : validRecs.values()) {
+            if (idx > targetCount) {
+                break;
+            }
+            sb.append(String.format("%d. %s (Score: %d)%n   %s%n%n",
+                    idx++, rec.taId(), rec.score(), rec.reason()));
+        }
+        if (validRecs.size() < targetCount) {
+            sb.append("(AI returned only ")
+                    .append(validRecs.size())
+                    .append(" matches; remaining slots filled from the rest of the Pending pool.)\n");
+        }
+
+        aiHighlights.applyRanking(jobId, topIds, scoreByTaId, sb.toString());
+        if (aiKeywordsArea != null) {
+            aiKeywordsArea.setText(sb.toString());
+        }
+        selectedApplicant = null;
+        filterApplicants(applicantSearchField == null ? "" : applicantSearchField.getText());
     }
 
     private void updateApplicantDetail(ApplicantDisplay display) {
@@ -1812,8 +1999,8 @@ CV: %s
             DialogUtil.error("Please select an applicant first", navigator.getPrimaryStage());
             return;
         }
-        ApplicantDisplay display = selectedApplicant;
-        ApplicationRecord record = display.getRecord();
+        ApplicantDisplay hireTarget = selectedApplicant;
+        ApplicationRecord record = hireTarget.getRecord();
         if (record.getStatus() != ApplicationStatus.PENDING) {
             DialogUtil.info("This applicant has already been decided.",
                     navigator.getPrimaryStage());
@@ -1832,11 +2019,12 @@ CV: %s
         if (overlappingJobs.size() >= WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD) {
             String warning = buildConcurrentHireWarning(currentJobOpt.get(), overlappingJobs);
             if (!DialogUtil.confirmYesNo(warning, navigator.getPrimaryStage())) {
+                promptRecommendSimilarAfterHire(hireTarget);
                 return;
             }
         }
         OperationResult<Void> result = services.applicationService().hireApplicant(record.getApplyId());
-        finishApplicantAction(result);
+        finishApplicantAction(result, hireTarget, true);
     }
 
     @FXML
@@ -1852,33 +2040,31 @@ CV: %s
             return;
         }
         OperationResult<Void> result = services.applicationService().rejectApplicant(record.getApplyId());
-        finishApplicantAction(result);
+        finishApplicantAction(result, display, false);
     }
 
     /**
      * Shared post-action flow: report the outcome and reload the applicant list while keeping
      * the MO on the same job (no jump to the first job).
      */
-    private void finishApplicantAction(OperationResult<Void> result) {
+    private void finishApplicantAction(
+            OperationResult<Void> result, ApplicantDisplay decidedApplicant, boolean promptSimilar) {
         if (result.success()) {
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
-            Job currentJob = jobSelector.getSelectionModel().getSelectedItem();
-            String currentApplyId = selectedApplicant != null && selectedApplicant.getRecord() != null
-                    ? selectedApplicant.getRecord().getApplyId()
+            String decidedTaId = decidedApplicant != null && decidedApplicant.getTa() != null
+                    ? decidedApplicant.getTa().getTaId()
+                    : null;
+            String jobIdSnapshot = decidedApplicant != null && decidedApplicant.getRecord() != null
+                    ? decidedApplicant.getRecord().getJobId()
                     : null;
             refreshMyJobs();
-            loadApplicants(currentJob);
-            // Try to keep the same applicant card selected so the MO can keep iterating.
-            if (currentApplyId != null) {
-                for (ApplicantDisplay candidate : applicantItems) {
-                    if (candidate.getRecord() != null
-                            && currentApplyId.equals(candidate.getRecord().getApplyId())) {
-                        selectedApplicant = candidate;
-                        updateApplicantDetail(candidate);
-                        renderApplicantCards();
-                        break;
-                    }
-                }
+            Job currentJob = jobSelector.getSelectionModel().getSelectedItem();
+            if (currentJob != null && jobIdSnapshot != null
+                    && sameJobId(jobIdSnapshot, currentJob.getJobId())) {
+                refreshApplicantsAfterHireOrReject(currentJob, decidedTaId);
+            }
+            if (promptSimilar && decidedApplicant != null) {
+                promptRecommendSimilarAfterHire(decidedApplicant);
             }
         } else {
             DialogUtil.error(result.message(), navigator.getPrimaryStage());
@@ -2005,5 +2191,74 @@ CV: %s
         });
 
         new Thread(task, "job-keywords-generator").start();
+    }
+
+    /**
+     * AI top-match highlights for one job. Kept separate from applicant list reload so hire/reject
+     * can refresh CSV data without losing MO-visible ranking.
+     */
+    private static final class ApplicantAiHighlightState {
+        private String jobId = "";
+        private final java.util.LinkedHashSet<String> topMatchTaIds = new java.util.LinkedHashSet<>();
+        private final java.util.Map<String, Integer> scores = new java.util.HashMap<>();
+        private String analysisText = "";
+
+        boolean isActive() {
+            return !topMatchTaIds.isEmpty();
+        }
+
+        boolean isForJob(String id) {
+            return id != null && !id.isBlank() && jobId != null && jobId.equalsIgnoreCase(id);
+        }
+
+        void clear() {
+            jobId = "";
+            topMatchTaIds.clear();
+            scores.clear();
+            analysisText = "";
+        }
+
+        void applyRanking(
+                String jobId,
+                java.util.List<String> orderedTaIds,
+                java.util.Map<String, Integer> scoreByTaId,
+                String analysis) {
+            this.jobId = jobId == null ? "" : jobId;
+            topMatchTaIds.clear();
+            scores.clear();
+            for (String taId : orderedTaIds) {
+                String key = MoDashboardController.normalizeTaId(taId);
+                topMatchTaIds.add(key);
+                Integer score = scoreByTaId == null ? null : scoreByTaId.get(key);
+                if (score != null) {
+                    scores.put(key, score);
+                }
+            }
+            analysisText = analysis == null ? "" : analysis;
+        }
+
+        void afterApplicantDecided(String decidedTaId, java.util.Set<String> pendingNormalizedIds) {
+            if (decidedTaId != null) {
+                String key = MoDashboardController.normalizeTaId(decidedTaId);
+                topMatchTaIds.remove(key);
+                scores.remove(key);
+            }
+            topMatchTaIds.retainAll(pendingNormalizedIds);
+            scores.keySet().retainAll(topMatchTaIds);
+        }
+
+        boolean contains(String taId) {
+            return topMatchTaIds.contains(MoDashboardController.normalizeTaId(taId));
+        }
+
+        int scoreOf(String taId) {
+            return scores.getOrDefault(MoDashboardController.normalizeTaId(taId), 0);
+        }
+
+        void restoreAnalysisTo(TextArea area) {
+            if (area != null && !analysisText.isBlank()) {
+                area.setText(analysisText);
+            }
+        }
     }
 }

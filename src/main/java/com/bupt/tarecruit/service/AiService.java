@@ -176,25 +176,30 @@ public class AiService {
         return result;
     }
 
-    public List<ApplicantRecommendation> findSimilarApplicants(Job job, Ta benchmark, List<ApplicantDisplay> applicants)
+    public List<ApplicantRecommendation> findSimilarApplicants(
+            Job job, Ta benchmark, List<ApplicantDisplay> applicants, int maxResults)
             throws IOException, InterruptedException {
+        int cap = Math.max(1, Math.min(maxResults, applicants.size()));
         String userPrompt = """
-                You are a recruiting assistant. Use the benchmark applicant and find the most similar candidates in the current applicant pool.
+                You are a recruiting assistant. The MO has just hired (or intends to hire) the benchmark applicant below.
+                Find the most similar pending candidates in the current applicant pool using the benchmark as the primary reference.
+                Do not include the benchmark applicant in the results.
                 Return a JSON array. Each item must include: taId(string), score(int 0-100), reason(string).
-                Return at most 5 items sorted by score descending.
+                Return at most %d items sorted by score descending.
                 
                 Job:
                 Name: %s
                 Module: %s
                 Requirements: %s
+                Notes: %s
                 
-                Benchmark applicant:
+                Benchmark applicant (hire reference):
                 %s
                 
                 Candidate list:
                 %s
-                """.formatted(safe(job.getJobName()), safe(job.getModuleName()), safe(job.getRequirements()),
-                taProfileText(benchmark), applicantListText(applicants));
+                """.formatted(cap, safe(job.getJobName()), safe(job.getModuleName()), safe(job.getRequirements()),
+                safe(job.getAdditionalNotes()), taProfileText(benchmark), applicantListText(applicants));
         JSONArray arr = asJsonArray(chatJson(userPrompt));
         List<ApplicantRecommendation> result = new ArrayList<>();
         for (int i = 0; i < arr.length(); i++) {
