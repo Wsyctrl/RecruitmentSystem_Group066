@@ -171,7 +171,10 @@
                                 </padding>
                                 <Label text="Additional preference for AI recommendation (optional)" styleClass="text-muted"/>
                                 <TextArea fx:id="aiJobPreferenceField" wrapText="true" prefRowCount="3"/>
-                                <Button text="AI Recommend Jobs" onAction="#handleAiRecommendJobs" maxWidth="Infinity"/>
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Button text="Reset" onAction="#handleResetAiJobRecommendations"/>
+                                    <Button text="AI Recommend Jobs" onAction="#handleAiRecommendJobs" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                                </HBox>
                                 <Label text="AI Job Recommendations" styleClass="text-muted"/>
                                 <TextArea fx:id="aiJobRecommendationArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
                             </VBox>
