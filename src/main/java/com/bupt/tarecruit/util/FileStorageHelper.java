@@ -48,6 +48,23 @@ public class FileStorageHelper {
         }
     }
 
+    public void deleteCv(String email, String storedPath) throws IOException {
+        Path canonical = getCvDir().resolve(cvFileName(email));
+        deleteIfExists(canonical);
+        if (storedPath != null && !storedPath.isBlank()) {
+            Path resolved = resolveCvFile(email, storedPath);
+            if (!resolved.equals(canonical)) {
+                deleteIfExists(resolved);
+            }
+        }
+    }
+
+    private void deleteIfExists(Path path) throws IOException {
+        if (Files.exists(path)) {
+            Files.delete(path);
+        }
+    }
+
     public Path resolve(String first, String... more) {
         return dataDir.resolve(Path.of(first, more));
     }

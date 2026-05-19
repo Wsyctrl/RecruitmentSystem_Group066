@@ -316,6 +316,11 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 1, 0, 0, 0);
 }
 
+.button:disabled {
+    -fx-opacity: 0.45;
+    -fx-cursor: default;
+}
+
 .btn-primary {
     -fx-background-color: linear-gradient(to right, #667eea 0%, #764ba2 100%);
     -fx-text-fill: white;
@@ -325,6 +330,15 @@
 .btn-primary:hover {
     -fx-background-color: linear-gradient(to right, #5a67d8 0%, #6b46c1 100%);
     -fx-border-color: transparent;
+}
+
+.btn-primary:disabled {
+    -fx-opacity: 1;
+    -fx-background-color: linear-gradient(to right, #a5b4fc 0%, #c4b5fd 100%);
+    -fx-text-fill: rgba(255, 255, 255, 0.92);
+    -fx-border-color: transparent;
+    -fx-cursor: default;
+    -fx-effect: none;
 }
 
 .btn-success {

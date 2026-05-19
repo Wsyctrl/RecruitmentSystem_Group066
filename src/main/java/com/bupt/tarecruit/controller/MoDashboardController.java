@@ -729,8 +729,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
         // Pre-load summaries from the TA record so the cards render instantly when cached.
         for (ApplicantDisplay applicant : applicantItems) {
             Ta ta = applicant.getTa();
-            if (ta != null && ta.getAiSummary() != null && !ta.getAiSummary().isBlank()) {
-                applicantSummaries.put(applicant.getTaId(), ta.getAiSummary().trim());
+            if (ta == null) continue;
+            String cached = ta.getAiSummary();
+            if (cached != null && !cached.isBlank()) {
+                applicantSummaries.put(applicant.getTaId(), cached.trim());
             }
         }
 
@@ -1614,7 +1616,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
                     // Skip if already in the in-memory cache for this session.
                     if (applicantSummaries.containsKey(taId)) continue;
 
-                    // Reuse the AI summary stored on the TA record when present.
+                    // Reuse the AI summary stored on the TA record when present and still valid.
                     String cached = ta.getAiSummary();
                     if (cached != null && !cached.isBlank()) {
                         applicantSummaries.put(taId, cached.trim());
@@ -1622,18 +1624,16 @@ public class MoDashboardController extends BaseController implements SessionAwar
                         continue;
                     }
 
-                    // No persisted summary yet: generate a new one and persist it back to TA.csv.
+                    String cvText = readAttachedCvText(ta);
+                    // No persisted summary yet: generate and persist to TA.csv.
                     try {
-                        String summary = services.aiService().generateApplicantSummary(ta);
+                        String summary = services.aiService().generateApplicantSummary(ta, cvText);
                         applicantSummaries.put(taId, summary);
                         ta.setAiSummary(summary);
                         services.profileService().updateTa(ta);
                         javafx.application.Platform.runLater(() -> renderApplicantCards());
                     } catch (Exception ex) {
-                        // Fallback summary: leave the persisted column blank so the next run retries.
-                        String fallback = ta.getMajor() + " major with skills in " +
-                                (ta.getSkills() != null && !ta.getSkills().isBlank()
-                                        ? ta.getSkills().split(",")[0] : "various areas");
+                        String fallback = AiService.fallbackApplicantSummary(ta, cvText);
                         applicantSummaries.put(taId, fallback);
                         javafx.application.Platform.runLater(() -> renderApplicantCards());
                     }
@@ -1882,6 +1882,21 @@ CV: %s
             }
         } else {
             DialogUtil.error(result.message(), navigator.getPrimaryStage());
+        }
+    }
+
+    private String readAttachedCvText(Ta ta) {
+        if (ta == null || ta.getCvPath() == null || ta.getCvPath().isBlank()) {
+            return "";
+        }
+        Path cvFile = services.fileStorageHelper().resolveCvFile(ta.getTaId(), ta.getCvPath());
+        if (!Files.isRegularFile(cvFile)) {
+            return "";
+        }
+        try {
+            return Files.readString(cvFile);
+        } catch (IOException e) {
+            return "";
         }
     }
 

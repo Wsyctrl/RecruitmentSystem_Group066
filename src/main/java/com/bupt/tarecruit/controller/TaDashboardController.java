@@ -123,7 +123,13 @@ public class TaDashboardController extends BaseController implements SessionAwar
     @FXML
     private Label cvPathLabel;
     @FXML
+    private Button deleteCvButton;
+    @FXML
     private Button downloadCvButton;
+    @FXML
+    private Button uploadCvButton;
+    @FXML
+    private Button aiFillProfileButton;
     @FXML
     private Label aiFillStatusLabel;
 /**
@@ -414,9 +420,17 @@ public class TaDashboardController extends BaseController implements SessionAwar
                 cvPathLabel.getStyleClass().remove("cv-file-uploaded");
             }
         }
+        if (uploadCvButton != null) {
+            uploadCvButton.setText(hasCv ? "Re-upload CV" : "Upload CV");
+        }
+        if (deleteCvButton != null) {
+            deleteCvButton.setDisable(!hasCv);
+        }
         if (downloadCvButton != null) {
-            downloadCvButton.setVisible(hasCv);
-            downloadCvButton.setManaged(hasCv);
+            downloadCvButton.setDisable(!hasCv);
+        }
+        if (aiFillProfileButton != null) {
+            aiFillProfileButton.setDisable(!hasCv);
         }
     }
 /**
@@ -686,7 +700,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
     }
 
     @FXML
-    private void handleDownloadCv() {
+    private void handleDeleteCv() {
         if (guestMode) {
             requireLoginAndRedirect("Please sign in first.");
             return;
@@ -695,8 +709,32 @@ public class TaDashboardController extends BaseController implements SessionAwar
         if (ta == null) {
             return;
         }
-        if (ta.getCvPath() == null || ta.getCvPath().isBlank()) {
-            DialogUtil.error("No CV has been uploaded yet", navigator.getPrimaryStage());
+        if (!DialogUtil.confirmYesNo("Delete your uploaded resume attachment?", navigator.getPrimaryStage())) {
+            return;
+        }
+        try {
+            services.fileStorageHelper().deleteCv(ta.getTaId(), ta.getCvPath());
+        } catch (IOException e) {
+            DialogUtil.error("Failed to delete CV: " + e.getMessage(), navigator.getPrimaryStage());
+            return;
+        }
+        ta.setCvPath("");
+        services.profileService().updateTa(ta);
+        updateCvUi(ta);
+        if (aiFillStatusLabel != null) {
+            aiFillStatusLabel.setText("");
+        }
+        DialogUtil.info("CV deleted", navigator.getPrimaryStage());
+    }
+
+    @FXML
+    private void handleDownloadCv() {
+        if (guestMode) {
+            requireLoginAndRedirect("Please sign in first.");
+            return;
+        }
+        Ta ta = session.taOptional().orElse(null);
+        if (ta == null) {
             return;
         }
 
@@ -939,10 +977,6 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
         Ta ta = session.taOptional().orElse(null);
         if (ta == null) {
-            return;
-        }
-        if (ta.getCvPath() == null || ta.getCvPath().isBlank()) {
-            DialogUtil.error("Please upload CV first", navigator.getPrimaryStage());
             return;
         }
         Path cvFile = services.fileStorageHelper().resolveCvFile(ta.getTaId(), ta.getCvPath());

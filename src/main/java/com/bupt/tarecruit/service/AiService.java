@@ -269,21 +269,97 @@ public class AiService {
     }
 
     public String generateApplicantSummary(Ta ta) throws IOException, InterruptedException {
-        String userPrompt = """
-                Summarize this TA applicant in ONE line under 15 words.
-                Format: "Major in [field], skilled in [2-3 key skills]."
-                No extra text, just the summary.
+        return generateApplicantSummary(ta, "");
+    }
 
-                Profile:
+    public String generateApplicantSummary(Ta ta, String cvText) throws IOException, InterruptedException {
+        if (!hasApplicantSourceMaterial(ta, cvText)) {
+            return incompleteProfileSummary();
+        }
+        String userPrompt = """
+                Write exactly ONE ultra-concise English phrase (at most 12 words) stating this TA applicant's top strengths.
+
+                Rules:
+                - Lead with strengths immediately: skills, teaching fit, standout experience. No name, no "is/has/with" openers, no filler.
+                - Every word must earn its place; drop articles and padding where meaning stays clear.
+                - Use only facts from the online profile, self-evaluation, and attached resume below. Do not invent details.
+                - If the online profile is mostly empty but resume or self-evaluation has content, distill strengths from those.
+                - If all sources are largely empty, output only: Profile incomplete.
+                - Output the phrase only—no quotes, labels, or bullet points.
+
+                Online profile:
                 Major: %s
                 Skills: %s
                 Experience: %s
+                Self-evaluation: %s
+
+                Attached resume (TXT):
+                %s
                 """.formatted(
                 safe(ta.getMajor()),
                 safe(ta.getSkills()),
-                safe(ta.getExperience())
+                safe(ta.getExperience()),
+                safe(ta.getSelfEvaluation()),
+                attachedResumeText(cvText)
         );
-        return chatText(userPrompt);
+        return chatText(userPrompt).trim();
+    }
+
+    public static String fallbackApplicantSummary(Ta ta, String cvText) {
+        if (!hasApplicantSourceMaterial(ta, cvText)) {
+            return incompleteProfileSummary();
+        }
+        String skills = trimOrEmpty(ta.getSkills());
+        if (!skills.isBlank()) {
+            return truncateWords(skills.replace(';', ',').replace('|', ','), 12);
+        }
+        String experience = trimOrEmpty(ta.getExperience());
+        if (!experience.isBlank()) {
+            return truncateWords(experience, 12);
+        }
+        String selfEval = trimOrEmpty(ta.getSelfEvaluation());
+        if (!selfEval.isBlank()) {
+            return truncateWords(selfEval, 12);
+        }
+        String major = trimOrEmpty(ta.getMajor());
+        if (!major.isBlank()) {
+            return truncateWords(major, 8);
+        }
+        String cv = trimOrEmpty(cvText);
+        if (!cv.isBlank()) {
+            return truncateWords(cv, 12);
+        }
+        return incompleteProfileSummary();
+    }
+
+    private static boolean hasApplicantSourceMaterial(Ta ta, String cvText) {
+        return !trimOrEmpty(ta.getMajor()).isBlank()
+                || !trimOrEmpty(ta.getSkills()).isBlank()
+                || !trimOrEmpty(ta.getExperience()).isBlank()
+                || !trimOrEmpty(ta.getSelfEvaluation()).isBlank()
+                || !trimOrEmpty(cvText).isBlank();
+    }
+
+    private static String trimOrEmpty(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private static String incompleteProfileSummary() {
+        return "Profile incomplete.";
+    }
+
+    private static String truncateWords(String text, int maxWords) {
+        String[] words = text.trim().split("\\s+");
+        if (words.length <= maxWords) {
+            return text.trim();
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < maxWords; i++) {
+            if (i > 0) sb.append(' ');
+            sb.append(words[i]);
+        }
+        sb.append("...");
+        return sb.toString();
     }
 
     private String applicantListText(List<ApplicantDisplay> applicants) {
@@ -413,7 +489,7 @@ public class AiService {
     }
 
     private String safe(String value) {
-        return value == null ? "" : value.trim();
+        return trimOrEmpty(value);
     }
 
     private int clampScore(int score) {
