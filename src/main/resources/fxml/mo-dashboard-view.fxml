@@ -61,6 +61,7 @@
                                         <Spinner fx:id="aiTopCountSpinner" prefWidth="80"/>
                                         <Label text="match(es)" styleClass="form-label"/>
                                         <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="Reset" onAction="#handleResetAiRecommendations" styleClass="btn-outline"/>
                                         <Button text="AI Recommend Applicants" onAction="#handleAiRecommendApplicants" styleClass="btn-primary"/>
                                     </HBox>
                                     <Label text="AI Analysis" styleClass="h6"/>
