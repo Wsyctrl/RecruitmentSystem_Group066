@@ -7,6 +7,7 @@ import com.bupt.tarecruit.entity.Ta;
 import com.bupt.tarecruit.util.OperationResult;
 import com.bupt.tarecruit.util.ValidationUtil;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -63,8 +64,34 @@ public class ProfileService {
      * @return operation result containing the updated TA entity
      */
     public OperationResult<Ta> updateTa(Ta ta) {
+        taDao.findById(ta.getTaId()).ifPresent(stored -> {
+            if (hasNonAiSummaryFieldChanged(stored, ta)) {
+                ta.setAiSummary("");
+            }
+        });
         taDao.update(ta);
         return OperationResult.success(ta, "Profile saved");
+    }
+
+    /**
+     * Returns true when any TA.csv column other than {@code ai_summary} differs between
+     * the persisted record and the update payload.
+     */
+    static boolean hasNonAiSummaryFieldChanged(Ta stored, Ta updated) {
+        return !Objects.equals(normalize(stored.getEmail()), normalize(updated.getEmail()))
+                || !Objects.equals(normalize(stored.getPassword()), normalize(updated.getPassword()))
+                || !Objects.equals(normalize(stored.getFullName()), normalize(updated.getFullName()))
+                || !Objects.equals(normalize(stored.getPhone()), normalize(updated.getPhone()))
+                || !Objects.equals(normalize(stored.getMajor()), normalize(updated.getMajor()))
+                || !Objects.equals(normalize(stored.getSkills()), normalize(updated.getSkills()))
+                || !Objects.equals(normalize(stored.getExperience()), normalize(updated.getExperience()))
+                || !Objects.equals(normalize(stored.getSelfEvaluation()), normalize(updated.getSelfEvaluation()))
+                || stored.isDisabled() != updated.isDisabled()
+                || !Objects.equals(normalize(stored.getCvPath()), normalize(updated.getCvPath()));
+    }
+
+    private static String normalize(String value) {
+        return value == null ? "" : value.trim();
     }
 
     /**
