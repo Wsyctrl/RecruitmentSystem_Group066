@@ -67,7 +67,7 @@
                             <BorderPane>
                                 <top>
                                     <HBox spacing="10" styleClass="p-3">
-                                        <TextField fx:id="jobSearchField" promptText="Search title, module, requirements" HBox.hgrow="ALWAYS" styleClass="search-field"/>
+                                        <TextField fx:id="jobSearchField" promptText="Search job information" HBox.hgrow="ALWAYS" styleClass="search-field"/>
                                         <Button text="Refresh" onAction="#handleRefreshJobs"/>
                                     </HBox>
                                 </top>

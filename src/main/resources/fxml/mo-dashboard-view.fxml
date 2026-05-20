@@ -196,11 +196,11 @@
                                     <VBox spacing="8">
                                         <VBox spacing="4">
                                             <Label text="Requirements" styleClass="form-label"/>
-                                            <TextArea fx:id="requirementsField" wrapText="true" prefRowCount="5"/>
+                                            <TextArea fx:id="requirementsField" wrapText="true" prefRowCount="3"/>
                                         </VBox>
                                         <VBox spacing="4">
                                             <Label text="Notes" styleClass="form-label"/>
-                                            <TextArea fx:id="notesField" wrapText="true" prefRowCount="8"/>
+                                            <TextArea fx:id="notesField" wrapText="true" prefRowCount="3"/>
                                         </VBox>
                                         <VBox spacing="4">
                                             <Label text="Keywords" styleClass="form-label"/>
