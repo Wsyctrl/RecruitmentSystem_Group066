@@ -529,7 +529,7 @@ For each applicant on the selected job, the system **automatically generates a s
 
 - While the text is still being generated, the card shows *Analyzing profile...*
 - Once ready, the sentence appears on the card under the name and status.
-- The same summary is kept on the applicant’s record so it can load faster when you view them again.
+- The same summary is kept on the applicant’s record so it can load faster when you view them again; if the TA updates their online profile or CV attachment, that cached summary is cleared and regenerated the next time you open Applicants.
 
 <p align="center">
   <img src="screenshots/fig-05-03-applicant-card-ai-summary.png" width="700" height="auto" alt="Figure 05-03: Applicant card — AI advantage summary">
