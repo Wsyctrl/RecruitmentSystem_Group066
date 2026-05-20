@@ -1249,8 +1249,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private void handleResetTaPassword() {
         AdminTaDisplay display = adminTaTable != null ? adminTaTable.getSelectionModel().getSelectedItem() : null;
         Ta ta = display != null ? display.getTa() : null;
-        if (ta == null) {
-            // Fallback to old table
+        if (ta == null && taUserTable != null) {
             ta = taUserTable.getSelectionModel().getSelectedItem();
         }
         if (ta == null) {
@@ -1267,8 +1266,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private void handleToggleTaStatus() {
         AdminTaDisplay display = adminTaTable != null ? adminTaTable.getSelectionModel().getSelectedItem() : null;
         Ta ta = display != null ? display.getTa() : null;
-        if (ta == null) {
-            // Fallback to old table
+        if (ta == null && taUserTable != null) {
             ta = taUserTable.getSelectionModel().getSelectedItem();
         }
         if (ta == null) {
@@ -1285,8 +1283,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private void handleResetMoPassword() {
         AdminMoDisplay display = adminMoTable != null ? adminMoTable.getSelectionModel().getSelectedItem() : null;
         Mo mo = display != null ? display.getMo() : null;
-        if (mo == null) {
-            // Fallback to old table
+        if (mo == null && moUserTable != null) {
             mo = moUserTable.getSelectionModel().getSelectedItem();
         }
         if (mo == null) {
@@ -1303,8 +1300,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private void handleToggleMoStatus() {
         AdminMoDisplay display = adminMoTable != null ? adminMoTable.getSelectionModel().getSelectedItem() : null;
         Mo mo = display != null ? display.getMo() : null;
-        if (mo == null) {
-            // Fallback to old table
+        if (mo == null && moUserTable != null) {
             mo = moUserTable.getSelectionModel().getSelectedItem();
         }
         if (mo == null) {
