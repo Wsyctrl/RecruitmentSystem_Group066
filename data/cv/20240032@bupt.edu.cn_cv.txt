@@ -1,0 +1,39 @@
+Chloe Anderson
+TA Candidate | Student ID: ta20240032
+Email: 20240032@bupt.edu.cn | Phone: 13810004032
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Full-stack oriented Software Engineering student with MERN capstone experience and internship exposure to REST API delivery.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Software Engineering (Expected Graduation: 2028)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- React
+- Node.js
+- MongoDB
+- REST
+- Postman
+- Git
+- Agile
+
+EXPERIENCE
+Integration Test Owner, Room Booking Capstone (2025-2026)
+- Maintained Postman collections and environment files for team API testing.
+- Documented endpoint contracts and error codes for front-end developers.
+- Facilitated sprint retrospectives and tracked action items.
+
+Intern, Logistics Technology Team (Summer 2025)
+- Implemented Node.js endpoints for shipment status queries.
+- Pair-programmed with junior developer on input validation patterns.
+- Participated in code reviews and learned branch naming conventions.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

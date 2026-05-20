@@ -1,0 +1,32 @@
+Henry Okafor
+TA Candidate | Student ID: ta20230037
+Email: 20230037@bupt.edu.cn | Phone: 13810003037
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Statistics-focused data science student with R lab facilitation experience and emphasis on responsible inference.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Data Science (Expected Graduation: 2027)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- R
+- ggplot2
+- Statistics
+- Experimental Design
+- Jupyter
+
+EXPERIENCE
+Course Assistant, Introductory Statistics Labs (2024-2026)
+- Ran weekly R sessions on hypothesis tests and regression diagnostics.
+- Co-authored instructor handout on interpreting p-values responsibly.
+- Tracked attendance and common question themes for weekly recap emails.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

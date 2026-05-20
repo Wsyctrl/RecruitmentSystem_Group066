@@ -1,0 +1,33 @@
+Olivia Bennett
+TA Candidate | Student ID: ta20230044
+Email: 20230044@bupt.edu.cn | Phone: 13810003044
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+NLP-oriented data science student with capstone experience in text analytics and peer tutoring on ML workflows.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Data Science (Expected Graduation: 2027)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- Python
+- spaCy
+- pandas
+- scikit-learn
+- Matplotlib
+- Jupyter
+
+EXPERIENCE
+Capstone: Course Feedback Sentiment Analysis (2025-2026)
+- Built spaCy preprocessing pipeline for comment cleaning and tokenization.
+- Compared model metrics and presented precision-recall trade-offs.
+- Tutored peers on train-test splits during project deadlines.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

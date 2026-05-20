@@ -1,0 +1,33 @@
+Grace Nguyen
+TA Candidate | Student ID: ta20240008
+Email: 20240008@bupt.edu.cn | Phone: 13810004008
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Front-end engineer focused on accessibility and inclusive interface design in team projects.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Software Engineering (Expected Graduation: 2028)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- JavaScript
+- React
+- TypeScript
+- HTML
+- CSS
+- Accessibility
+
+EXPERIENCE
+Hackathon Front-End Lead (2025)
+- Owned state management and ARIA labels for campus room-booking prototype.
+- Recorded video tutorials for first-year HTML/CSS learners.
+- Organized study sessions on OOP design patterns before midterms.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

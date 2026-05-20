@@ -1,0 +1,32 @@
+Nora Patel
+TA Candidate | Student ID: ta20230017
+Email: 20230017@bupt.edu.cn | Phone: 13810003017
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Machine learning enthusiast with capstone modeling experience and workshop facilitation skills.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Data Science (Expected Graduation: 2027)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- Python
+- pandas
+- scikit-learn
+- Jupyter
+- Matplotlib
+
+EXPERIENCE
+ML Capstone, Student Success Prediction (2025-2026)
+- Trained and evaluated logistic regression and random forest models on 200k rows.
+- Presented confusion matrices and feature importance to faculty panel.
+- Co-taught one-day Jupyter workshop for sophomores.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

@@ -1,0 +1,33 @@
+Isabel Costa
+TA Candidate | Student ID: ta20220038
+Email: 20220038@bupt.edu.cn | Phone: 13810002038
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+HCI-oriented student with usability testing experience and collaboration skills across design and engineering teams.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Software Engineering (Expected Graduation: 2026)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- Figma
+- UX Research
+- HTML
+- CSS
+- Prototyping
+- Accessibility
+
+EXPERIENCE
+Usability Lead, Campus Navigation Prototype (2025)
+- Planned and moderated user tests with task scripts and consent forms.
+- Synthesized findings into prioritized design recommendations.
+- Partnered with developers to verify accessibility fixes.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

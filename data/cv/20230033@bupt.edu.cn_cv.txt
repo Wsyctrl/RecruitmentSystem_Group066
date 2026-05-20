@@ -1,0 +1,37 @@
+Daniel Kim
+TA Candidate | Student ID: ta20230033
+Email: 20230033@bupt.edu.cn | Phone: 13810003033
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Physics major focused on mechanics labs uncertainty analysis and clear lab-report mentoring.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Physics (Expected Graduation: 2027)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- Verilog
+- FPGA
+- Digital Logic
+- C
+- ModelSim
+
+EXPERIENCE
+Recitation Volunteer, Digital Design (2024-2025)
+- Walked students through Karnaugh maps and state-machine timing diagrams.
+- Prepared weekly recap handouts on combinational vs sequential blocks.
+- Reinforced lab safety and equipment checkout procedures.
+
+Project: Pipelined RISC Core on FPGA (2025)
+- Implemented fetch-decode-execute stages with documented timing constraints.
+- Debugged synthesis warnings with instructor guidance.
+- Presented demo comparing cycle counts across design variants.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.
