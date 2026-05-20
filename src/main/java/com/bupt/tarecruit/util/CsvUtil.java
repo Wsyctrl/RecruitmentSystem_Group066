@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +26,7 @@ public final class CsvUtil {
     public static void ensureFileWithHeader(Path path, String[] header) {
         try {
             Files.createDirectories(path.getParent());
-            if (Files.notExists(path) || Files.size(path) == 0) {
+            if (Files.notExists(path)) {
                 try (Writer writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8);
                      CSVWriter csvWriter = new CSVWriter(writer)) {
                     csvWriter.writeNext(header, false);
@@ -52,13 +53,21 @@ public final class CsvUtil {
 
     public static void writeAll(Path path, String[] header, List<String[]> rows) {
         ensurePathExists(path);
-        try (Writer writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8);
-             CSVWriter csvWriter = new CSVWriter(writer)) {
-            csvWriter.writeNext(header, false);
-            for (String[] row : rows) {
-                csvWriter.writeNext(row, false);
+        Path tempPath = path.resolveSibling(path.getFileName().toString() + ".tmp");
+        try {
+            try (Writer writer = Files.newBufferedWriter(tempPath, StandardCharsets.UTF_8);
+                 CSVWriter csvWriter = new CSVWriter(writer)) {
+                csvWriter.writeNext(header, false);
+                for (String[] row : rows) {
+                    csvWriter.writeNext(row, false);
+                }
             }
+            Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
+            try {
+                Files.deleteIfExists(tempPath);
+            } catch (IOException ignored) {
+            }
             throw new IllegalStateException("Failed to write CSV: " + path, e);
         }
     }
@@ -72,7 +81,7 @@ public final class CsvUtil {
                 Files.createFile(path);
             }
         } catch (IOException e) {
-            throw new IllegalStateException("Could not create path: " + path, e);
+            throw new IllegalStateException("Could not ensure path exists: " + path, e);
         }
     }
 }
