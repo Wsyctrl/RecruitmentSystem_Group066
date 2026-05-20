@@ -1,0 +1,32 @@
+Samir Ahmadi
+TA Candidate | Student ID: ta20210022
+Email: 20210022@bupt.edu.cn | Phone: 13810001022
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Operating systems specialist with GDB debugging experience and prior TA candidacy for OS course.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Computer Science (Expected Graduation: 2026)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- C
+- GDB
+- Linux
+- Pthreads
+- Virtual Memory
+
+EXPERIENCE
+OS Review Session Leader (2024-2025)
+- Led weekly review on scheduling synchronization and virtual memory.
+- Helped students debug pthread assignments using GDB and rr.
+- Prepared concise cheat sheets distributed by instructor.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

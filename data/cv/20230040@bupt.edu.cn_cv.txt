@@ -1,0 +1,36 @@
+Kelly Tran
+TA Candidate | Student ID: ta20230040
+Email: 20230040@bupt.edu.cn | Phone: 13810003040
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Cybersecurity student with CTF experience and practical web hardening documentation for student organizations.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Computer Science (Expected Graduation: 2027)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- Python
+- Linux
+- Wireshark
+- Web Security
+- Threat Modeling
+
+EXPERIENCE
+CTF Team Member, Regional Competition (2025)
+- Focused on web and cryptography challenge categories.
+- Documented solution write-ups for team knowledge sharing.
+- Practiced responsible disclosure norms in all activities.
+
+Security Review, Student Club Website (2025)
+- Identified XSS and CSRF issues and proposed remediation steps.
+- Verified fixes with manual test cases and brief retest report.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

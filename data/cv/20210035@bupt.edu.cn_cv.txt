@@ -1,0 +1,38 @@
+Felix Brandt
+TA Candidate | Student ID: ta20210035
+Email: 20210035@bupt.edu.cn | Phone: 13810001035
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Systems-minded developer with Rust open-source contributions and experience leading study groups on memory safety.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Computer Science (Expected Graduation: 2026)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- Rust
+- C++
+- Linux
+- Git
+- Cargo
+- GDB
+
+EXPERIENCE
+Contributor, Student CLI Utilities (Rust) (2024-2026)
+- Reviewed pull requests focusing on error handling and test coverage.
+- Added integration tests for file parsing edge cases.
+- Wrote contributor guide section on unsafe code policy.
+
+Organizer, Ownership and Borrowing Study Group (2025)
+- Led weekly sessions for students transitioning from C++ to Rust.
+- Prepared small exercises on lifetimes and smart pointers.
+- Summarized common compiler errors with fix strategies.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

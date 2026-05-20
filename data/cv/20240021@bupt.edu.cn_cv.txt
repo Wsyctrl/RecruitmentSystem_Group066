@@ -1,0 +1,32 @@
+Riya Das
+TA Candidate | Student ID: ta20240021
+Email: 20240021@bupt.edu.cn | Phone: 13810004021
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Database systems specialist with tutoring experience and department wiki tutorials on indexing.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Computer Science (Expected Graduation: 2028)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- SQL
+- PostgreSQL
+- ER Modeling
+- Indexing
+- pgAdmin
+
+EXPERIENCE
+Database Tutor, Final Project Support (2025-2026)
+- Helped seven classmates complete ER models and query optimization tasks.
+- Demoed query plans in pgAdmin during office hours.
+- Wrote B-tree vs hash index tutorial for department wiki.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

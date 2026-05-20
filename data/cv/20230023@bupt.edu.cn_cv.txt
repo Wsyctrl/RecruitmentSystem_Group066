@@ -1,0 +1,33 @@
+Tina Olsen
+TA Candidate | Student ID: ta20230023
+Email: 20230023@bupt.edu.cn | Phone: 13810003023
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Enthusiastic Python instructor with summer camp and campus workshop leadership experience.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Software Engineering (Expected Graduation: 2027)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- Python
+- Flask
+- Django
+- HTML
+- CSS
+- Public Speaking
+
+EXPERIENCE
+Summer Python Club Instructor (2023-2025)
+- Taught 45 total hours across two summer programs for high-school students.
+- Designed progressive exercises from variables to small web projects.
+- Ran weekly campus Python beginners workshop with 25 attendees.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

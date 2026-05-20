@@ -1,0 +1,38 @@
+Benjamin Wu
+TA Candidate | Student ID: ta20240031
+Email: 20240031@bupt.edu.cn | Phone: 13810004031
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Digital media student with festival documentary experience and strong video-editing workflow skills.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Digital Media Arts (Expected Graduation: 2027)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- Java
+- Kotlin
+- Android SDK
+- Git
+- JUnit
+- IntelliJ IDEA
+
+EXPERIENCE
+Peer Mentor, Weekend Mobile Hackathon (2025)
+- Guided first-year students through Android Studio setup and emulator configuration.
+- Explained activity lifecycle with simple diagram-based examples.
+- Prepared troubleshooting checklist for common Gradle sync failures.
+
+Project: Campus Event Check-In App (Kotlin) (2025-2026)
+- Implemented QR check-in flow with offline cache for poor network areas.
+- Integrated Firebase authentication and role-based views.
+- Wrote unit tests for validation logic and documented API usage for teammates.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

@@ -1,0 +1,32 @@
+Umar Khan
+TA Candidate | Student ID: ta20220024
+Email: 20220024@bupt.edu.cn | Phone: 13810002024
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Competitive programmer with extensive LeetCode practice and informal Java tutoring experience.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Computer Science (Expected Graduation: 2026)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- Java
+- Algorithms
+- LeetCode
+- Recursion
+- Big-O
+
+EXPERIENCE
+Algorithms Warm-Up Week Co-Leader (2025)
+- Prepared daily problem sets for incoming sophomores.
+- Explained recursion patterns with whiteboard traces.
+- Maintained online judge submission checklist for teams.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.

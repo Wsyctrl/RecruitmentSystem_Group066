@@ -1,0 +1,33 @@
+Quentin Reyes
+TA Candidate | Student ID: ta20220020
+Email: 20220020@bupt.edu.cn | Phone: 13810002020
+Location: BUPT International School, Beijing
+
+PROFESSIONAL SUMMARY
+Backend-focused engineer with Spring Boot capstone leadership and fintech internship experience.
+
+EDUCATION
+Beijing University of Posts and Telecommunications (BUPT), International School
+Bachelor in Software Engineering (Expected Graduation: 2026)
+Relevant Coursework: Core major modules aligned with TA application focus areas
+
+TECHNICAL SKILLS
+- Java
+- Spring Boot
+- REST
+- Git
+- JUnit
+- Agile
+
+EXPERIENCE
+Team Lead, Inventory Management Capstone (2024-2025)
+- Owned PR review standards and branch protection rules.
+- Built integration test pipeline and onboarding guide for juniors.
+- Presented at campus meetup on Spring idioms.
+
+AVAILABILITY
+- Available for weekday labs and coordinated office-hour blocks during term.
+- Can commit stable weekly hours with advance notice for exam weeks.
+
+REFERENCES
+Available upon request.
