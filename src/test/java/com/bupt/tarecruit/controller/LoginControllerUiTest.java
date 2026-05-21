@@ -1,7 +1,5 @@
 package com.bupt.tarecruit.controller;
 
-import com.bupt.tarecruit.entity.Mo;
-import com.bupt.tarecruit.entity.Ta;
 import com.bupt.tarecruit.util.PortalMode;
 import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
