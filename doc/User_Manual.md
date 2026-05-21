@@ -734,9 +734,20 @@ Sign in to the **MO/Admin Portal** with your **administrator account**. The dash
 
 ### 6.1 TA admin
 
-**Left:** TA accounts table — Name, Phone, Email, Ongoing Jobs, Applied, Hired, Status.
+The screen is split into a **left** TA accounts list and a **right** detail panel. Click a row on the left to select that TA — the selected row is highlighted **blue** — and the right side shows that person’s **Jobs Applied** and **Jobs Hired** tables (application and hire history).
 
-**Right:** TA Details — applied jobs table, hired jobs table (with Hired Time, Work Period).
+**Left — TA accounts table:** Name, Phone, Email, **Ongoing Jobs** (currently in-progress hired positions), **Applied** (how many jobs they have ever applied to, including ended jobs), **Hired** (how many jobs they have ever been hired for, including ended jobs), Status.
+
+- Rows with a **light red** background indicate the TA has **more than 2** ongoing hired jobs (the workload warning threshold is **2**). This flags that the person may already be under heavy commitment; take it into account when hiring. The same rule triggers a **Confirm** warning when an MO tries to **Hire** that TA and they already have **2 or more** overlapping hired jobs (see Section 5.2).
+
+**Right — TA Details**
+
+| Table | Content |
+|-------|---------|
+| **Jobs Applied** | Jobs this TA has applied to (non-withdrawn applications) |
+| **Jobs Hired** | Jobs where this TA was hired — **Hired Time**, **Work Period** |
+
+In **Jobs Hired**, rows for jobs that are **currently in progress** (today falls between the job’s start and end dates) are highlighted **blue** so you can spot active assignments at a glance.
 
 **Actions**
 
