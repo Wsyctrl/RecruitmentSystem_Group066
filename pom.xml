@@ -80,6 +80,18 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testfx</groupId>
+            <artifactId>testfx-core</artifactId>
+            <version>4.0.18</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testfx</groupId>
+            <artifactId>testfx-junit5</artifactId>
+            <version>4.0.18</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -98,6 +110,11 @@
                 <version>3.2.5</version>
                 <configuration>
                     <useSystemClassLoader>false</useSystemClassLoader>
+                    <systemPropertyVariables>
+                        <testfx.robot>glass</testfx.robot>
+                        <prism.order>sw</prism.order>
+                        <prism.text>t2k</prism.text>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>
