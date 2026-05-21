@@ -36,6 +36,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * TestFX UI tests for MoDashboardController MO and admin tabs.
+ */
 class MoDashboardControllerUiTest extends BaseUiTest {
 
     @Override
@@ -127,7 +130,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         }
         return null;
     }
-
+    /** Verifies mo login shows applicants tab. */
     @Test
     @DisplayName("MO login lands on Applicants tab and renders welcome label")
     void moLoginShowsApplicantsTab() {
@@ -137,7 +140,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         TabPane tabs = fx("#tabPane");
         assertEquals("Applicants", tabs.getSelectionModel().getSelectedItem().getText());
     }
-
+    /** Verifies admin tabs only for admin. */
     @Test
     @DisplayName("Admin tabs only appear after admin login")
     void adminTabsOnlyForAdmin() {
@@ -151,7 +154,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         boolean hasTaAdmin = tabs2.getTabs().stream().anyMatch(t -> "TA admin".equals(t.getText()));
         assertTrue(hasTaAdmin, "Admin should see TA admin tab");
     }
-
+    /** Verifies profile save updates mo. */
     @Test
     @DisplayName("Profile tab shows Bob's data; saving persists changes")
     void profileSaveUpdatesMo() {
@@ -171,7 +174,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertEquals("13888888888", stored.getPhone());
         assertEquals("Math, Physics", stored.getResponsibleModules());
     }
-
+    /** Verifies my jobs tab lists jobs. */
     @Test
     @DisplayName("My jobs tab lists Bob's jobs")
     void myJobsTabListsJobs() {
@@ -180,7 +183,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         TableView<Job> table = fx("#myJobTable");
         assertEquals(1, table.getItems().size());
     }
-
+    /** Verifies my jobs search filter. */
     @Test
     @DisplayName("Search filter narrows the My jobs list")
     void myJobsSearchFilter() {
@@ -196,7 +199,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertEquals(1, table.getItems().size());
         assertEquals("Beta Job", table.getItems().get(0).getJobName());
     }
-
+    /** Verifies post job requires fields. */
     @Test
     @DisplayName("Post / edit job: missing required fields trigger error")
     void postJobRequiresFields() {
@@ -213,7 +216,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         // No new job was saved (still 1 from seed).
         assertEquals(1, services.jobService().findJobsByMo("mo.bob@bupt.edu.cn").size());
     }
-
+    /** Verifies post job saves when valid. */
     @Test
     @DisplayName("Post / edit job: saving valid form creates a new job")
     void postJobSavesWhenValid() {
@@ -233,7 +236,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         List<Job> jobs = services.jobService().findJobsByMo("mo.bob@bupt.edu.cn");
         assertTrue(jobs.stream().anyMatch(j -> "Brand New Job".equals(j.getJobName())));
     }
-
+    /** Verifies clear resets form. */
     @Test
     @DisplayName("Clear button resets form to 'New job'")
     void clearResetsForm() {
@@ -247,7 +250,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertEquals("", ((TextField) fx("#jobNameField")).getText());
         assertEquals("New job", ((Label) fx("#formJobIdLabel")).getText());
     }
-
+    /** Verifies edit button populates form. */
     @Test
     @DisplayName("Edit button populates the form with selected job's data")
     void editButtonPopulatesForm() {
@@ -265,7 +268,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertEquals("Initial Job", ((TextField) fx("#jobNameField")).getText());
         assertEquals("InitialMod", ((TextField) fx("#moduleField")).getText());
     }
-
+    /** Verifies close job logs action. */
     @Test
     @DisplayName("Closing a job updates DAO state and JobLog")
     void closeJobLogsAction() {
@@ -283,7 +286,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertFalse(job.isOpen());
         assertFalse(services.jobLogDao().findAll().isEmpty(), "Close action should produce a job log");
     }
-
+    /** Verifies no applicants state. */
     @Test
     @DisplayName("Job selector cycles to the open job and 'No applicants for this job yet.' shows when empty")
     void noApplicantsState() {
@@ -298,7 +301,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertTrue(empty.isVisible());
         assertEquals("No applicants for this job yet.", empty.getText());
     }
-
+    /** Verifies hire applicant success. */
     @Test
     @DisplayName("Hire button hires selected applicant and refreshes UI")
     void hireApplicantSuccess() {
@@ -326,7 +329,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
                 .count();
         assertEquals(1, hired);
     }
-
+    /** Verifies reject applicant success. */
     @Test
     @DisplayName("Reject button rejects selected applicant")
     void rejectApplicantSuccess() {
@@ -347,7 +350,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
                 .count();
         assertEquals(1, rejected);
     }
-
+    /** Verifies logout navigates to login. */
     @Test
     @DisplayName("Logout returns to login view")
     void logoutNavigatesToLogin() {
@@ -356,7 +359,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertNotNull(fx("#registerLink"));
     }
-
+    /** Verifies admin ta toggle status. */
     @Test
     @DisplayName("Admin: TA admin tab populates and toggles status")
     void adminTaToggleStatus() {
@@ -381,7 +384,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         Ta toggled = services.profileService().findTa("ta.daniel@bupt.edu.cn").orElseThrow();
         assertTrue(toggled.isDisabled(), "Daniel should be disabled after toggling status");
     }
-
+    /** Verifies admin mo reset password. */
     @Test
     @DisplayName("Admin: MO admin tab populates and resets MO password")
     void adminMoResetPassword() {
@@ -410,7 +413,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertFalse("pass1234".equals(bob.getPassword()),
                 "Reset password should change Bob's password from the seeded one");
     }
-
+    /** Verifies admin all jobs close action. */
     @Test
     @DisplayName("Admin: All Jobs tab lists every job and supports admin close")
     void adminAllJobsCloseAction() {
@@ -430,7 +433,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertFalse(services.jobLogDao().findAll().isEmpty(),
                 "Admin closing a job should add a job log entry");
     }
-
+    /** Verifies admin job management shows logs. */
     @Test
     @DisplayName("Admin: Job management tab refreshes job logs after closing a job")
     void adminJobManagementShowsLogs() {
@@ -452,7 +455,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertNotNull(jobLogTable);
         assertFalse(jobLogTable.getItems().isEmpty());
     }
-
+    /** Verifies admin account management shows logs. */
     @Test
     @DisplayName("Admin: Account management tab lists account logs")
     void adminAccountManagementShowsLogs() {
@@ -464,7 +467,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertNotNull(accountLogTable);
         assertFalse(accountLogTable.getItems().isEmpty());
     }
-
+    /** Verifies admin insights loads once. */
     @Test
     @DisplayName("Admin: Insights tab loads metrics on first visit")
     void adminInsightsLoadsOnce() {

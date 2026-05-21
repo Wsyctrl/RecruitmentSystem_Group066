@@ -8,18 +8,41 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * CSV-based implementation of the {@link TaDao} interface.
+ * Responsible for reading and writing teaching assistant accounts
+ * from and to the TA CSV file.
+ */
 public class CsvTaDao implements TaDao {
 
+    /**
+     * Header row used for the TA CSV file.
+     */
     private static final String[] HEADER = {
             "email", "password", "full_name", "phone", "major", "skills", "experience", "self_evaluation", "is_disabled", "cv_path", "ai_summary"
     };
+
+    /**
+     * Path of the CSV file storing TA records.
+     */
     private final Path filePath;
 
+    /**
+     * Creates a CSV-based TA DAO and ensures that
+     * the target file exists with the required header row.
+     *
+     * @param filePath path of the TA CSV file
+     */
     public CsvTaDao(Path filePath) {
         this.filePath = filePath;
         CsvUtil.ensureFileWithHeader(filePath, HEADER);
     }
 
+    /**
+     * Returns all teaching assistant records stored in the CSV file.
+     *
+     * @return list of all TA accounts
+     */
     @Override
     public List<Ta> findAll() {
         List<String[]> rows = CsvUtil.readDataRows(filePath);
@@ -30,11 +53,22 @@ public class CsvTaDao implements TaDao {
         return result;
     }
 
+    /**
+     * Finds a teaching assistant by email (identity).
+     *
+     * @param taId teaching assistant email
+     * @return matching TA, or empty when not found
+     */
     @Override
     public Optional<Ta> findById(String taId) {
         return findAll().stream().filter(ta -> ta.getEmail().equalsIgnoreCase(taId)).findFirst();
     }
 
+    /**
+     * Appends a new teaching assistant record to the CSV file.
+     *
+     * @param ta TA entity to save
+     */
     @Override
     public void save(Ta ta) {
         List<String[]> rows = CsvUtil.readDataRows(filePath);
@@ -42,6 +76,11 @@ public class CsvTaDao implements TaDao {
         CsvUtil.writeAll(filePath, HEADER, rows);
     }
 
+    /**
+     * Updates an existing teaching assistant record in the CSV file by email.
+     *
+     * @param ta TA entity with updated fields
+     */
     @Override
     public void update(Ta ta) {
         List<String[]> rows = CsvUtil.readDataRows(filePath);
@@ -54,6 +93,13 @@ public class CsvTaDao implements TaDao {
         CsvUtil.writeAll(filePath, HEADER, rows);
     }
 
+    /**
+     * Converts a CSV row into a {@link Ta} entity.
+     * Supports current and legacy column layouts (email-first and legacy {@code ta_id} schemas).
+     *
+     * @param row CSV row data
+     * @return mapped TA entity
+     */
     private Ta mapRow(String[] row) {
         Ta ta = new Ta();
         ta.setEmail(rowAt(row, 0));
@@ -97,6 +143,12 @@ public class CsvTaDao implements TaDao {
         return ta;
     }
 
+    /**
+     * Converts a {@link Ta} entity into a CSV row.
+     *
+     * @param ta TA entity
+     * @return CSV row representation of the entity
+     */
     private String[] mapToRow(Ta ta) {
         return new String[]{
                 emptyIfNull(ta.getEmail()),
@@ -113,10 +165,24 @@ public class CsvTaDao implements TaDao {
         };
     }
 
+    /**
+     * Safely returns the value at the specified index from a CSV row.
+     * Returns an empty string if the index is out of bounds.
+     *
+     * @param row   CSV row data
+     * @param index target column index
+     * @return row value at the given index, or an empty string when unavailable
+     */
     private String rowAt(String[] row, int index) {
         return row.length > index ? row[index] : "";
     }
 
+    /**
+     * Returns an empty string when the value is null.
+     *
+     * @param value text value
+     * @return original value or empty string
+     */
     private String emptyIfNull(String value) {
         return value == null ? "" : value;
     }

@@ -28,36 +28,60 @@ public class InsightsDialogController {
     private ServiceRegistry services;
     private Stage dialogStage;
 
-    // Module stats data
+    /** Module application counts for the textual bar chart. */
     private List<ModuleStat> moduleStats = new ArrayList<>();
 
+    /** All-time total job count. */
     @FXML
     private Label totalJobsLabel;
+
+    /** All-time open job count. */
     @FXML
     private Label openJobsLabel;
+
+    /** All-time application count. */
     @FXML
     private Label applicationsLabel;
+
+    /** All-time hired count. */
     @FXML
     private Label hiredLabel;
+
+    /** All-time hire rate percentage. */
     @FXML
     private Label hireRateLabel;
+
+    /** Bar chart of pending/hired/rejected/withdrawn counts (all-time). */
     @FXML
     private BarChart<String, Number> hiringStatusChart;
+
+    /** Container for AI-generated 30-day insight cards. */
     @FXML
     private VBox insightsContentBox;
+
+    /** Scroll wrapper for the insights layout. */
     @FXML
     private ScrollPane scrollPane;
+
+    /** Per-module application count rows with ASCII bars. */
     @FXML
     private VBox moduleStatsBox;
 
+    /**
+     * @param services application service registry
+     */
     public void setServices(ServiceRegistry services) {
         this.services = services;
     }
 
+    /**
+     * @param stage owning stage when shown as a dialog; may be null when embedded in a tab
+     */
     public void setDialogStage(Stage stage) {
         this.dialogStage = stage;
     }
 
+    /** Prepares chart axes and legend defaults. */
     @FXML
     private void initialize() {
         // Initialize charts
@@ -77,6 +101,9 @@ public class InsightsDialogController {
         hiringStatusChart.setCategoryGap(10);
     }
 
+    /**
+     * Loads all-time metrics, charts, module stats, and kicks off async 30-day AI insights.
+     */
     public void loadData() {
         try {
             // Load data from services
@@ -290,11 +317,13 @@ public class InsightsDialogController {
         insightsContentBox.getChildren().add(card);
     }
 
+    /** Reloads metrics and regenerates AI insights. */
     @FXML
     private void handleRefresh() {
         loadData();
     }
 
+    /** Closes the dialog stage when present; no-op when embedded as a tab. */
     @FXML
     private void handleClose() {
         if (dialogStage != null) {
@@ -303,12 +332,14 @@ public class InsightsDialogController {
         // No-op when the view is embedded as a tab.
     }
 
+    /** Sorts module stats alphabetically by module name. */
     @FXML
     private void handleSortModulesByName() {
         moduleStats.sort(Comparator.comparing(ModuleStat::getModuleName));
         renderModuleStats();
     }
 
+    /** Sorts module stats by application count descending. */
     @FXML
     private void handleSortModulesByCount() {
         moduleStats.sort(Comparator.comparingLong(ModuleStat::getCount).reversed());

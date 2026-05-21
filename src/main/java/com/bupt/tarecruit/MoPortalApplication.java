@@ -9,8 +9,18 @@ import javafx.stage.Stage;
 import java.nio.file.Path;
 import java.util.Locale;
 
+/**
+ * JavaFX entry point for the Module Organizer (MO) and admin portal.
+ * Initializes CSV-backed services, forces English locale, and opens the login screen.
+ */
 public class MoPortalApplication extends Application {
 
+    /**
+     * Configures the primary stage, wires {@link ServiceRegistry} and {@link SceneNavigator}
+     * in {@link PortalMode#MO_PORTAL}, and shows the login view.
+     *
+     * @param stage primary window provided by JavaFX
+     */
     @Override
     public void start(Stage stage) {
         Path dataDir = Path.of("data");
@@ -25,6 +35,11 @@ public class MoPortalApplication extends Application {
         stage.show();
     }
 
+    /**
+     * Sets default locale categories to English and launches the JavaFX application.
+     *
+     * @param args command-line arguments forwarded to {@link Application#launch(String...)}
+     */
     public static void main(String[] args) {
         Locale english = Locale.ENGLISH;
         Locale.setDefault(english);
@@ -33,7 +48,13 @@ public class MoPortalApplication extends Application {
         launch(args);
     }
 
+    /**
+     * IDE-friendly launcher that delegates to {@link #main(String[])} for packaged MO builds.
+     */
     public static class Launcher {
+        /**
+         * @param args command-line arguments
+         */
         public static void main(String[] args) {
             MoPortalApplication.main(args);
         }

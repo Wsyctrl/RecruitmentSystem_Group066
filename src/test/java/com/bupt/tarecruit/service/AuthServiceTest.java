@@ -21,17 +21,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * 1) role resolution (TA/MO/ADMIN),
  * 2) disabled-account rejection,
  * 3) duplicate registration checks,
- * 4) @bupt.edu.cn email validation during registration.
- * 管理员账号登录是否识别为 ADMIN
- * 禁用 TA 账号登录是否被拒绝
- * 重复注册是否被拒绝
- * 非法邮箱注册是否被拒绝
+ * 4) {@code @bupt.edu.cn} email validation during registration.
  */
 class AuthServiceTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies login admin mo should resolve to admin role. */
     @Test
     void loginAdminMoShouldResolveToAdminRole() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -48,7 +44,7 @@ class AuthServiceTest {
         assertTrue(result.success());
         assertEquals(Role.ADMIN, result.data().role());
     }
-
+    /** Verifies login disabled ta should fail. */
     @Test
     void loginDisabledTaShouldFail() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -65,7 +61,7 @@ class AuthServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("disabled"));
     }
-
+    /** Verifies register duplicate user should fail. */
     @Test
     void registerDuplicateUserShouldFail() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -81,7 +77,7 @@ class AuthServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("exists"));
     }
-
+    /** Verifies register invalid email should fail. */
     @Test
     void registerInvalidEmailShouldFail() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -93,7 +89,7 @@ class AuthServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("@bupt.edu.cn"));
     }
-
+    /** Verifies login ta success should return ta session. */
     @Test
     void loginTaSuccessShouldReturnTaSession() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -110,7 +106,7 @@ class AuthServiceTest {
         assertEquals(Role.TA, result.data().role());
         assertTrue(result.data().taOptional().isPresent());
     }
-
+    /** Verifies login mo success should return mo session. */
     @Test
     void loginMoSuccessShouldReturnMoSession() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -127,7 +123,7 @@ class AuthServiceTest {
         assertEquals(Role.MO, result.data().role());
         assertTrue(result.data().moOptional().isPresent());
     }
-
+    /** Verifies login wrong password should fail. */
     @Test
     void loginWrongPasswordShouldFail() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -143,7 +139,7 @@ class AuthServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("password"));
     }
-
+    /** Verifies login unknown user should fail. */
     @Test
     void loginUnknownUserShouldFail() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -155,7 +151,7 @@ class AuthServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("unknown"));
     }
-
+    /** Verifies login blank fields should throw. */
     @Test
     void loginBlankFieldsShouldThrow() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -165,7 +161,7 @@ class AuthServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.login("", "Pass@123"));
         assertThrows(IllegalArgumentException.class, () -> service.login("ta@bupt.edu.cn", "  "));
     }
-
+    /** Verifies login invalid email format should fail. */
     @Test
     void loginInvalidEmailFormatShouldFail() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -177,7 +173,7 @@ class AuthServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().contains("@bupt.edu.cn"));
     }
-
+    /** Verifies register ta success should persist. */
     @Test
     void registerTaSuccessShouldPersist() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -190,7 +186,7 @@ class AuthServiceTest {
         assertTrue(taDao.findById("newta@bupt.edu.cn").isPresent());
         assertFalse(taDao.findById("newta@bupt.edu.cn").orElseThrow().isDisabled());
     }
-
+    /** Verifies register password mismatch should fail. */
     @Test
     void registerPasswordMismatchShouldFail() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -202,7 +198,7 @@ class AuthServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("match"));
     }
-
+    /** Verifies register admin role should throw. */
     @Test
     void registerAdminRoleShouldThrow() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
@@ -212,7 +208,7 @@ class AuthServiceTest {
         assertThrows(IllegalStateException.class,
                 () -> service.register(Role.ADMIN, "admin2@bupt.edu.cn", "Pass@123", "Pass@123"));
     }
-
+    /** Verifies login disabled mo should fail. */
     @Test
     void loginDisabledMoShouldFail() {
         CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));

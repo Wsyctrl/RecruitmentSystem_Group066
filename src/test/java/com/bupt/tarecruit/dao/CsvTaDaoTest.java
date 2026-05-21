@@ -8,11 +8,14 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for CsvTaDao CSV persistence of TA accounts.
+ */
 class CsvTaDaoTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies save and update ta record. */
     @Test
     void saveAndUpdateTaRecord() {
         Path file = tempDir.resolve("TA.csv");
@@ -32,13 +35,13 @@ class CsvTaDaoTest {
         Ta updated = dao.findById("test@bupt.edu.cn").orElseThrow();
         assertEquals("13800001111", updated.getPhone());
     }
-
+    /** Verifies find by id missing returns empty. */
     @Test
     void findByIdMissingReturnsEmpty() {
         CsvTaDao dao = new CsvTaDao(tempDir.resolve("TA.csv"));
         assertTrue(dao.findById("missing@bupt.edu.cn").isEmpty());
     }
-
+    /** Verifies find all returns all saved records. */
     @Test
     void findAllReturnsAllSavedRecords() {
         CsvTaDao dao = new CsvTaDao(tempDir.resolve("TA.csv"));

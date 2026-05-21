@@ -19,6 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * TestFX UI tests for ChangePasswordDialogController.
+ */
 class ChangePasswordDialogControllerUiTest extends BaseUiTest {
 
     @Override
@@ -62,7 +65,7 @@ class ChangePasswordDialogControllerUiTest extends BaseUiTest {
         }
         return null;
     }
-
+    /** Verifies initial render. */
     @Test
     @DisplayName("Initial render shows three password fields and empty status label")
     void initialRender() {
@@ -75,7 +78,7 @@ class ChangePasswordDialogControllerUiTest extends BaseUiTest {
         assertEquals("", status.getText());
         runOnFx(l.stage::close);
     }
-
+    /** Verifies blank fields show error. */
     @Test
     @DisplayName("Empty fields produce a 'Please fill in all fields' status and no change")
     void blankFieldsShowError() {
@@ -88,7 +91,7 @@ class ChangePasswordDialogControllerUiTest extends BaseUiTest {
         assertTrue(l.stage.isShowing(), "Dialog stays open on validation failure");
         runOnFx(l.stage::close);
     }
-
+    /** Verifies wrong current password. */
     @Test
     @DisplayName("Wrong current password shows error and stays open")
     void wrongCurrentPassword() {
@@ -108,7 +111,7 @@ class ChangePasswordDialogControllerUiTest extends BaseUiTest {
                 services.profileService().findTa("ta.alice@bupt.edu.cn").orElseThrow().getPassword());
         runOnFx(l.stage::close);
     }
-
+    /** Verifies mismatched new passwords. */
     @Test
     @DisplayName("Mismatched new passwords are rejected")
     void mismatchedNewPasswords() {
@@ -125,7 +128,7 @@ class ChangePasswordDialogControllerUiTest extends BaseUiTest {
         assertFalse(l.controller.isPasswordChanged());
         runOnFx(l.stage::close);
     }
-
+    /** Verifies successful ta change. */
     @Test
     @DisplayName("Valid change updates TA password and closes the dialog")
     void successfulTaChange() {
@@ -142,7 +145,7 @@ class ChangePasswordDialogControllerUiTest extends BaseUiTest {
         assertEquals("freshSecret",
                 services.profileService().findTa("ta.alice@bupt.edu.cn").orElseThrow().getPassword());
     }
-
+    /** Verifies successful mo change. */
     @Test
     @DisplayName("Valid change updates MO password and closes the dialog")
     void successfulMoChange() {
@@ -159,7 +162,7 @@ class ChangePasswordDialogControllerUiTest extends BaseUiTest {
         assertEquals("newmopass",
                 services.profileService().findMo("mo.bob@bupt.edu.cn").orElseThrow().getPassword());
     }
-
+    /** Verifies cancel closes dialog. */
     @Test
     @DisplayName("Cancel button closes dialog without changing password")
     void cancelClosesDialog() {

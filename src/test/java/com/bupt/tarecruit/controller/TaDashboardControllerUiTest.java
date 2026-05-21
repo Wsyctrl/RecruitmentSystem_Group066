@@ -25,6 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * TestFX UI tests for TaDashboardController guest and signed-in flows.
+ */
 class TaDashboardControllerUiTest extends BaseUiTest {
 
     @Override
@@ -75,7 +78,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         runOnFx(() -> navigator.showTaGuestDashboard());
         WaitForAsyncUtils.waitForFxEvents();
     }
-
+    /** Verifies guest mode basics. */
     @Test
     @DisplayName("Guest mode populates welcome label and switches to Browse jobs tab")
     void guestModeBasics() {
@@ -87,7 +90,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         TabPane tabs = fx("#tabPane");
         assertEquals("Browse jobs", tabs.getSelectionModel().getSelectedItem().getText());
     }
-
+    /** Verifies guest mode shows open jobs only. */
     @Test
     @DisplayName("Guest mode shows open jobs only")
     void guestModeShowsOpenJobsOnly() {
@@ -99,7 +102,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         // in the past — still open by status. So the open-jobs filter shows all 3.
         assertEquals(3, table.getItems().size());
     }
-
+    /** Verifies login shows ta dashboard. */
     @Test
     @DisplayName("Authenticated TA sees welcome label with full name and lands on My applications")
     void loginShowsTaDashboard() {
@@ -111,7 +114,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         TabPane tabs = fx("#tabPane");
         assertEquals("My applications", tabs.getSelectionModel().getSelectedItem().getText());
     }
-
+    /** Verifies profile tab populates from session. */
     @Test
     @DisplayName("Profile tab loads Alice's profile fields after login")
     void profileTabPopulatesFromSession() {
@@ -141,7 +144,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         assertTrue(delete.isDisable());
         assertTrue(aiFill.isDisable());
     }
-
+    /** Verifies save profile writes changes. */
     @Test
     @DisplayName("Save profile persists field changes")
     void saveProfileWritesChanges() {
@@ -172,7 +175,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         assertEquals("Math", stored.getMajor());
         assertEquals("Python", stored.getSkills());
     }
-
+    /** Verifies browse jobs shows details. */
     @Test
     @DisplayName("Browse Jobs tab loads open job list and shows details for the first job")
     void browseJobsShowsDetails() {
@@ -200,7 +203,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         assertNotNull(apply);
         assertFalse(apply.isDisable(), "Apply enabled for open un-applied job");
     }
-
+    /** Verifies search filters jobs. */
     @Test
     @DisplayName("Search filter limits jobs to keyword match after Refresh button is pressed")
     void searchFiltersJobs() {
@@ -224,7 +227,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         assertEquals(1, table.getItems().size());
         assertEquals("Networking TA", table.getItems().get(0).getJobName());
     }
-
+    /** Verifies apply for a job. */
     @Test
     @DisplayName("Apply button submits an application that appears under My applications")
     void applyForAJob() {
@@ -254,7 +257,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         assertTrue(apply.isDisable());
         assertEquals("Already Applied", apply.getText());
     }
-
+    /** Verifies withdraw application. */
     @Test
     @DisplayName("Withdrawing a pending application reverts the apply button")
     void withdrawApplication() {
@@ -301,7 +304,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         assertEquals(0,
                 services.applicationService().findActiveApplicationsForTa("ta.alice@bupt.edu.cn").size());
     }
-
+    /** Verifies guest apply redirects to login. */
     @Test
     @DisplayName("Guest mode redirects to login when clicking apply with a selected job")
     void guestApplyRedirectsToLogin() {
@@ -330,7 +333,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         assertEquals("Browse jobs as guest", welcome.getText(),
                 "TA portal: logging out returns to guest browse dashboard");
     }
-
+    /** Verifies detail panel empty state. */
     @Test
     @DisplayName("Guest selecting empty job table clears detail panel")
     void detailPanelEmptyState() {

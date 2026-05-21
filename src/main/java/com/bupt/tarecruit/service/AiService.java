@@ -20,30 +20,100 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+/**
+ * Client for Qwen (DashScope) chat-completions used across recruiting AI features.
+ * <p>
+ * All network calls use the DashScope OpenAI-compatible chat completions endpoint with model
+ * {@code qwen-plus}, low temperature (0.2), and role-specific system prompts. JSON-oriented
+ * methods expect the model to return parseable JSON; free-text methods return concise English.
+ * </p>
+ * <p>
+ * API key resolution (first non-blank wins): environment variable {@code QWEN_API_KEY},
+ * JVM property {@code qwen.api.key}, then classpath resource {@code ai-config.properties}
+ * property {@code qwen.api.key}. If none are set, {@link #readApiKey()} throws
+ * {@link IllegalStateException}.
+ * </p>
+ * <p>
+ * HTTP failures (status &ge; 400 or empty choices) surface as {@link IOException}.
+ * Malformed JSON from the model may throw from {@link org.json.JSONObject} parsing.
+ * {@link #fallbackApplicantSummary} provides a local, non-API fallback when applicant
+ * summary generation fails or is unavailable.
+ * </p>
+ */
 public class AiService {
 
+    /** DashScope OpenAI-compatible chat completions URL. */
     private static final String API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+    /** Model id sent in every completion request. */
     private static final String MODEL = "qwen-plus";
 
+    /** Shared client with a 10-second connect timeout; per-request timeout is 20 seconds. */
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
+    /**
+     * AI-ranked open job for a TA.
+     *
+     * @param jobId  job identifier returned by the model (matched case-insensitively in callers)
+     * @param score  match score 0–100 after {@link #clampScore(int)}
+     * @param reason short English justification
+     */
     public record JobRecommendation(String jobId, int score, String reason) {
     }
 
+    /**
+     * AI-ranked applicant for a job.
+     *
+     * @param taId   teaching assistant identifier
+     * @param score  match score 0–100 after {@link #clampScore(int)}
+     * @param reason short English justification
+     */
     public record ApplicantRecommendation(String taId, int score, String reason) {
     }
 
+    /**
+     * Structured profile fields extracted from CV text.
+     *
+     * @param fullName        candidate name
+     * @param phone           contact phone
+     * @param major           academic major
+     * @param skills          skills text
+     * @param experience      experience text
+     * @param selfEvaluation  self-evaluation text
+     */
     public record ResumeDraft(String fullName, String phone, String major, String skills, String experience,
                               String selfEvaluation) {
     }
 
+    /**
+     * Recommends up to three jobs for a TA using profile and optional preference only (no CV attachment).
+     *
+     * @param ta         TA profile sent to the model
+     * @param jobs       eligible open jobs
+     * @param preference free-text TA preference (higher weight in the prompt)
+     * @return ranked recommendations, possibly fewer than three if the model returns less
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     * @see #recommendJobsForTa(Ta, List, String, String)
+     */
     public List<JobRecommendation> recommendJobsForTa(Ta ta, List<Job> jobs, String preference)
             throws IOException, InterruptedException {
         return recommendJobsForTa(ta, jobs, preference, "");
     }
 
+    /**
+     * Recommends up to three jobs for a TA using online profile, optional uploaded resume text,
+     * and a preference string that takes priority in scoring.
+     *
+     * @param ta         TA profile
+     * @param jobs       eligible open jobs (callers typically exclude applied/disabled-MO jobs)
+     * @param preference free-text preference
+     * @param cvText     plain-text resume body, or blank if none
+     * @return parsed recommendations; invalid array elements are skipped
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     */
     public List<JobRecommendation> recommendJobsForTa(Ta ta, List<Job> jobs, String preference, String cvText)
             throws IOException, InterruptedException {
         StringBuilder jobsText = new StringBuilder();
@@ -86,6 +156,15 @@ public class AiService {
         return result;
     }
 
+    /**
+     * Extracts resume fields from CV text without inventing facts; missing fields become empty strings.
+     *
+     * @param ta     existing TA profile included as context in the prompt
+     * @param cvText full CV plain text
+     * @return structured draft for form pre-fill (not persisted by this class)
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     */
     public ResumeDraft draftResumeFromCv(Ta ta, String cvText) throws IOException, InterruptedException {
         String userPrompt = """
                 You are a resume extraction assistant. Extract data from CV text, preserve original wording when possible, do not fabricate facts.
@@ -110,6 +189,15 @@ public class AiService {
         );
     }
 
+    /**
+     * Produces concise English resume optimization advice for a specific job (bullet sections, not JSON).
+     *
+     * @param ta  applicant profile
+     * @param job target job
+     * @return free-text advice from the model
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     */
     public String suggestResumeOptimization(Ta ta, Job job) throws IOException, InterruptedException {
         String userPrompt = """
                 Provide resume optimization advice for the target job.
@@ -131,12 +219,33 @@ public class AiService {
         return chatText(userPrompt);
     }
 
+    /**
+     * Ranks applicants for a job with default cap of eight results and no MO preference.
+     *
+     * @param job         job being staffed
+     * @param applicants  applicant rows to consider
+     * @return up to eight recommendations sorted by the model
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     * @see #recommendApplicantsForJob(Job, List, int, String)
+     */
     public List<ApplicantRecommendation> recommendApplicantsForJob(Job job, List<ApplicantDisplay> applicants)
             throws IOException, InterruptedException {
         // Backwards-compatible default: no extra preference, up to 8 results.
         return recommendApplicantsForJob(job, applicants, 8, "");
     }
 
+    /**
+     * Ranks applicants for a job with a configurable result cap and optional MO preference text.
+     *
+     * @param job         job being staffed
+     * @param applicants  applicant pool (callers usually pass pending-only)
+     * @param maxResults  desired maximum items; clamped to {@code [1, applicants.size()]}
+     * @param preference  MO hiring preference; blank is ignored in the prompt
+     * @return parsed recommendations
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     */
     public List<ApplicantRecommendation> recommendApplicantsForJob(
             Job job, List<ApplicantDisplay> applicants, int maxResults, String preference)
             throws IOException, InterruptedException {
@@ -176,6 +285,18 @@ public class AiService {
         return result;
     }
 
+    /**
+     * Finds pending candidates most similar to a benchmark hire for the same job.
+     * The benchmark TA must not appear in the returned list.
+     *
+     * @param job          job context
+     * @param benchmark    recently hired or reference TA
+     * @param applicants   pending candidates (benchmark excluded by callers)
+     * @param maxResults   cap clamped to {@code [1, applicants.size()]}
+     * @return similarity-ranked recommendations
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     */
     public List<ApplicantRecommendation> findSimilarApplicants(
             Job job, Ta benchmark, List<ApplicantDisplay> applicants, int maxResults)
             throws IOException, InterruptedException {
@@ -214,6 +335,14 @@ public class AiService {
         return result;
     }
 
+    /**
+     * Generates 3–5 short English keyword phrases (1–3 words each) for quick job review.
+     *
+     * @param job job whose title, module, requirements, and notes feed the prompt
+     * @return non-empty keyword strings from a JSON string array response
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     */
     public List<String> generateJobKeywords(Job job) throws IOException, InterruptedException {
         String userPrompt = """
                 Generate 3 to 5 short English job-requirement keywords for quick hiring review.
@@ -237,6 +366,16 @@ public class AiService {
         return result;
     }
 
+    /**
+     * Builds exactly three English insights from last-30-day application aggregates only.
+     * Counts are computed locally; the model must not infer data outside that window.
+     *
+     * @param applications all application records used to derive 30-day metrics
+     * @param openJobs     current count of open jobs
+     * @return free-text insights (typically numbered paragraphs)
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     */
     public String generate30DayInsights(List<ApplicationRecord> applications, int openJobs) throws IOException, InterruptedException {
         LocalDateTime boundary = LocalDateTime.now().minusDays(30);
         long recentApply = applications.stream()
@@ -273,10 +412,29 @@ public class AiService {
         return chatText(userPrompt);
     }
 
+    /**
+     * Generates a one-phrase English strength summary from the TA online profile only.
+     *
+     * @param ta applicant
+     * @return ultra-concise phrase, or {@code Profile incomplete.} when no source material exists
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     * @see #fallbackApplicantSummary(Ta, String)
+     */
     public String generateApplicantSummary(Ta ta) throws IOException, InterruptedException {
         return generateApplicantSummary(ta, "");
     }
 
+    /**
+     * Generates a one-phrase English strength summary from profile plus optional CV text.
+     * Returns {@code Profile incomplete.} without calling the API when all sources are empty.
+     *
+     * @param ta     applicant
+     * @param cvText attached resume plain text, or blank
+     * @return phrase trimmed from model output, at most ~12 words by prompt rules
+     * @throws IOException          API or transport failure
+     * @throws InterruptedException if the HTTP call is interrupted
+     */
     public String generateApplicantSummary(Ta ta, String cvText) throws IOException, InterruptedException {
         if (!hasApplicantSourceMaterial(ta, cvText)) {
             return incompleteProfileSummary();
@@ -310,6 +468,15 @@ public class AiService {
         return chatText(userPrompt).trim();
     }
 
+    /**
+     * Local fallback when {@link #generateApplicantSummary(Ta, String)} is unavailable or fails.
+     * Prefers skills, then experience, self-evaluation, major, then CV snippet; otherwise
+     * {@code Profile incomplete.}
+     *
+     * @param ta     applicant
+     * @param cvText optional resume text
+     * @return truncated phrase suitable for card display
+     */
     public static String fallbackApplicantSummary(Ta ta, String cvText) {
         if (!hasApplicantSourceMaterial(ta, cvText)) {
             return incompleteProfileSummary();
@@ -337,6 +504,7 @@ public class AiService {
         return incompleteProfileSummary();
     }
 
+    /** True when any profile field or CV text has non-blank content. */
     private static boolean hasApplicantSourceMaterial(Ta ta, String cvText) {
         return !trimOrEmpty(ta.getMajor()).isBlank()
                 || !trimOrEmpty(ta.getSkills()).isBlank()
@@ -345,14 +513,17 @@ public class AiService {
                 || !trimOrEmpty(cvText).isBlank();
     }
 
+    /** Null-safe trim; null becomes empty string. */
     private static String trimOrEmpty(String value) {
         return value == null ? "" : value.trim();
     }
 
+    /** Fixed message when applicant data is too sparse for summarization. */
     private static String incompleteProfileSummary() {
         return "Profile incomplete.";
     }
 
+    /** Truncates to {@code maxWords} words, appending {@code ...} when shortened. */
     private static String truncateWords(String text, int maxWords) {
         String[] words = text.trim().split("\\s+");
         if (words.length <= maxWords) {
@@ -367,6 +538,7 @@ public class AiService {
         return sb.toString();
     }
 
+    /** Serializes applicants into a bullet list for MO ranking prompts. */
     private String applicantListText(List<ApplicantDisplay> applicants) {
         StringBuilder text = new StringBuilder();
         for (ApplicantDisplay display : applicants) {
@@ -383,6 +555,7 @@ public class AiService {
         return text.toString();
     }
 
+    /** Formats a TA record as labeled lines for prompts. */
     private String taProfileText(Ta ta) {
         return """
                 taId: %s
@@ -401,6 +574,7 @@ public class AiService {
         );
     }
 
+    /** Returns CV body or {@code (none uploaded)} when blank. */
     private String attachedResumeText(String cvText) {
         if (cvText == null || cvText.isBlank()) {
             return "(none uploaded)";
@@ -408,15 +582,25 @@ public class AiService {
         return safe(cvText);
     }
 
+    /**
+     * Calls the API with JSON-only system instructions and strips markdown code fences from the reply.
+     */
     private String chatJson(String userPrompt) throws IOException, InterruptedException {
         String content = chat(userPrompt, true);
         return content.replace("```json", "").replace("```", "").trim();
     }
 
+    /** Calls the API expecting concise actionable English (non-JSON). */
     private String chatText(String userPrompt) throws IOException, InterruptedException {
         return chat(userPrompt, false);
     }
 
+    /**
+     * Posts a chat completion to DashScope and returns the assistant message content.
+     *
+     * @param userPrompt  user message body
+     * @param expectJson  when true, system prompt requires valid JSON only
+     */
     private String chat(String userPrompt, boolean expectJson) throws IOException, InterruptedException {
         String apiKey = readApiKey();
         JSONObject body = new JSONObject();
@@ -451,11 +635,15 @@ public class AiService {
         return choices.getJSONObject(0).getJSONObject("message").optString("content", "").trim();
     }
 
+    /** Parses a JSON object from model text (after fence stripping in {@link #chatJson}). */
     private JSONObject asJsonObject(String text) {
         String cleaned = text.trim();
         return new JSONObject(cleaned);
     }
 
+    /**
+     * Parses a JSON array; if the root is an object, uses its {@code data} array when present.
+     */
     private JSONArray asJsonArray(String text) {
         String cleaned = text.trim();
         if (cleaned.startsWith("{")) {
@@ -466,6 +654,12 @@ public class AiService {
         return new JSONArray(cleaned);
     }
 
+    /**
+     * Resolves the Qwen API key from environment, system property, or {@code ai-config.properties}.
+     *
+     * @return non-blank API key
+     * @throws IllegalStateException when no key is configured
+     */
     private String readApiKey() {
         String apiKey = System.getenv("QWEN_API_KEY");
         if (apiKey == null || apiKey.isBlank()) {
@@ -480,6 +674,7 @@ public class AiService {
         return apiKey;
     }
 
+    /** Loads {@code qwen.api.key} from classpath {@code ai-config.properties}, or null if missing. */
     private String readApiKeyFromResource() {
         try (InputStream in = AiService.class.getClassLoader().getResourceAsStream("ai-config.properties")) {
             if (in == null) {
@@ -493,10 +688,12 @@ public class AiService {
         }
     }
 
+    /** Null-safe trim for prompt fields. */
     private String safe(String value) {
         return trimOrEmpty(value);
     }
 
+    /** Clamps model scores to the inclusive range 0–100. */
     private int clampScore(int score) {
         return Math.max(0, Math.min(100, score));
     }

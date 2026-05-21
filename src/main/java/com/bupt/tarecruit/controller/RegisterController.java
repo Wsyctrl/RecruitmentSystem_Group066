@@ -19,12 +19,19 @@ public class RegisterController extends BaseController {
     /**
      * Choice box used to select the user role during registration.
      */
+    /** Hidden in portal-specific mode; role is fixed per portal. */
     @FXML
     private ChoiceBox<Role> roleChoice;
+
+    /** Displays fixed role hint (Register as TA / Register as MO). */
     @FXML
     private Label registerRoleHintLabel;
+
+    /** Optional navigation back to guest browse or login context. */
     @FXML
     private Button backButton;
+
+    /** Role enforced for this portal instance (TA or MO). */
     private Role fixedRole = Role.TA;
 
     /**
@@ -57,6 +64,12 @@ public class RegisterController extends BaseController {
         }
     }
 
+    /**
+     * Locks registration to a single role and configures back-button visibility.
+     *
+     * @param defaultRole     TA or MO for this portal
+     * @param showBackButton  when true, shows back to guest browse (TA portal)
+     */
     public void configureForPortal(Role defaultRole, boolean showBackButton) {
         this.fixedRole = defaultRole == null ? Role.TA : defaultRole;
         if (roleChoice != null) {
@@ -118,6 +131,7 @@ public class RegisterController extends BaseController {
         navigator.showLogin();
     }
 
+    /** Returns to the TA guest dashboard without completing registration. */
     @FXML
     private void handleBackToBrowse() {
         navigator.showTaGuestDashboard();

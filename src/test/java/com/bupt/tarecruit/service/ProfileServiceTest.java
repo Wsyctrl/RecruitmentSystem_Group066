@@ -14,6 +14,9 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for ProfileService profile updates and password changes.
+ */
 class ProfileServiceTest {
 
     @TempDir
@@ -34,7 +37,7 @@ class ProfileServiceTest {
         ta.setAiSummary("Strong Java and teaching experience.");
         taDao.save(ta);
     }
-
+    /** Verifies update ta clears ai summary when resume profile fields change. */
     @Test
     void updateTaClearsAiSummaryWhenResumeProfileFieldsChange() {
         Ta ta = taDao.findById(TA_ID).orElseThrow();
@@ -46,7 +49,7 @@ class ProfileServiceTest {
         assertEquals("Software Engineering", stored.getMajor());
         assertTrue(stored.getAiSummary() == null || stored.getAiSummary().isBlank());
     }
-
+    /** Verifies update ta preserves ai summary when only contact fields change. */
     @Test
     void updateTaPreservesAiSummaryWhenOnlyContactFieldsChange() {
         Ta ta = taDao.findById(TA_ID).orElseThrow();
@@ -59,7 +62,7 @@ class ProfileServiceTest {
         Ta stored = taDao.findById(TA_ID).orElseThrow();
         assertEquals("Strong Java and teaching experience.", stored.getAiSummary());
     }
-
+    /** Verifies update ta clears ai summary when cv path removed. */
     @Test
     void updateTaClearsAiSummaryWhenCvPathRemoved() {
         Ta ta = taDao.findById(TA_ID).orElseThrow();
@@ -70,7 +73,7 @@ class ProfileServiceTest {
         assertTrue(stored.getCvPath() == null || stored.getCvPath().isBlank());
         assertTrue(stored.getAiSummary() == null || stored.getAiSummary().isBlank());
     }
-
+    /** Verifies update ta clears ai summary when cv content changed flag is true. */
     @Test
     void updateTaClearsAiSummaryWhenCvContentChangedFlagIsTrue() {
         Ta ta = taDao.findById(TA_ID).orElseThrow();
@@ -81,7 +84,7 @@ class ProfileServiceTest {
         Ta stored = taDao.findById(TA_ID).orElseThrow();
         assertTrue(stored.getAiSummary() == null || stored.getAiSummary().isBlank());
     }
-
+    /** Verifies update ta preserves ai summary when cv path unchanged and content unchanged. */
     @Test
     void updateTaPreservesAiSummaryWhenCvPathUnchangedAndContentUnchanged() {
         Ta ta = taDao.findById(TA_ID).orElseThrow();
@@ -91,7 +94,7 @@ class ProfileServiceTest {
         Ta stored = taDao.findById(TA_ID).orElseThrow();
         assertEquals("Strong Java and teaching experience.", stored.getAiSummary());
     }
-
+    /** Verifies update ta preserves ai summary when only ai summary changes. */
     @Test
     void updateTaPreservesAiSummaryWhenOnlyAiSummaryChanges() {
         Ta ta = taDao.findById(TA_ID).orElseThrow();
@@ -103,7 +106,7 @@ class ProfileServiceTest {
         assertEquals("Refined one-line applicant summary.", stored.getAiSummary());
         assertEquals("Computer Science", stored.getMajor());
     }
-
+    /** Verifies should invalidate ai summary ignores ai summary column. */
     @Test
     void shouldInvalidateAiSummaryIgnoresAiSummaryColumn() {
         Ta stored = taDao.findById(TA_ID).orElseThrow();
@@ -112,7 +115,7 @@ class ProfileServiceTest {
 
         assertFalse(ProfileService.shouldInvalidateAiSummary(stored, updated, false));
     }
-
+    /** Verifies change ta password success. */
     @Test
     void changeTaPasswordSuccess() {
         OperationResult<Void> result = profileService.changeTaPassword(
@@ -120,7 +123,7 @@ class ProfileServiceTest {
         assertTrue(result.success());
         assertEquals("NewSecret@9", taDao.findById(TA_ID).orElseThrow().getPassword());
     }
-
+    /** Verifies change ta password wrong current should fail. */
     @Test
     void changeTaPasswordWrongCurrentShouldFail() {
         OperationResult<Void> result = profileService.changeTaPassword(
@@ -128,7 +131,7 @@ class ProfileServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("incorrect"));
     }
-
+    /** Verifies change ta password mismatch confirm should fail. */
     @Test
     void changeTaPasswordMismatchConfirmShouldFail() {
         OperationResult<Void> result = profileService.changeTaPassword(
@@ -136,7 +139,7 @@ class ProfileServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("match"));
     }
-
+    /** Verifies change ta password blank new should fail. */
     @Test
     void changeTaPasswordBlankNewShouldFail() {
         OperationResult<Void> result = profileService.changeTaPassword(
@@ -144,7 +147,7 @@ class ProfileServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("required"));
     }
-
+    /** Verifies update mo profile should persist. */
     @Test
     void updateMoProfileShouldPersist() {
         com.bupt.tarecruit.entity.Mo mo = new com.bupt.tarecruit.entity.Mo("mo@bupt.edu.cn", "Mo@1");
@@ -157,7 +160,7 @@ class ProfileServiceTest {
         assertTrue(service.updateMo(mo).success());
         assertEquals("Updated MO", service.findMo("mo@bupt.edu.cn").orElseThrow().getFullName());
     }
-
+    /** Verifies save cv detects content change. */
     @Test
     void saveCvDetectsContentChange() throws Exception {
         FileStorageHelper helper = new FileStorageHelper(tempDir);

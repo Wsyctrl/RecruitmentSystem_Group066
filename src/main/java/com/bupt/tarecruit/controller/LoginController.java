@@ -36,10 +36,16 @@ public class LoginController extends BaseController {
      */
     @FXML
     private Hyperlink registerLink;
+
+    /** Optional control to return to TA guest browse (TA portal only). */
     @FXML
     private Button backButton;
+
+    /** Transient banner message shown after redirect from guest actions. */
     @FXML
     private Label noticeLabel;
+
+    /** Container for the notice banner; hidden when no message is active. */
     @FXML
     private HBox noticeBox;
 
@@ -60,6 +66,12 @@ public class LoginController extends BaseController {
         }
     }
 
+    /**
+     * Adapts the login view for TA vs MO portal (back button and optional notice).
+     *
+     * @param showBackButton when true, shows navigation back to guest job browse
+     * @param noticeMessage  optional text for a short-lived notice; blank hides the banner
+     */
     public void configureForPortal(boolean showBackButton, String noticeMessage) {
         if (backButton != null) {
             backButton.setVisible(showBackButton);
@@ -70,13 +82,14 @@ public class LoginController extends BaseController {
         }
     }
 
+    /** Returns to the TA guest dashboard without signing in. */
     @FXML
     private void handleBackToBrowse() {
         navigator.showTaGuestDashboard();
     }
 
     /**
-     * Handles the login action triggered from the UI.
+     * Authenticates credentials and routes to the correct dashboard, enforcing portal/role pairing.
      */
     @FXML
     private void handleLogin() {
@@ -103,6 +116,7 @@ public class LoginController extends BaseController {
         }
     }
 
+    /** Displays a temporary notice that auto-hides after 2.5 seconds. */
     private void showNotice(String message) {
         if (noticeLabel == null || noticeBox == null) {
             return;

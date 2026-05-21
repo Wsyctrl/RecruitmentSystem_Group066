@@ -34,9 +34,12 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
- * Controller for the MO dashboard view.
- * Manages job posting, applicant review, profile updates,
- * and administrator operations in the dashboard.
+ * Controller for the MO (and admin) dashboard.
+ * <p>
+ * MO users manage jobs, review applicants (hire/reject, AI ranking, similar candidates),
+ * and edit profile. Admin users gain extra tabs: TA/MO accounts, all jobs, insights,
+ * account logs, and job management logs.
+ * </p>
  */
 public class MoDashboardController extends BaseController implements SessionAware {
 
@@ -75,172 +78,316 @@ public class MoDashboardController extends BaseController implements SessionAwar
     /** Blocks job-selector listener while jobOptions is being refreshed (avoids spurious loadApplicants(null)). */
     private boolean suppressJobSelectorApplicantReload;
 
+    /** Root tab pane for MO workflow and optional admin tabs. */
     @FXML
     private TabPane tabPane;
+
+    /** Applicant review tab for the selected job. */
     @FXML
     private Tab applicantsTab;
+
+    /** List of jobs owned by the current MO. */
     @FXML
     private Tab myJobsTab;
+
+    /** Create/edit job form tab. */
     @FXML
     private Tab postEditJobTab;
+
+    /** Welcome header with display name. */
     @FXML
     private Label welcomeLabel;
+
+    /** Filter for the my-jobs table (applied on refresh). */
     @FXML
     private TextField myJobSearchField;
+
+    /** MO's jobs with selection driving detail panel. */
     @FXML
     private TableView<Job> myJobTable;
+
+    /** Detail: selected job title. */
     @FXML
     private Label selectedJobNameLabel;
+
+    /** Detail: open/closed status. */
     @FXML
     private Label selectedJobStatusLabel;
+
+    /** Detail: start and end dates. */
     @FXML
     private Label selectedJobDatesLabel;
+
+    /** Detail: active applicant count. */
     @FXML
     private Label selectedJobApplicantsLabel;
+
+    /** Detail: hired count. */
     @FXML
     private Label selectedJobHiredLabel;
+
+    /** Detail: requirements text. */
     @FXML
     private TextArea selectedJobRequirementsArea;
+
+    /** Detail: additional notes. */
     @FXML
     private TextArea selectedJobNotesArea;
+
+    /** Detail: keyword list. */
     @FXML
     private TextArea selectedJobKeywordsArea;
 
+    /** Post/edit form: job title. */
     @FXML
     private TextField jobNameField;
+
+    /** Post/edit form: module name. */
     @FXML
     private TextField moduleField;
+
+    /** Post/edit form: number of positions. */
     @FXML
     private Spinner<Integer> positionsSpinner;
+
+    /** Post/edit form: start date. */
     @FXML
     private DatePicker startDatePicker;
+
+    /** Post/edit form: end date. */
     @FXML
     private DatePicker endDatePicker;
+
+    /** Post/edit form: requirements. */
     @FXML
     private TextArea requirementsField;
+
+    /** Post/edit form: comma-separated keywords. */
     @FXML
     private TextArea keywordsField;
+
+    /** Triggers AI keyword generation from the post/edit form. */
     @FXML
     private Button generateKeywordsBtn;
+
+    /** Shown while form keyword generation runs. */
     @FXML
     private Label keywordsLoadingLabel;
+
+    /** Post/edit form: additional notes. */
     @FXML
     private TextArea notesField;
+
+    /** Inline status after save job. */
     @FXML
     private Label formStatusLabel;
+
+    /** Shows new vs edit job id in the form header. */
     @FXML
     private Label formJobIdLabel;
 
+    /** Selects which job's applicants are shown. */
     @FXML
     private ComboBox<Job> jobSelector;
+
+    /** Applicant search (applied on Refresh). */
     @FXML
     private TextField applicantSearchField;
+
+    /** Legacy table binding; cards are primary UI. */
     @FXML
     private TableView<ApplicantDisplay> applicantTable;
+
+    /** Flow layout of applicant summary cards. */
     @FXML
     private FlowPane applicantCardPane;
+
+    /** Scroll container for applicant cards. */
     @FXML
     private ScrollPane applicantCardScroll;
+
+    /** Detail panel: applicant name and id. */
     @FXML
     private Label applicantNameLabel;
+
+    /** Detail panel: application status. */
     @FXML
     private Label applicantStatusLabel;
+
+    /** Detail panel: full profile text. */
     @FXML
     private TextArea applicantProfileArea;
+
+    /** AI applicant ranking narrative (top matches / similar search). */
     @FXML
     private TextArea aiApplicantResultArea;
+
+    /** AI keyword output or ranking status for applicants tab. */
     @FXML
     private TextArea aiKeywordsArea;
+
+    /** MO free-text preference for AI applicant ranking. */
     @FXML
     private TextArea aiPreferenceArea;
+
+    /** How many top pending applicants AI should return (1–10). */
     @FXML
     private Spinner<Integer> aiTopCountSpinner;
+
+    /** Hires the card-selected pending applicant. */
     @FXML
     private Button hireButton;
+
+    /** Rejects the card-selected pending applicant. */
     @FXML
     private Button rejectButton;
 
+    /** MO profile: full name. */
     @FXML
     private TextField moFullNameField;
+
+    /** MO profile: phone. */
     @FXML
     private TextField moPhoneField;
+
+    /** MO profile: email (read-only). */
     @FXML
     private TextField moEmailField;
+
+    /** MO profile: responsible modules. */
     @FXML
     private TextArea moModuleArea;
 
+    /** Parent admin tab (legacy; may be unused in FXML). */
     @FXML
     private Tab adminUserTab;
+
+    /** Admin: TA account management tab. */
     @FXML
     private Tab adminTaTab;
+
+    /** Admin: MO account management tab. */
     @FXML
     private Tab adminMoTab;
+
+    /** Admin: all jobs tab. */
     @FXML
     private Tab adminJobTab;
+
+    /** Admin: embedded insights tab. */
     @FXML
     private Tab adminInsightsTab;
+
+    /** Admin: account audit log tab. */
     @FXML
     private Tab adminAccountTab;
+
+    /** Admin: job open/close audit log tab. */
     @FXML
     private Tab adminJobManagementTab;
+
+    /** Right-hand applicant detail column. */
     @FXML
     private javafx.scene.layout.VBox applicantDetailPanel;
+
+    /** Right-hand my-jobs detail column. */
     @FXML
     private javafx.scene.layout.VBox myJobsDetailPanel;
+
+    /** Split between applicant cards and detail. */
     @FXML
     private SplitPane applicantsSplitPane;
+
+    /** Split within applicant detail (profile vs AI). */
     @FXML
     private SplitPane applicantDetailSplit;
+
+    /** Split for my-jobs list vs detail. */
     @FXML
     private SplitPane myJobsSplitPane;
+
+    /** Split on admin TA master/detail. */
     @FXML
     private SplitPane adminTaSplitPane;
+
+    /** Split on admin MO master/detail. */
     @FXML
     private SplitPane adminMoSplitPane;
+
+    /** Left stack for applicant cards or empty state. */
     @FXML
     private javafx.scene.layout.StackPane applicantsLeftPane;
+
+    /** Shown when the selected job has no applicants. */
     @FXML
     private Label applicantsEmptyLabel;
+
+    /** Nested controller for admin insights metrics and AI section. */
     @FXML
     private InsightsDialogController insightsViewController;
+
+    /** Guards one-time insights wiring when the admin insights tab is first opened. */
     private boolean insightsLoaded;
+
+    /** Legacy TA user table (admin). */
     @FXML
     private TableView<Ta> taUserTable;
+
+    /** Legacy MO user table (admin). */
     @FXML
     private TableView<Mo> moUserTable;
+
+    /** Admin table of all jobs with hired counts. */
     @FXML
     private TableView<AdminJobDisplay> adminJobTable;
 
-    // New admin tables
+    /** Admin TA list with workload highlighting. */
     @FXML
     private TableView<AdminTaDisplay> adminTaTable;
+
+    /** Admin MO list. */
     @FXML
     private TableView<AdminMoDisplay> adminMoTable;
+
+    /** Jobs the selected TA has applied to. */
     @FXML
     private TableView<AdminTaDisplay.JobApplicationInfo> adminTaAppliedJobsTable;
+
+    /** Jobs the selected TA was hired for. */
     @FXML
     private TableView<AdminTaDisplay.JobApplicationInfo> adminTaHiredJobsTable;
+
+    /** Jobs posted by the selected MO in admin detail. */
     @FXML
     private TableView<AdminJobDisplay> adminMoJobsTable;
+
+    /** Account management audit log. */
     @FXML
     private TableView<AccountLogDisplay> accountLogTable;
+
+    /** Job open/close audit log. */
     @FXML
     private TableView<JobLogDisplay> jobLogTable;
 
-    // Admin detail labels
+    /** Admin TA detail: email header. */
     @FXML
     private Label adminTaNameLabel;
+
+    /** Admin TA detail: name/phone/major. */
     @FXML
     private Label adminTaInfoLabel;
+
+    /** Admin MO detail: email header. */
     @FXML
     private Label adminMoNameLabel;
+
+    /** Admin MO detail: name/phone/modules. */
     @FXML
     private Label adminMoInfoLabel;
-/**
- * Performs controller-specific initialization after shared dependencies
- * have been injected. Sets up table bindings, search filters, selection
- * listeners, spinner defaults, and admin tab behavior.
- */
+
+    /**
+     * Wires tables, filters, split panes, job selector, applicant cards, and admin tab refresh hooks.
+     */
     @Override
     protected void onInit() {
         filteredMyJobs = new FilteredList<>(myJobs, job -> true);
@@ -613,6 +760,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Binds the MO or admin session, toggles admin tabs, selects the initial tab, and loads data.
+     *
+     * @param session authenticated MO or admin session
+     */
     @Override
     public void setSession(UserSession session) {
         this.session = session;
@@ -832,6 +984,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         return a.equalsIgnoreCase(b);
     }
 
+    /** Clears applicant AI highlights, cancels ranking tasks, and re-renders cards. */
     @FXML
     private void handleResetAiRecommendations() {
         if (activeRecommendApplicantsTask != null && activeRecommendApplicantsTask.isRunning()) {
@@ -965,11 +1118,13 @@ public class MoDashboardController extends BaseController implements SessionAwar
         refreshAdminJobs();
     }
 
+    /** Applies the my-jobs search filter. */
     @FXML
     private void handleRefreshMyJobs() {
         filterJobs(myJobSearchField.getText());
     }
 
+    /** Loads the selected job into the post/edit form and switches to that tab. */
     @FXML
     private void handleEditFromSelected() {
         Job selected = myJobTable.getSelectionModel().getSelectedItem();
@@ -983,6 +1138,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Clears the post/edit form for a new job posting. */
     @FXML
     private void handleCreateNewJob() {
         currentEditingJob = null;
@@ -1011,6 +1167,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         formJobIdLabel.setText("Edit: " + job.getJobId());
     }
 
+    /** Creates or updates the job via {@link com.bupt.tarecruit.service.JobService#upsertJob}. */
     @FXML
     private void handleSaveJob() {
         try {
@@ -1040,6 +1197,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Closes the selected job, rejects pending applications, and writes a job log entry. */
     @FXML
     private void handleCloseJob() {
         Job job = myJobTable.getSelectionModel().getSelectedItem();
@@ -1074,6 +1232,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Re-opens a closed job from my-jobs and logs the action. */
     @FXML
     private void handleOpenJob() {
         Job job = myJobTable.getSelectionModel().getSelectedItem();
@@ -1107,6 +1266,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Selects an open job in the applicant combo and switches to the applicants tab. */
     @FXML
     private void handleJumpToApplicants() {
         Job job = myJobTable.getSelectionModel().getSelectedItem();
@@ -1125,12 +1285,14 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Re-applies applicant search filter and re-renders cards. */
     @FXML
     private void handleRefreshApplicants() {
         // Apply current search filter; this is the only way to trigger search.
         filterApplicants(applicantSearchField.getText());
     }
 
+    /** Legacy handler: clears applicant search (may be unused in FXML). */
     @FXML
     private void handleClearApplicantSearch() {
         // Retained for backwards compatibility; no longer wired into the FXML.
@@ -1138,6 +1300,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         filterApplicants(null);
     }
 
+    /** Switches to the admin insights tab (data loads on first visit). */
     @FXML
     private void handleAiGenerateInsights() {
         // Insights now live as their own admin tab; selecting that tab triggers loading.
@@ -1146,6 +1309,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Saves MO profile fields (name, phone, modules). */
     @FXML
     private void handleSaveMoProfile() {
         Mo mo = session.moOptional().orElse(null);
@@ -1164,6 +1328,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Opens the change-password dialog for the signed-in MO. */
     @FXML
     private void handleChangePasswordFromProfile() {
         Mo mo = session.moOptional().orElse(null);
@@ -1205,6 +1370,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Returns to the MO portal login screen. */
     @FXML
     private void handleLogout() {
         navigator.showLogin();
@@ -1245,6 +1411,8 @@ public class MoDashboardController extends BaseController implements SessionAwar
     }
 
     // Admin operations
+
+    /** Admin: resets password for the selected TA. */
     @FXML
     private void handleResetTaPassword() {
         AdminTaDisplay display = adminTaTable != null ? adminTaTable.getSelectionModel().getSelectedItem() : null;
@@ -1262,6 +1430,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         loadAdminData();
     }
 
+    /** Admin: enables or disables the selected TA account. */
     @FXML
     private void handleToggleTaStatus() {
         AdminTaDisplay display = adminTaTable != null ? adminTaTable.getSelectionModel().getSelectedItem() : null;
@@ -1279,6 +1448,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         loadAdminData();
     }
 
+    /** Admin: resets password for the selected MO. */
     @FXML
     private void handleResetMoPassword() {
         AdminMoDisplay display = adminMoTable != null ? adminMoTable.getSelectionModel().getSelectedItem() : null;
@@ -1296,6 +1466,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         loadAdminData();
     }
 
+    /** Admin: enables or disables the selected MO account. */
     @FXML
     private void handleToggleMoStatus() {
         AdminMoDisplay display = adminMoTable != null ? adminMoTable.getSelectionModel().getSelectedItem() : null;
@@ -1313,6 +1484,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         loadAdminData();
     }
 
+    /** Admin: closes the selected job in the all-jobs table and logs the action. */
     @FXML
     private void handleAdminToggleJob() {
         AdminJobDisplay display = adminJobTable.getSelectionModel().getSelectedItem();
@@ -1350,6 +1522,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Admin: re-opens the selected closed job and logs the action. */
     @FXML
     private void handleAdminOpenJob() {
         AdminJobDisplay display = adminJobTable.getSelectionModel().getSelectedItem();
@@ -1426,21 +1599,25 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Placeholder; job management UI moved to the all-jobs admin tab. */
     @FXML
     private void handleToggleJobManagementDisabled() {
         // Removed - job management is done in All Jobs tab
     }
 
+    /** Placeholder refresh for legacy job-management tab. */
     @FXML
     private void handleRefreshJobManagement() {
         // Removed - job management is done in All Jobs tab
     }
 
+    /** Reloads job open/close audit log rows. */
     @FXML
     private void handleRefreshJobLogs() {
         refreshJobLogs();
     }
 
+    /** Admin: wipes AccountLogs.csv after confirmation. */
     @FXML
     private void handleClearAccountLogs() {
         if (!DialogUtil.confirm("Clear all account-management log entries? This cannot be undone.", navigator.getPrimaryStage())) {
@@ -1458,6 +1635,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Admin: wipes JobLogs.csv after confirmation. */
     @FXML
     private void handleClearJobLogs() {
         if (!DialogUtil.confirm("Clear all job-management log entries? This cannot be undone.", navigator.getPrimaryStage())) {
@@ -1482,6 +1660,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         return com.bupt.tarecruit.util.IdGenerator.nextId("jlog", existing);
     }
 
+    /** Admin: reloads account management audit log table. */
     @FXML
     private void handleRefreshAccountLogs() {
         refreshAccountLogs();
@@ -1744,6 +1923,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
         new Thread(task, "applicant-summary-generator").start();
     }
 
+    /**
+     * AI-ranks pending applicants for the selected job (respects Top-N spinner and MO preference),
+     * highlights cards, and shows scored reasons.
+     */
     @FXML
     private void handleAiRecommendApplicants() {
         Job job = jobSelector.getSelectionModel().getSelectedItem();
@@ -1989,6 +2172,10 @@ CV: %s
         }
     }
 
+    /**
+     * Hires the selected pending applicant with concurrent-job warning and optional
+     * similar-candidate AI prompt afterward.
+     */
     @FXML
     private void handleHireApplicant() {
         if (selectedApplicant == null) {
@@ -2023,6 +2210,7 @@ CV: %s
         finishApplicantAction(result, hireTarget, true);
     }
 
+    /** Rejects the selected pending applicant and refreshes the applicant list for the same job. */
     @FXML
     private void handleRejectApplicant() {
         if (selectedApplicant == null) {
@@ -2082,6 +2270,7 @@ CV: %s
         }
     }
 
+    /** Downloads the selected applicant's CV to a user-chosen file. */
     @FXML
     private void handleDownloadCv() {
         if (selectedApplicant == null || selectedApplicant.getTa() == null) {
@@ -2109,6 +2298,7 @@ CV: %s
         }
     }
 
+    /** Generates quick-review keywords for the job selected in the applicants tab. */
     @FXML
     private void handleAiGenerateJobKeywords() {
         Job job = jobSelector.getSelectionModel().getSelectedItem();
@@ -2144,6 +2334,7 @@ CV: %s
         new Thread(task, "ai-job-keywords").start();
     }
 
+    /** Generates keywords from the post/edit job form fields into {@link #keywordsField}. */
     @FXML
     private void handleGenerateJobKeywords() {
         String requirements = requirementsField.getText() == null ? "" : requirementsField.getText().trim();
