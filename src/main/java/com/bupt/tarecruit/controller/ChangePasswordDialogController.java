@@ -21,42 +21,73 @@ public class ChangePasswordDialogController {
     private boolean isTaUser = false;
     private boolean passwordChanged = false;
 
+    /** Current password for verification. */
     @FXML
     private PasswordField currentPasswordField;
+
+    /** New password entry. */
     @FXML
     private PasswordField newPasswordField;
+
+    /** Confirmation of the new password. */
     @FXML
     private PasswordField confirmPasswordField;
+
+    /** Inline validation or service error message. */
     @FXML
     private Label statusLabel;
 
+    /**
+     * @param services application service registry
+     */
     public void setServices(ServiceRegistry services) {
         this.services = services;
     }
 
+    /**
+     * @param stage modal stage used to close the dialog
+     */
     public void setDialogStage(Stage stage) {
         this.dialogStage = stage;
     }
 
+    /**
+     * Configures the dialog for an MO password change.
+     *
+     * @param moId MO identifier
+     */
     public void setMoId(String moId) {
         this.moId = moId;
         this.isTaUser = false;
     }
 
+    /**
+     * Configures the dialog for a TA password change.
+     *
+     * @param taId TA identifier
+     */
     public void setTaId(String taId) {
         this.taId = taId;
         this.isTaUser = true;
     }
 
+    /**
+     * @return true if the user successfully changed the password in this dialog session
+     */
     public boolean isPasswordChanged() {
         return passwordChanged;
     }
 
+    /** Clears the status label when the dialog opens. */
     @FXML
     private void initialize() {
         statusLabel.setText("");
     }
 
+    /**
+     * Validates fields and calls {@link com.bupt.tarecruit.service.ProfileService} for TA or MO;
+     * closes the dialog on success so the parent can show confirmation.
+     */
     @FXML
     private void handleChangePassword() {
         String current = currentPasswordField.getText() == null ? "" : currentPasswordField.getText();
@@ -89,11 +120,13 @@ public class ChangePasswordDialogController {
         }
     }
 
+    /** Closes the dialog without saving. */
     @FXML
     private void handleCancel() {
         dialogStage.close();
     }
 
+    /** Closes the dialog (same as cancel). */
     @FXML
     private void handleClose() {
         dialogStage.close();

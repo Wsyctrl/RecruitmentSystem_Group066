@@ -9,11 +9,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for CsvMoDao CSV persistence of MO accounts.
+ */
 class CsvMoDaoTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies save find update and find all. */
     @Test
     void saveFindUpdateAndFindAll() {
         CsvMoDao dao = new CsvMoDao(tempDir.resolve("MO.csv"));
@@ -39,7 +42,7 @@ class CsvMoDaoTest {
         List<Mo> all = dao.findAll();
         assertEquals(1, all.size());
     }
-
+    /** Verifies find by id missing returns empty. */
     @Test
     void findByIdMissingReturnsEmpty() {
         CsvMoDao dao = new CsvMoDao(tempDir.resolve("MO.csv"));

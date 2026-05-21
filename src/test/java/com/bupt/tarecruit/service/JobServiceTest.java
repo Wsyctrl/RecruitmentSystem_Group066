@@ -20,15 +20,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * 1) job creation defaults,
  * 2) validation rules for invalid date ranges,
  * 3) open-job filtering and keyword search behavior.
- * 新建岗位是否自动生成 ID 并默认为 OPEN
- * 结束日期早于开始日期是否抛错
- * 搜索开放岗位时是否排除 CLOSED 岗位
  */
 class JobServiceTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies upsert new job should generate id and set open status. */
     @Test
     void upsertNewJobShouldGenerateIdAndSetOpenStatus() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -43,7 +40,7 @@ class JobServiceTest {
         assertFalse(result.data().getJobId().isBlank());
         assertEquals(JobStatus.OPEN, result.data().getStatus());
     }
-
+    /** Verifies upsert job with end date before start date should throw. */
     @Test
     void upsertJobWithEndDateBeforeStartDateShouldThrow() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -55,7 +52,7 @@ class JobServiceTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.upsertJob(job));
         assertTrue(ex.getMessage().toLowerCase().contains("end date"));
     }
-
+    /** Verifies search open jobs should ignore closed jobs and match keyword. */
     @Test
     void searchOpenJobsShouldIgnoreClosedJobsAndMatchKeyword() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -76,7 +73,7 @@ class JobServiceTest {
         assertEquals("Algorithms Tutor", results.get(0).getJobName());
         assertTrue(results.get(0).isOpen());
     }
-
+    /** Verifies close and open job lifecycle. */
     @Test
     void closeAndOpenJobLifecycle() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -91,7 +88,7 @@ class JobServiceTest {
         assertTrue(service.openJob(jobId).success());
         assertTrue(jobDao.findById(jobId).orElseThrow().isOpen());
     }
-
+    /** Verifies close job not found should fail. */
     @Test
     void closeJobNotFoundShouldFail() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -101,7 +98,7 @@ class JobServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().contains("not found"));
     }
-
+    /** Verifies upsert existing job should update without new id. */
     @Test
     void upsertExistingJobShouldUpdateWithoutNewId() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -117,7 +114,7 @@ class JobServiceTest {
         assertTrue(result.success());
         assertEquals("Updated Title", jobDao.findById(jobId).orElseThrow().getJobName());
     }
-
+    /** Verifies upsert missing required fields should throw. */
     @Test
     void upsertMissingRequiredFieldsShouldThrow() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -129,7 +126,7 @@ class JobServiceTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.upsertJob(incomplete));
         assertTrue(ex.getMessage().toLowerCase().contains("required"));
     }
-
+    /** Verifies find jobs by mo filters and sorts. */
     @Test
     void findJobsByMoFiltersAndSorts() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -144,7 +141,7 @@ class JobServiceTest {
 
         assertEquals(1, service.findJobsByMo("mo-a@bupt.edu.cn").size());
     }
-
+    /** Verifies search open jobs null keyword returns all open. */
     @Test
     void searchOpenJobsNullKeywordReturnsAllOpen() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));

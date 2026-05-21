@@ -6,7 +6,7 @@ package com.bupt.tarecruit.util;
 public final class WorkloadRules {
 
     /**
-     * Threshold for warning about concurrent jobs.
+     * Threshold for warning about concurrent jobs assigned to one module organizer.
      */
     public static final int CONCURRENT_JOB_WARNING_THRESHOLD = 2;
 

@@ -20,6 +20,9 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for AdminService account disable or enable and admin job actions.
+ */
 class AdminServiceTest {
 
     @TempDir
@@ -58,7 +61,7 @@ class AdminServiceTest {
         job.setStatus(JobStatus.OPEN);
         jobDao.save(job);
     }
-
+    /** Verifies reset password for ta should use default and log. */
     @Test
     void resetPasswordForTaShouldUseDefaultAndLog() {
         OperationResult<Void> result = adminService.resetPassword(Role.TA, "ta@bupt.edu.cn", "admin@bupt.edu.cn");
@@ -68,14 +71,14 @@ class AdminServiceTest {
         assertEquals(1, accountLogDao.findAll().size());
         assertEquals(AccountLog.AccountAction.RESET_PASSWORD, accountLogDao.findAll().get(0).getAction());
     }
-
+    /** Verifies reset password unknown ta should fail. */
     @Test
     void resetPasswordUnknownTaShouldFail() {
         OperationResult<Void> result = adminService.resetPassword(Role.TA, "missing@bupt.edu.cn", "admin@bupt.edu.cn");
         assertFalse(result.success());
         assertTrue(result.message().contains("not found"));
     }
-
+    /** Verifies toggle status disable and enable ta. */
     @Test
     void toggleStatusDisableAndEnableTa() {
         assertTrue(adminService.toggleStatus(Role.TA, "ta@bupt.edu.cn", true, "admin@bupt.edu.cn").success());
@@ -84,14 +87,14 @@ class AdminServiceTest {
         assertTrue(adminService.toggleStatus(Role.TA, "ta@bupt.edu.cn", false, "admin@bupt.edu.cn").success());
         assertFalse(taDao.findById("ta@bupt.edu.cn").orElseThrow().isDisabled());
     }
-
+    /** Verifies toggle job open closed should close open job. */
     @Test
     void toggleJobOpenClosedShouldCloseOpenJob() {
         OperationResult<Void> result = adminService.toggleJobOpenClosed("job001");
         assertTrue(result.success());
         assertEquals(JobStatus.CLOSED, jobDao.findById("job001").orElseThrow().getStatus());
     }
-
+    /** Verifies toggle job open closed already closed should fail. */
     @Test
     void toggleJobOpenClosedAlreadyClosedShouldFail() {
         adminService.toggleJobOpenClosed("job001");
@@ -99,14 +102,14 @@ class AdminServiceTest {
         assertFalse(second.success());
         assertTrue(second.message().toLowerCase().contains("closed"));
     }
-
+    /** Verifies toggle job open closed unknown job should fail. */
     @Test
     void toggleJobOpenClosedUnknownJobShouldFail() {
         OperationResult<Void> result = adminService.toggleJobOpenClosed("job999");
         assertFalse(result.success());
         assertTrue(result.message().contains("not found"));
     }
-
+    /** Verifies find all methods return persisted data. */
     @Test
     void findAllMethodsReturnPersistedData() {
         assertEquals(1, adminService.findAllTa().size());

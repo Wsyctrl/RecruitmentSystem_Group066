@@ -24,6 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * TestFX UI tests for InsightsDialogController analytics view.
+ */
 class InsightsDialogControllerUiTest extends BaseUiTest {
 
     @Override
@@ -76,7 +79,7 @@ class InsightsDialogControllerUiTest extends BaseUiTest {
         }
         return services.jobService().findById(saved.getJobId()).orElseThrow();
     }
-
+    /** Verifies initial zero state. */
     @Test
     @DisplayName("Initial state has zeroed metric labels and an empty chart")
     void initialZeroState() {
@@ -93,7 +96,7 @@ class InsightsDialogControllerUiTest extends BaseUiTest {
         assertFalse(chart.isLegendVisible());
         runOnFx(l.stage::close);
     }
-
+    /** Verifies load data metrics. */
     @Test
     @DisplayName("loadData populates job & application metrics for existing data")
     void loadDataMetrics() {
@@ -123,7 +126,7 @@ class InsightsDialogControllerUiTest extends BaseUiTest {
         assertEquals(4, series.getData().size());
         runOnFx(l.stage::close);
     }
-
+    /** Verifies module stats rendered. */
     @Test
     @DisplayName("Module stats rendering shows one row per module")
     void moduleStatsRendered() {
@@ -142,7 +145,7 @@ class InsightsDialogControllerUiTest extends BaseUiTest {
                 "One row per module that has applications");
         runOnFx(l.stage::close);
     }
-
+    /** Verifies empty module stats. */
     @Test
     @DisplayName("'No application data available' shown when there are no applications")
     void emptyModuleStats() {
@@ -156,7 +159,7 @@ class InsightsDialogControllerUiTest extends BaseUiTest {
         assertEquals("No application data available", empty.getText());
         runOnFx(l.stage::close);
     }
-
+    /** Verifies sorting buttons. */
     @Test
     @DisplayName("Sort buttons reorder the module stats rows alphabetically/by count")
     void sortingButtons() {
@@ -198,7 +201,7 @@ class InsightsDialogControllerUiTest extends BaseUiTest {
         assertNotNull(firstAfterCount);
         runOnFx(l.stage::close);
     }
-
+    /** Verifies close closes stage. */
     @Test
     @DisplayName("handleClose closes the dialog stage")
     void closeClosesStage() {

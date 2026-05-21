@@ -22,17 +22,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * This file focuses on business-rule boundaries that can easily regress:
  * 1) blocking duplicate active applications,
  * 2) enforcing ownership checks on withdraw,
- * 3) rejecting only pending records when a job is closed.
- * ApplicationService（边界场景）
- * 同一 TA 重复申请同一岗位是否被拒绝
- * 非申请人本人撤回是否失败
- * 关闭岗位时仅 pending 申请被改为 rejected（已 hired 不应被改）
+ * 3) rejecting only pending records when a job is closed (hired records must remain unchanged).
  */
 class ApplicationServiceEdgeCaseTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies duplicate active application should be rejected. */
     @Test
     void duplicateActiveApplicationShouldBeRejected() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -49,7 +45,7 @@ class ApplicationServiceEdgeCaseTest {
         assertFalse(second.success());
         assertTrue(second.message().toLowerCase().contains("already"));
     }
-
+    /** Verifies withdraw by different ta should fail. */
     @Test
     void withdrawByDifferentTaShouldFail() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -65,7 +61,7 @@ class ApplicationServiceEdgeCaseTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("cannot"));
     }
-
+    /** Verifies reject pending applications should only change pending records. */
     @Test
     void rejectPendingApplicationsShouldOnlyChangePendingRecords() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -91,7 +87,7 @@ class ApplicationServiceEdgeCaseTest {
         assertEquals(ApplicationStatus.REJECTED, pendingRecord.getStatus());
         assertEquals(ApplicationStatus.HIRED, hiredRecord.getStatus());
     }
-
+    /** Verifies withdraw unknown application should fail. */
     @Test
     void withdrawUnknownApplicationShouldFail() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -102,7 +98,7 @@ class ApplicationServiceEdgeCaseTest {
         assertFalse(result.success());
         assertTrue(result.message().contains("not found"));
     }
-
+    /** Verifies hire unknown application should fail. */
     @Test
     void hireUnknownApplicationShouldFail() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -113,7 +109,7 @@ class ApplicationServiceEdgeCaseTest {
         assertFalse(result.success());
         assertTrue(result.message().contains("not found"));
     }
-
+    /** Verifies find active applications for ta excludes withdrawn. */
     @Test
     void findActiveApplicationsForTaExcludesWithdrawn() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));

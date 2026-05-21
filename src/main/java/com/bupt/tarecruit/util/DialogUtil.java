@@ -12,6 +12,12 @@ import javafx.stage.Window;
 
 import java.util.Optional;
 
+/**
+ * Factory helpers for JavaFX alert dialogs with consistent English button labels.
+ * <p>
+ * Uses explicit English button types so labels remain correct on non-English OS locales.
+ * </p>
+ */
 public final class DialogUtil {
 
     private static final double MESSAGE_MAX_WIDTH = 520;
@@ -24,19 +30,45 @@ public final class DialogUtil {
     private DialogUtil() {
     }
 
+    /**
+     * Shows an information dialog and waits until the user dismisses it.
+     *
+     * @param content message body text
+     * @param owner   optional owner window for modality; may be {@code null}
+     */
     public static void info(String content, Window owner) {
         createAlert(Alert.AlertType.INFORMATION, "Information", content, owner).showAndWait();
     }
 
+    /**
+     * Shows an error dialog and waits until the user dismisses it.
+     *
+     * @param content message body text
+     * @param owner   optional owner window for modality; may be {@code null}
+     */
     public static void error(String content, Window owner) {
         createAlert(Alert.AlertType.ERROR, "Error", content, owner).showAndWait();
     }
 
+    /**
+     * Shows a confirmation dialog with OK and Cancel buttons.
+     *
+     * @param content message body text
+     * @param owner   optional owner window for modality; may be {@code null}
+     * @return {@code true} when the user chooses OK; {@code false} otherwise
+     */
     public static boolean confirm(String content, Window owner) {
         Optional<ButtonType> result = createAlert(Alert.AlertType.CONFIRMATION, "Confirm", content, owner).showAndWait();
         return result.map(bt -> bt.getButtonData() == ButtonBar.ButtonData.OK_DONE).orElse(false);
     }
 
+    /**
+     * Shows a confirmation dialog with Yes and No buttons.
+     *
+     * @param content message body text
+     * @param owner   optional owner window for modality; may be {@code null}
+     * @return {@code true} when the user chooses Yes; {@code false} otherwise
+     */
     public static boolean confirmYesNo(String content, Window owner) {
         Alert alert = createAlert(Alert.AlertType.CONFIRMATION, "Confirm", content, owner);
         alert.getButtonTypes().setAll(YES_EN, NO_EN);
@@ -47,6 +79,8 @@ public final class DialogUtil {
     /**
      * Asks whether to recommend similar pending candidates after a hire decision.
      *
+     * @param applicantLabel display name of the reference applicant; may be blank
+     * @param owner          optional owner window for modality; may be {@code null}
      * @return the chosen count (1–10) when the user selects Yes; empty when No or closed
      */
     public static Optional<Integer> confirmRecommendSimilarCandidates(String applicantLabel, Window owner) {
@@ -91,6 +125,15 @@ public final class DialogUtil {
         return Optional.of(Math.max(1, Math.min(10, value)));
     }
 
+    /**
+     * Builds an alert with wrapped message text and English button labels.
+     *
+     * @param type    alert severity/type
+     * @param title   dialog title
+     * @param content message body text
+     * @param owner   optional owner window; may be {@code null}
+     * @return configured alert (not yet shown)
+     */
     private static Alert createAlert(Alert.AlertType type, String title, String content, Window owner) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

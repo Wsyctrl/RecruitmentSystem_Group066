@@ -10,11 +10,14 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for CsvJobDao CSV persistence of job postings.
+ */
 class CsvJobDaoTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies save update and round trip fields. */
     @Test
     void saveUpdateAndRoundTripFields() {
         CsvJobDao dao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -45,7 +48,7 @@ class CsvJobDaoTest {
         assertEquals(JobStatus.CLOSED, updated.getStatus());
         assertEquals("updated", updated.getKeywords());
     }
-
+    /** Verifies invalid status code defaults to open. */
     @Test
     void invalidStatusCodeDefaultsToOpen() {
         CsvJobDao dao = new CsvJobDao(tempDir.resolve("Jobs.csv"));

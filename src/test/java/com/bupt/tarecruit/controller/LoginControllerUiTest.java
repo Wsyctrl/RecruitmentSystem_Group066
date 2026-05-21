@@ -17,6 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * TestFX UI tests for LoginController login and navigation.
+ */
 class LoginControllerUiTest extends BaseUiTest {
 
     @Override
@@ -38,7 +41,7 @@ class LoginControllerUiTest extends BaseUiTest {
         services.authService().register(com.bupt.tarecruit.entity.Role.MO,
                 "mo.cathy@bupt.edu.cn", "mopass", "mopass");
     }
-
+    /** Verifies renders login form. */
     @Test
     @DisplayName("Login view renders core fields and register link")
     void rendersLoginForm() {
@@ -48,7 +51,7 @@ class LoginControllerUiTest extends BaseUiTest {
         assertNotNull(registerLink, "registerLink should be present");
         assertEquals("No account? Register", registerLink.getText());
     }
-
+    /** Verifies ta portal shows back button. */
     @Test
     @DisplayName("TA portal shows the back-to-browse button on login")
     void taPortalShowsBackButton() {
@@ -57,7 +60,7 @@ class LoginControllerUiTest extends BaseUiTest {
         assertTrue(backButton.isVisible());
         assertTrue(backButton.isManaged());
     }
-
+    /** Verifies notice banner shows on configure. */
     @Test
     @DisplayName("Notice banner appears when configureForPortal supplies a notice")
     void noticeBannerShowsOnConfigure() {
@@ -70,7 +73,7 @@ class LoginControllerUiTest extends BaseUiTest {
         assertTrue(noticeBox.isVisible());
         assertEquals("Please sign in first.", noticeLabel.getText());
     }
-
+    /** Verifies empty email shows error. */
     @Test
     @DisplayName("Empty email triggers validation alert")
     void emptyEmailShowsError() {
@@ -85,7 +88,7 @@ class LoginControllerUiTest extends BaseUiTest {
         // Still on login (no dashboard).
         assertNotNull(fx("#userIdField"), "Should remain on login after validation failure");
     }
-
+    /** Verifies empty password shows error. */
     @Test
     @DisplayName("Empty password triggers validation alert")
     void emptyPasswordShowsError() {
@@ -99,7 +102,7 @@ class LoginControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertNotNull(fx("#userIdField"));
     }
-
+    /** Verifies invalid email keeps login. */
     @Test
     @DisplayName("Invalid email format keeps user on login")
     void invalidEmailKeepsLogin() {
@@ -113,7 +116,7 @@ class LoginControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertNotNull(fx("#userIdField"));
     }
-
+    /** Verifies wrong password shows error. */
     @Test
     @DisplayName("Wrong password keeps user on login view")
     void wrongPasswordShowsError() {
@@ -127,7 +130,7 @@ class LoginControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertNotNull(fx("#userIdField"), "Should remain on login after wrong password");
     }
-
+    /** Verifies disabled account is rejected. */
     @Test
     @DisplayName("Disabled account shows error and does not log in")
     void disabledAccountIsRejected() {
@@ -141,7 +144,7 @@ class LoginControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertNotNull(fx("#userIdField"), "Disabled accounts cannot sign in");
     }
-
+    /** Verifies mo account blocked on ta portal. */
     @Test
     @DisplayName("MO/Admin accounts cannot sign in from TA portal")
     void moAccountBlockedOnTaPortal() {
@@ -155,7 +158,7 @@ class LoginControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertNotNull(fx("#userIdField"));
     }
-
+    /** Verifies valid ta login navigates to dashboard. */
     @Test
     @DisplayName("Valid TA login navigates to dashboard")
     void validTaLoginNavigatesToDashboard() {
@@ -171,7 +174,7 @@ class LoginControllerUiTest extends BaseUiTest {
         assertNotNull(welcome, "TA dashboard should render after successful login");
         assertTrue(welcome.getText().contains("Alice"));
     }
-
+    /** Verifies register link navigates. */
     @Test
     @DisplayName("Register hyperlink navigates to registration view")
     void registerLinkNavigates() {
@@ -183,7 +186,7 @@ class LoginControllerUiTest extends BaseUiTest {
         assertNotNull(fx("#confirmPasswordField"),
                 "Register view should be loaded (confirmPasswordField appears only there)");
     }
-
+    /** Verifies back to browse loads guest dashboard. */
     @Test
     @DisplayName("Back-to-browse button navigates to TA guest dashboard")
     void backToBrowseLoadsGuestDashboard() {
@@ -201,7 +204,7 @@ class LoginControllerUiTest extends BaseUiTest {
         assertNotNull(welcome);
         assertEquals("Browse jobs as guest", welcome.getText());
     }
-
+    /** Verifies mo portal has no back button. */
     @Test
     @DisplayName("MO portal hides back button entirely")
     void moPortalHasNoBackButton() throws Exception {

@@ -1,10 +1,11 @@
 package com.bupt.tarecruit.util;
 
 /**
- * Result of saving a TA CV attachment.
+ * Outcome of persisting a teaching assistant CV attachment to disk.
  *
- * @param relativePath   stored path written to TA.csv ({@code cv_path})
- * @param contentChanged {@code true} when the file was newly created or its bytes changed
+ * @param relativePath   path written to {@code TA.csv} ({@code cv_path}), relative to the project root
+ * @param contentChanged {@code true} when the file was newly created or its bytes changed;
+ *                       {@code false} when an identical file already existed
  */
 public record CvSaveOutcome(String relativePath, boolean contentChanged) {
 }

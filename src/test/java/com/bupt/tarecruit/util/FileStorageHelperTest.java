@@ -9,22 +9,25 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for FileStorageHelper CV file operations.
+ */
 class FileStorageHelperTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies cv file name and relative path. */
     @Test
     void cvFileNameAndRelativePath() {
         assertEquals("ta@bupt.edu.cn_cv.txt", FileStorageHelper.cvFileName("ta@bupt.edu.cn"));
         assertEquals("data/cv/ta@bupt.edu.cn_cv.txt", FileStorageHelper.cvRelativePath("ta@bupt.edu.cn"));
     }
-
+    /** Verifies cv file name blank email throws. */
     @Test
     void cvFileNameBlankEmailThrows() {
         assertThrows(IllegalArgumentException.class, () -> FileStorageHelper.cvFileName(" "));
     }
-
+    /** Verifies save cv null source returns no path. */
     @Test
     void saveCvNullSourceReturnsNoPath() {
         FileStorageHelper helper = new FileStorageHelper(tempDir);
@@ -32,7 +35,7 @@ class FileStorageHelperTest {
         assertNull(outcome.relativePath());
         assertFalse(outcome.contentChanged());
     }
-
+    /** Verifies delete cv removes file. */
     @Test
     void deleteCvRemovesFile() throws Exception {
         FileStorageHelper helper = new FileStorageHelper(tempDir);

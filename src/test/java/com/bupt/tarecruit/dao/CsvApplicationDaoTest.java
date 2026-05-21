@@ -11,11 +11,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for CsvApplicationDao CSV persistence of applications.
+ */
 class CsvApplicationDaoTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies save update and query by ta and job. */
     @Test
     void saveUpdateAndQueryByTaAndJob() {
         CsvApplicationDao dao = new CsvApplicationDao(tempDir.resolve("Applications.csv"));
@@ -42,7 +45,7 @@ class CsvApplicationDaoTest {
         List<ApplicationRecord> all = dao.findAll();
         assertEquals(1, all.size());
     }
-
+    /** Verifies find by id case insensitive. */
     @Test
     void findByIdCaseInsensitive() {
         CsvApplicationDao dao = new CsvApplicationDao(tempDir.resolve("Applications.csv"));

@@ -34,12 +34,16 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
- * Controller for the TA dashboard view.
- * Manages job browsing, job applications, profile updates,
- * CV upload and download, and account-related actions.
+ * Controller for the TA dashboard (signed-in and guest browse modes).
+ * <p>
+ * Tabs: browse open jobs (apply, AI job match, resume tips), my applications (withdraw),
+ * and profile (save, CV, AI fill-from-CV). Guest mode hides authenticated tabs and redirects
+ * protected actions to login.
+ * </p>
  */
 public class TaDashboardController extends BaseController implements SessionAware {
 
+    /** Snapshot of saved profile fields used to detect unsaved edits when leaving the profile tab. */
     private record ProfileDraft(String fullName, String phone, String major, String skills, String experience, String selfEvaluation) {
     }
 
@@ -58,86 +62,158 @@ public class TaDashboardController extends BaseController implements SessionAwar
     private final java.util.Map<String, Integer> aiRecommendedJobScores = new java.util.HashMap<>();
     private final ObservableList<ApplicationDisplay> applicationItems = FXCollections.observableArrayList();
 
+    /** Header greeting or guest browse title. */
     @FXML
     private Label welcomeLabel;
+
+    /** Toggles between Log in (guest) and Log out (authenticated). */
     @FXML
     private Button authButton;
+
+    /** Main dashboard tab container. */
     @FXML
     private TabPane tabPane;
+
+    /** Open jobs browser tab. */
     @FXML
     private Tab browseJobsTab;
+
+    /** TA application history tab (hidden in guest mode). */
     @FXML
     private Tab myApplicationsTab;
+
+    /** Profile and CV tab (hidden in guest mode). */
     @FXML
     private Tab myProfileTab;
+
+    /** Keyword filter applied when Refresh is clicked. */
     @FXML
     private TextField jobSearchField;
+
+    /** Sortable list of open jobs with AI/applied row styling. */
     @FXML
     private TableView<TaJobDisplay> jobTable;
+
+    /** Vertical split between job list and detail/AI panels. */
     @FXML
     private SplitPane browseJobsVerticalSplit;
+
+    /** Horizontal split within the job detail area. */
     @FXML
     private SplitPane browseJobsHorizontalSplit;
+
+    /** Selected job title. */
     @FXML
     private Label jobNameLabel;
+
+    /** MO display name for the selected job. */
     @FXML
     private Label jobMoNameLabel;
+
+    /** Module name for the selected job. */
     @FXML
     private Label jobModuleLabel;
+
+    /** Position count label for the selected job. */
     @FXML
     private Label jobPositionsLabel;
+
+    /** Start/end dates for the selected job. */
     @FXML
     private Label jobDateLabel;
+
+    /** Read-only requirements for the selected job. */
     @FXML
     private TextArea jobRequirementsArea;
+
+    /** Read-only additional notes for the selected job. */
     @FXML
     private TextArea jobNotesArea;
+
+    /** Read-only keywords for the selected job. */
     @FXML
     private TextArea jobKeywordsArea;
+
+    /** Submits an application for the selected job. */
     @FXML
     private Button applyButton;
+
+    /** Free-text preference passed to AI job recommendations. */
     @FXML
     private TextArea aiJobPreferenceField;
+
+    /** Text area showing AI job match results and scores. */
     @FXML
     private TextArea aiJobRecommendationArea;
+
+    /** Text area showing AI resume optimization for the selected job. */
     @FXML
     private TextArea aiResumeAdviceArea;
 
+    /** Table of the TA's applications across jobs. */
     @FXML
     private TableView<ApplicationDisplay> applicationTable;
+
+    /** Withdraws the selected pending application. */
     @FXML
     private Button withdrawButton;
 
+    /** Editable full name on the profile tab. */
     @FXML
     private TextField fullNameField;
+
+    /** Editable phone on the profile tab. */
     @FXML
     private TextField phoneField;
+
+    /** Read-only email on the profile tab. */
     @FXML
     private TextField emailField;
+
+    /** Editable major on the profile tab. */
     @FXML
     private TextField majorField;
+
+    /** Editable skills on the profile tab. */
     @FXML
     private TextArea skillsArea;
+
+    /** Editable experience on the profile tab. */
     @FXML
     private TextArea experienceArea;
+
+    /** Editable self-evaluation on the profile tab. */
     @FXML
     private TextArea selfEvalArea;
+
+    /** Shows whether a CV file is attached. */
     @FXML
     private Label cvPathLabel;
+
+    /** Removes the uploaded CV file. */
     @FXML
     private Button deleteCvButton;
+
+    /** Downloads the CV to a user-chosen path. */
     @FXML
     private Button downloadCvButton;
+
+    /** Uploads a .txt CV via file chooser. */
     @FXML
     private Button uploadCvButton;
+
+    /** Triggers AI extraction of profile fields from the uploaded CV. */
     @FXML
     private Button aiFillProfileButton;
+
+    /** Status text for AI profile fill progress or errors. */
     @FXML
     private Label aiFillStatusLabel;
-/**
- * Performs controller-specific initialization after shared dependencies
- * have been injected. Sets up job filtering, table bindings, and selection listeners.
- */
+
+    /**
+     * Binds job and application tables, split panes, tab guards, and selection listeners
+     * after {@link BaseController#init} injects dependencies.
+     */
     @Override
     protected void onInit() {
         filteredJobs = new FilteredList<>(jobItems, job -> true);
@@ -292,6 +368,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
         selectTab(myApplicationsTab);
     }
 
+    /**
+     * Enables browse-only mode without a session: jobs visible, auth button shows Log in,
+     * applications/profile tabs unused, and protected handlers redirect to login.
+     */
     public void enterGuestMode() {
         this.session = null;
         this.guestMode = true;
@@ -548,6 +628,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         return applicationItems.stream().anyMatch(display -> display.getRecord().getJobId().equalsIgnoreCase(jobId));
     }
 
+    /** Submits a job application for the selected open posting (requires sign-in). */
     @FXML
     private void handleApply() {
         if (guestMode) {
@@ -574,6 +655,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Withdraws the selected pending application after confirmation. */
     @FXML
     private void handleWithdraw() {
         if (guestMode) {
@@ -601,6 +683,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Persists profile fields via {@link com.bupt.tarecruit.service.ProfileService#updateTa}. */
     @FXML
     private void handleSaveProfile() {
         if (guestMode) {
@@ -627,6 +710,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Opens the modal change-password dialog for the signed-in TA. */
     @FXML
     private void handleChangePasswordFromProfile() {
         if (guestMode) {
@@ -672,6 +756,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Uploads a .txt resume and updates the TA CV path. */
     @FXML
     private void handleUploadCv() {
         if (guestMode) {
@@ -701,6 +786,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         DialogUtil.info("CV uploaded", navigator.getPrimaryStage());
     }
 
+    /** Deletes the on-disk CV and clears the profile CV reference. */
     @FXML
     private void handleDeleteCv() {
         if (guestMode) {
@@ -729,6 +815,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         DialogUtil.info("CV deleted", navigator.getPrimaryStage());
     }
 
+    /** Saves a copy of the uploaded CV via file chooser. */
     @FXML
     private void handleDownloadCv() {
         if (guestMode) {
@@ -761,6 +848,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Guest: navigate to login; signed-in: log out to guest dashboard or login. */
     @FXML
     private void handleAuthAction() {
         if (guestMode) {
@@ -774,6 +862,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Applies the job search filter and refreshes the job table ordering. */
     @FXML
     private void handleRefreshJobs() {
         applyJobFilter(jobSearchField == null ? "" : jobSearchField.getText());
@@ -860,6 +949,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         return selected != null && selected.getJob().getJobId().equalsIgnoreCase(jobIdSnapshot);
     }
 
+    /** Clears AI job highlights, cancels in-flight recommendation task, and resets the results area. */
     @FXML
     private void handleResetAiJobRecommendations() {
         if (activeRecommendJobsTask != null && activeRecommendJobsTask.isRunning()) {
@@ -876,6 +966,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Calls {@link com.bupt.tarecruit.service.AiService#recommendJobsForTa} on eligible open jobs,
+     * highlights top matches in the table, and shows scored reasons (pads with jobId order if needed).
+     */
     @FXML
     private void handleAiRecommendJobs() {
         if (guestMode) {
@@ -998,6 +1092,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Extracts profile draft fields from the uploaded CV via AI; user must still click Save profile.
+     */
     @FXML
     private void handleAiFillProfileFromCv() {
         if (guestMode) {
@@ -1044,6 +1141,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
         new Thread(task, "ai-fill-profile").start();
     }
 
+    /**
+     * Generates resume optimization bullets for the selected job; ignores stale results if
+     * selection or tab changes before completion.
+     */
     @FXML
     private void handleAiResumeOptimization() {
         if (guestMode) {

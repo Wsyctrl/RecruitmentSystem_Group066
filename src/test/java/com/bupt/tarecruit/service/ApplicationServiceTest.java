@@ -16,11 +16,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for ApplicationService apply, hire, and reject flows.
+ */
 class ApplicationServiceTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies apply and hire applicant flow. */
     @Test
     void applyAndHireApplicantFlow() {
         Path jobFile = tempDir.resolve("Jobs.csv");
@@ -68,7 +71,7 @@ class ApplicationServiceTest {
                 .orElseThrow();
         assertEquals(ApplicationStatus.REJECTED, rejected.getStatus());
     }
-
+    /** Verifies withdraw then can apply again. */
     @Test
     void withdrawThenCanApplyAgain() {
         Path jobFile = tempDir.resolve("Jobs.csv");

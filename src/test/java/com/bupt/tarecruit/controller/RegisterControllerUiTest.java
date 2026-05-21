@@ -17,6 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * TestFX UI tests for RegisterController registration flow.
+ */
 class RegisterControllerUiTest extends BaseUiTest {
 
     @Override
@@ -28,7 +31,7 @@ class RegisterControllerUiTest extends BaseUiTest {
     protected void navigateInitialView() {
         navigator.showRegister();
     }
-
+    /** Verifies renders register form. */
     @Test
     @DisplayName("Register view shows core fields and the role hint")
     void rendersRegisterForm() {
@@ -39,7 +42,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         assertNotNull(hint);
         assertEquals("Register as TA", hint.getText());
     }
-
+    /** Verifies role choice hidden. */
     @Test
     @DisplayName("Role choice is hidden in TA portal but still set to TA")
     void roleChoiceHidden() {
@@ -49,7 +52,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         assertFalse(roleChoice.isManaged());
         assertEquals(Role.TA, roleChoice.getValue());
     }
-
+    /** Verifies mo portal changes hint. */
     @Test
     @DisplayName("MO portal renders 'Register as MO'")
     void moPortalChangesHint() {
@@ -64,7 +67,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         ChoiceBox<Role> roleChoice = fx("#roleChoice");
         assertEquals(Role.MO, roleChoice.getValue());
     }
-
+    /** Verifies empty email rejected. */
     @Test
     @DisplayName("Empty email shows an error and stays on register")
     void emptyEmailRejected() {
@@ -74,7 +77,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         assertNotNull(fx("#confirmPasswordField"), "Should stay on register view");
         assertTrue(services.profileService().findTa("").isEmpty());
     }
-
+    /** Verifies empty password rejected. */
     @Test
     @DisplayName("Empty password shows an error and stays on register")
     void emptyPasswordRejected() {
@@ -83,7 +86,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertTrue(services.profileService().findTa("new.ta@bupt.edu.cn").isEmpty());
     }
-
+    /** Verifies empty confirm rejected. */
     @Test
     @DisplayName("Empty confirm password shows an error and stays on register")
     void emptyConfirmRejected() {
@@ -92,7 +95,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertTrue(services.profileService().findTa("new.ta@bupt.edu.cn").isEmpty());
     }
-
+    /** Verifies invalid email rejected. */
     @Test
     @DisplayName("Invalid bupt email format is rejected")
     void invalidEmailRejected() {
@@ -101,7 +104,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertTrue(services.profileService().findTa("notabupt@example.com").isEmpty());
     }
-
+    /** Verifies mismatched passwords rejected. */
     @Test
     @DisplayName("Mismatched passwords are rejected")
     void mismatchedPasswordsRejected() {
@@ -110,7 +113,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertTrue(services.profileService().findTa("ta.zoe@bupt.edu.cn").isEmpty());
     }
-
+    /** Verifies existing email rejected. */
     @Test
     @DisplayName("Existing email cannot be re-registered")
     void existingEmailRejected() {
@@ -121,7 +124,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         assertEquals("pass1234",
                 services.profileService().findTa("ta.alice@bupt.edu.cn").orElseThrow().getPassword());
     }
-
+    /** Verifies valid registration creates account. */
     @Test
     @DisplayName("Valid TA registration creates the account and navigates to login")
     void validRegistrationCreatesAccount() {
@@ -133,7 +136,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         // We should be back on the login screen (registerLink hyperlink only exists there).
         assertNotNull(fx("#registerLink"));
     }
-
+    /** Verifies back to sign in navigates to login. */
     @Test
     @DisplayName("Back to sign in returns to the login view")
     void backToSignInNavigatesToLogin() {
@@ -145,7 +148,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
         assertNotNull(fx("#registerLink"));
     }
-
+    /** Verifies back to browse navigates to guest dashboard. */
     @Test
     @DisplayName("Back-to-browse arrow returns to TA guest dashboard")
     void backToBrowseNavigatesToGuestDashboard() {

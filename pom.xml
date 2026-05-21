@@ -157,6 +157,25 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                    <encoding>UTF-8</encoding>
+                    <docencoding>UTF-8</docencoding>
+                    <charset>UTF-8</charset>
+                    <show>public</show>
+                    <noqualifier>all</noqualifier>
+                    <doclint>all,-missing</doclint>
+                    <failOnError>false</failOnError>
+                    <windowtitle>BUPT TA Recruitment System API</windowtitle>
+                    <doctitle>BUPT TA Recruitment System ${project.version}</doctitle>
+                    <bottom>Copyright BUPT International School TA Recruitment System</bottom>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.6.0</version>
                 <configuration>

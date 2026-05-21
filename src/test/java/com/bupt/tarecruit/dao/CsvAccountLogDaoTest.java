@@ -10,11 +10,14 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for CsvAccountLogDao CSV persistence of account audit logs.
+ */
 class CsvAccountLogDaoTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies save and load account log. */
     @Test
     void saveAndLoadAccountLog() {
         CsvAccountLogDao dao = new CsvAccountLogDao(tempDir.resolve("AccountLogs.csv"));

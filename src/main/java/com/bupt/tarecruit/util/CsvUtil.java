@@ -16,13 +16,24 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Helper methods to work with CSV-backed data stores.
+ * Utility methods for reading and writing CSV-backed data stores.
+ * <p>
+ * All file operations use UTF-8 encoding. I/O failures are wrapped in
+ * {@link IllegalStateException} rather than propagated as checked exceptions.
+ * </p>
  */
 public final class CsvUtil {
 
     private CsvUtil() {
     }
 
+    /**
+     * Ensures that the parent directory exists and that the CSV file at {@code path}
+     * exists with the given header row. Creates the file when it is missing.
+     *
+     * @param path   target CSV file path
+     * @param header column names written as the first row when the file is created
+     */
     public static void ensureFileWithHeader(Path path, String[] header) {
         try {
             Files.createDirectories(path.getParent());
@@ -37,6 +48,12 @@ public final class CsvUtil {
         }
     }
 
+    /**
+     * Reads all data rows from a CSV file, excluding the header row.
+     *
+     * @param path path of the CSV file to read
+     * @return list of data rows (never {@code null}; may be empty)
+     */
     public static List<String[]> readDataRows(Path path) {
         ensurePathExists(path);
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8);
@@ -51,6 +68,15 @@ public final class CsvUtil {
         }
     }
 
+    /**
+     * Replaces the entire contents of a CSV file with a header row followed by
+     * the supplied data rows. Writes to a temporary file first, then atomically
+     * replaces the target file.
+     *
+     * @param path   target CSV file path
+     * @param header column names written as the first row
+     * @param rows   data rows to persist (excluding the header)
+     */
     public static void writeAll(Path path, String[] header, List<String[]> rows) {
         ensurePathExists(path);
         Path tempPath = path.resolveSibling(path.getFileName().toString() + ".tmp");
@@ -72,6 +98,12 @@ public final class CsvUtil {
         }
     }
 
+    /**
+     * Ensures that the parent directory and the file at {@code path} exist,
+     * creating them when necessary.
+     *
+     * @param path target file path whose parent and file must exist
+     */
     private static void ensurePathExists(Path path) {
         try {
             if (Files.notExists(path.getParent())) {

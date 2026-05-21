@@ -24,7 +24,7 @@ class ApplicationServiceStateTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies apply to closed job should fail. */
     @Test
     void applyToClosedJobShouldFail() {
         ApplicationService service = createService();
@@ -36,7 +36,7 @@ class ApplicationServiceStateTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("not open"));
     }
-
+    /** Verifies withdraw non pending should fail. */
     @Test
     void withdrawNonPendingShouldFail() {
         ApplicationService service = createService();
@@ -50,7 +50,7 @@ class ApplicationServiceStateTest {
         assertFalse(withdraw.success());
         assertTrue(withdraw.message().toLowerCase().contains("pending"));
     }
-
+    /** Verifies unhire reject and unreject flow. */
     @Test
     void unhireRejectAndUnrejectFlow() {
         ApplicationService service = createService();
@@ -69,7 +69,7 @@ class ApplicationServiceStateTest {
         assertTrue(service.unrejectApplicant(applyId).success());
         assertEquals(ApplicationStatus.PENDING, appDao(service).findById(applyId).orElseThrow().getStatus());
     }
-
+    /** Verifies unhire non hired should fail. */
     @Test
     void unhireNonHiredShouldFail() {
         ApplicationService service = createService();
@@ -81,7 +81,7 @@ class ApplicationServiceStateTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("hired"));
     }
-
+    /** Verifies hire multiple positions before closing. */
     @Test
     void hireMultiplePositionsBeforeClosing() {
         ApplicationService service = createService();
@@ -100,7 +100,7 @@ class ApplicationServiceStateTest {
         assertEquals(JobStatus.CLOSED, jobDao(service).findById(job.getJobId()).orElseThrow().getStatus());
         assertEquals(ApplicationStatus.REJECTED, appDao(service).findById(id3).orElseThrow().getStatus());
     }
-
+    /** Verifies find active applications for job dedupes same ta. */
     @Test
     void findActiveApplicationsForJobDedupesSameTa() {
         ApplicationService service = createService();
@@ -124,7 +124,7 @@ class ApplicationServiceStateTest {
         List<ApplicationRecord> active = service.findActiveApplicationsForJob(job.getJobId());
         assertEquals(1, active.size());
     }
-
+    /** Verifies overlapping hired jobs triggers concurrent warning. */
     @Test
     void overlappingHiredJobsTriggersConcurrentWarning() {
         ApplicationService service = createService();
@@ -154,7 +154,7 @@ class ApplicationServiceStateTest {
         assertTrue(service.shouldWarnConcurrentHire(taId, target.getJobId()));
         assertEquals(WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD, overlaps.size());
     }
-
+    /** Verifies normalize pending applications for closed jobs on startup. */
     @Test
     void normalizePendingApplicationsForClosedJobsOnStartup() {
         CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
@@ -176,7 +176,7 @@ class ApplicationServiceStateTest {
 
         assertEquals(ApplicationStatus.REJECTED, appDao.findById("apply-p").orElseThrow().getStatus());
     }
-
+    /** Verifies find current ongoing hired jobs uses date window. */
     @Test
     void findCurrentOngoingHiredJobsUsesDateWindow() {
         ApplicationService service = createService();

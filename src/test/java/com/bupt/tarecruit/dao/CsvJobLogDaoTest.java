@@ -9,11 +9,14 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for CsvJobLogDao CSV persistence of job audit logs.
+ */
 class CsvJobLogDaoTest {
 
     @TempDir
     Path tempDir;
-
+    /** Verifies save and load job log. */
     @Test
     void saveAndLoadJobLog() {
         CsvJobLogDao dao = new CsvJobLogDao(tempDir.resolve("JobLogs.csv"));

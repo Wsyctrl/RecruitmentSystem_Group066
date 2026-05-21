@@ -72,6 +72,10 @@ public class ServiceRegistry {
      * Administrator operation service.
      */
     private final AdminService adminService;
+
+    /**
+     * AI assistant for job/applicant recommendations, summaries, keywords, and insights.
+     */
     private final AiService aiService;
 
     /**
@@ -159,6 +163,11 @@ public class ServiceRegistry {
         return adminService;
     }
 
+    /**
+     * Returns the AI service used for DashScope/Qwen integrations.
+     *
+     * @return shared {@link AiService} instance
+     */
     public AiService aiService() {
         return aiService;
     }
