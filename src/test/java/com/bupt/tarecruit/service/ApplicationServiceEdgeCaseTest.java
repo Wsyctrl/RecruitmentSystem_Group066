@@ -92,6 +92,43 @@ class ApplicationServiceEdgeCaseTest {
         assertEquals(ApplicationStatus.HIRED, hiredRecord.getStatus());
     }
 
+    @Test
+    void withdrawUnknownApplicationShouldFail() {
+        CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
+        CsvApplicationDao applicationDao = new CsvApplicationDao(tempDir.resolve("Applications.csv"));
+        ApplicationService service = new ApplicationService(applicationDao, jobDao);
+
+        OperationResult<Void> result = service.withdraw("apply999", "ta20230001");
+        assertFalse(result.success());
+        assertTrue(result.message().contains("not found"));
+    }
+
+    @Test
+    void hireUnknownApplicationShouldFail() {
+        CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
+        CsvApplicationDao applicationDao = new CsvApplicationDao(tempDir.resolve("Applications.csv"));
+        ApplicationService service = new ApplicationService(applicationDao, jobDao);
+
+        OperationResult<Void> result = service.hireApplicant("apply999");
+        assertFalse(result.success());
+        assertTrue(result.message().contains("not found"));
+    }
+
+    @Test
+    void findActiveApplicationsForTaExcludesWithdrawn() {
+        CsvJobDao jobDao = new CsvJobDao(tempDir.resolve("Jobs.csv"));
+        CsvApplicationDao applicationDao = new CsvApplicationDao(tempDir.resolve("Applications.csv"));
+        ApplicationService service = new ApplicationService(applicationDao, jobDao);
+
+        Job job = createOpenJob("job1004");
+        jobDao.save(job);
+        String applyId = service.applyForJob("ta20230005", job).data().getApplyId();
+        service.withdraw(applyId, "ta20230005");
+
+        assertTrue(service.findActiveApplicationsForTa("ta20230005").isEmpty());
+        assertEquals(1, service.findByTa("ta20230005").size());
+    }
+
     private Job createOpenJob(String jobId) {
         Job job = new Job();
         job.setJobId(jobId);

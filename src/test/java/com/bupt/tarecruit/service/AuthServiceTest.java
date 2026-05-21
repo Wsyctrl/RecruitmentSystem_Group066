@@ -93,4 +93,140 @@ class AuthServiceTest {
         assertFalse(result.success());
         assertTrue(result.message().toLowerCase().contains("@bupt.edu.cn"));
     }
+
+    @Test
+    void loginTaSuccessShouldReturnTaSession() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        Ta ta = new Ta("ta20230001@bupt.edu.cn", "Pass@123");
+        ta.setEmail("ta20230001@bupt.edu.cn");
+        taDao.save(ta);
+
+        OperationResult<UserSession> result = service.login("ta20230001@bupt.edu.cn", "Pass@123");
+
+        assertTrue(result.success());
+        assertEquals(Role.TA, result.data().role());
+        assertTrue(result.data().taOptional().isPresent());
+    }
+
+    @Test
+    void loginMoSuccessShouldReturnMoSession() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        Mo mo = new Mo("mo20160001@bupt.edu.cn", "MoPass@1");
+        mo.setEmail("mo20160001@bupt.edu.cn");
+        moDao.save(mo);
+
+        OperationResult<UserSession> result = service.login("mo20160001@bupt.edu.cn", "MoPass@1");
+
+        assertTrue(result.success());
+        assertEquals(Role.MO, result.data().role());
+        assertTrue(result.data().moOptional().isPresent());
+    }
+
+    @Test
+    void loginWrongPasswordShouldFail() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        Ta ta = new Ta("ta20230002@bupt.edu.cn", "Correct@1");
+        ta.setEmail("ta20230002@bupt.edu.cn");
+        taDao.save(ta);
+
+        OperationResult<UserSession> result = service.login("ta20230002@bupt.edu.cn", "Wrong@1");
+
+        assertFalse(result.success());
+        assertTrue(result.message().toLowerCase().contains("password"));
+    }
+
+    @Test
+    void loginUnknownUserShouldFail() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        OperationResult<UserSession> result = service.login("unknown@bupt.edu.cn", "Pass@123");
+
+        assertFalse(result.success());
+        assertTrue(result.message().toLowerCase().contains("unknown"));
+    }
+
+    @Test
+    void loginBlankFieldsShouldThrow() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        assertThrows(IllegalArgumentException.class, () -> service.login("", "Pass@123"));
+        assertThrows(IllegalArgumentException.class, () -> service.login("ta@bupt.edu.cn", "  "));
+    }
+
+    @Test
+    void loginInvalidEmailFormatShouldFail() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        OperationResult<UserSession> result = service.login("not-an-email", "Pass@123");
+
+        assertFalse(result.success());
+        assertTrue(result.message().contains("@bupt.edu.cn"));
+    }
+
+    @Test
+    void registerTaSuccessShouldPersist() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        OperationResult<Void> result = service.register(Role.TA, "newta@bupt.edu.cn", "Pass@123", "Pass@123");
+
+        assertTrue(result.success());
+        assertTrue(taDao.findById("newta@bupt.edu.cn").isPresent());
+        assertFalse(taDao.findById("newta@bupt.edu.cn").orElseThrow().isDisabled());
+    }
+
+    @Test
+    void registerPasswordMismatchShouldFail() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        OperationResult<Void> result = service.register(Role.TA, "newmo@bupt.edu.cn", "Pass@123", "Pass@999");
+
+        assertFalse(result.success());
+        assertTrue(result.message().toLowerCase().contains("match"));
+    }
+
+    @Test
+    void registerAdminRoleShouldThrow() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        assertThrows(IllegalStateException.class,
+                () -> service.register(Role.ADMIN, "admin2@bupt.edu.cn", "Pass@123", "Pass@123"));
+    }
+
+    @Test
+    void loginDisabledMoShouldFail() {
+        CsvTaDao taDao = new CsvTaDao(tempDir.resolve("TA.csv"));
+        CsvMoDao moDao = new CsvMoDao(tempDir.resolve("MO.csv"));
+        AuthService service = new AuthService(taDao, moDao);
+
+        Mo mo = new Mo("mo20160002@bupt.edu.cn", "Pass@123");
+        mo.setEmail("mo20160002@bupt.edu.cn");
+        mo.setDisabled(true);
+        moDao.save(mo);
+
+        OperationResult<UserSession> result = service.login("mo20160002@bupt.edu.cn", "Pass@123");
+
+        assertFalse(result.success());
+        assertTrue(result.message().toLowerCase().contains("disabled"));
+    }
 }
