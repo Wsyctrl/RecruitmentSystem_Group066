@@ -11,7 +11,7 @@ Our design strategy prioritises **modularity**, **testability**, and **maintaina
 - **Design for testability** — business rules live in services that do not depend on JavaFX; UI controllers delegate to services.
 - **Incremental refinement** — start with core flows (login, job posting, apply, hire) and extend with admin, logging, and AI features and so on.
 
-We also mapped our solution to the **4+1 Architectural View Model** (Kruchten):
+We also mapped our solution to the **4+1 Architectural View Model**:
 
 | View | How it applies to our system |
 |------|------------------------------|
@@ -512,5 +512,43 @@ Testing found and fixed issues such as duplicate applications after withdraw, in
 3. **No secrets** in prompts or committed files; API keys only in local config.  
 4. **Developers remain accountable** for correctness, security, and coursework compliance.  
 5. **Report transparency** — This section documents both development-time GenAI (Cursor/ChatGPT) and product-embedded GenAI (Qwen).
+
+---
+
+## 5. Individual Member Contributions and Reflections
+
+### 5.1 Siyan Wu (Project Lead)
+
+#### Main contribution
+
+As project lead, I set up the Maven/JavaFX skeleton, layered packages, CSV DAOs, `ServiceRegistry`, and `OperationResult<T>`. I implemented dual-portal login/register, AI applicant summaries, workload checks, `AiService` fallbacks, and GitHub Actions CI. I coordinated interface contracts, pull-request merges, and four GitHub Releases (v1.0–v4.0).
+
+#### Reflective statement
+
+Software engineering here was as much about **process** as about code. We ran four agile sprints with a versioned release at each end; my role was to keep `main` integratable while five teammates worked on feature branches. That meant agreeing DAO interfaces early, writing a short PR description, and refusing merges when `mvn verify` failed locally or in CI. GitHub Issues tracked bugs and backlog items; our commit convention (`feat`, `fix`, `test`, …) made history readable during review.
+
+GenAI (Cursor/ChatGPT) was part of the toolchain, not a substitute for engineering discipline. We adopted a team rule: AI-generated changes must be reviewed and tested before merge—matching coursework expectations for responsible GenAI use. I sometimes over-focused on implementation when facilitation would have helped more; a per-sprint “interface changelog” and earlier cross-portal demos would reduce late integration surprises.
+
+CI with 168 tests became our shared quality gate; flaky TestFX runs taught us that test infrastructure is product work. I learned that scoping AI as optional enhancement kept demos reliable when the network failed. Facilitating sprint retros—what to defer, what blocked others—was as important as merging code. Overall this project trained me in technical leadership: architecture, collaboration, release management, and accountability—not only Java syntax. Delivering four named releases on GitHub made progress visible to the whole group.
+
+---
+
+### 5.2 Xinzhu Wang
+
+---
+
+### 5.3 Shuyu Zhu
+
+---
+
+### 5.4 Yuan Zhang
+
+---
+
+### 5.5 Liying Wu
+
+---
+
+### 5.6 Jie Sun
 
 ---
