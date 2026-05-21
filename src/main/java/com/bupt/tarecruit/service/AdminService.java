@@ -218,6 +218,6 @@ public class AdminService {
         List<String> existing = accountLogDao.findAll().stream()
                 .map(AccountLog::getLogId)
                 .collect(Collectors.toList());
-        return IdGenerator.nextId("log", existing);
+        return IdGenerator.nextId("alog", existing);
     }
 }
