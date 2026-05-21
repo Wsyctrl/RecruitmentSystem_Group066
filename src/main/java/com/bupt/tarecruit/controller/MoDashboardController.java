@@ -1058,7 +1058,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
                 // Log the action to JobLog
                 String moId = session.moOptional().map(Mo::getMoId).orElse("admin@bupt.edu.cn");
                 JobLog log = new JobLog();
-                log.setLogId(generateLogId());
+                log.setLogId(generateJobLogId());
                 log.setAdminId(moId);
                 log.setJobId(job.getJobId());
                 log.setAction(JobLog.JobLogAction.CLOSE_JOB);
@@ -1091,7 +1091,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
             if (result.success()) {
                 // Log the action to JobLog
                 JobLog log = new JobLog();
-                log.setLogId(generateLogId());
+                log.setLogId(generateJobLogId());
                 log.setAdminId(moId);
                 log.setJobId(job.getJobId());
                 log.setAction(JobLog.JobLogAction.OPEN_JOB);
@@ -1335,7 +1335,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
             services.applicationService().rejectPendingApplicationsForJob(job.getJobId());
             // Log the action to JobLog
             JobLog log = new JobLog();
-            log.setLogId(generateLogId());
+            log.setLogId(generateJobLogId());
             log.setAdminId(adminId);
             log.setJobId(job.getJobId());
             log.setAction(JobLog.JobLogAction.CLOSE_JOB);
@@ -1371,7 +1371,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
             // Log the action to JobLog
             JobLog log = new JobLog();
-            log.setLogId(generateLogId());
+            log.setLogId(generateJobLogId());
             log.setAdminId(adminId);
             log.setJobId(job.getJobId());
             log.setAction(JobLog.JobLogAction.OPEN_JOB);
@@ -1475,11 +1475,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
-    private String generateLogId() {
-        List<String> existing = services.accountLogDao().findAll().stream()
-                .map(com.bupt.tarecruit.entity.AccountLog::getLogId)
+    private String generateJobLogId() {
+        List<String> existing = services.jobLogDao().findAll().stream()
+                .map(JobLog::getLogId)
                 .collect(Collectors.toList());
-        return com.bupt.tarecruit.util.IdGenerator.nextId("log", existing);
+        return com.bupt.tarecruit.util.IdGenerator.nextId("jlog", existing);
     }
 
     @FXML

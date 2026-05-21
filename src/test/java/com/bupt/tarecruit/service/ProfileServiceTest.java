@@ -3,10 +3,12 @@ package com.bupt.tarecruit.service;
 import com.bupt.tarecruit.dao.CsvMoDao;
 import com.bupt.tarecruit.dao.CsvTaDao;
 import com.bupt.tarecruit.entity.Ta;
+import com.bupt.tarecruit.util.FileStorageHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,12 +29,13 @@ class ProfileServiceTest {
         Ta ta = new Ta(TA_ID, "Secret@1");
         ta.setEmail(TA_ID);
         ta.setMajor("Computer Science");
+        ta.setCvPath(FileStorageHelper.cvRelativePath(TA_ID));
         ta.setAiSummary("Strong Java and teaching experience.");
         taDao.save(ta);
     }
 
     @Test
-    void updateTaClearsAiSummaryWhenProfileFieldsChange() {
+    void updateTaClearsAiSummaryWhenResumeProfileFieldsChange() {
         Ta ta = taDao.findById(TA_ID).orElseThrow();
         ta.setMajor("Software Engineering");
 
@@ -44,15 +47,48 @@ class ProfileServiceTest {
     }
 
     @Test
-    void updateTaClearsAiSummaryWhenCvPathChanges() {
+    void updateTaPreservesAiSummaryWhenOnlyContactFieldsChange() {
         Ta ta = taDao.findById(TA_ID).orElseThrow();
-        ta.setCvPath("cv/ta@bupt.edu.cn/resume.txt");
+        ta.setFullName("New Name");
+        ta.setPhone("13800001111");
+        ta.setPassword("Other@99");
 
         profileService.updateTa(ta);
 
         Ta stored = taDao.findById(TA_ID).orElseThrow();
-        assertEquals("cv/ta@bupt.edu.cn/resume.txt", stored.getCvPath());
+        assertEquals("Strong Java and teaching experience.", stored.getAiSummary());
+    }
+
+    @Test
+    void updateTaClearsAiSummaryWhenCvPathRemoved() {
+        Ta ta = taDao.findById(TA_ID).orElseThrow();
+        ta.setCvPath("");
+        profileService.updateTa(ta);
+
+        Ta stored = taDao.findById(TA_ID).orElseThrow();
+        assertTrue(stored.getCvPath() == null || stored.getCvPath().isBlank());
         assertTrue(stored.getAiSummary() == null || stored.getAiSummary().isBlank());
+    }
+
+    @Test
+    void updateTaClearsAiSummaryWhenCvContentChangedFlagIsTrue() {
+        Ta ta = taDao.findById(TA_ID).orElseThrow();
+        ta.setCvPath(FileStorageHelper.cvRelativePath(TA_ID));
+
+        profileService.updateTa(ta, true);
+
+        Ta stored = taDao.findById(TA_ID).orElseThrow();
+        assertTrue(stored.getAiSummary() == null || stored.getAiSummary().isBlank());
+    }
+
+    @Test
+    void updateTaPreservesAiSummaryWhenCvPathUnchangedAndContentUnchanged() {
+        Ta ta = taDao.findById(TA_ID).orElseThrow();
+
+        profileService.updateTa(ta, false);
+
+        Ta stored = taDao.findById(TA_ID).orElseThrow();
+        assertEquals("Strong Java and teaching experience.", stored.getAiSummary());
     }
 
     @Test
@@ -68,11 +104,24 @@ class ProfileServiceTest {
     }
 
     @Test
-    void hasNonAiSummaryFieldChangedIgnoresAiSummaryColumn() {
+    void shouldInvalidateAiSummaryIgnoresAiSummaryColumn() {
         Ta stored = taDao.findById(TA_ID).orElseThrow();
         Ta updated = taDao.findById(TA_ID).orElseThrow();
         updated.setAiSummary("Different cached summary.");
 
-        assertFalse(ProfileService.hasNonAiSummaryFieldChanged(stored, updated));
+        assertFalse(ProfileService.shouldInvalidateAiSummary(stored, updated, false));
+    }
+
+    @Test
+    void saveCvDetectsContentChange() throws Exception {
+        FileStorageHelper helper = new FileStorageHelper(tempDir);
+        Path first = tempDir.resolve("cv-v1.txt");
+        Path second = tempDir.resolve("cv-v2.txt");
+        Files.writeString(first, "skills: Java");
+        Files.writeString(second, "skills: Python");
+
+        assertTrue(helper.saveCv(TA_ID, first.toFile()).contentChanged());
+        assertFalse(helper.saveCv(TA_ID, first.toFile()).contentChanged());
+        assertTrue(helper.saveCv(TA_ID, second.toFile()).contentChanged());
     }
 }

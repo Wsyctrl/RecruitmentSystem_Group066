@@ -64,8 +64,19 @@ public class ProfileService {
      * @return operation result containing the updated TA entity
      */
     public OperationResult<Ta> updateTa(Ta ta) {
+        return updateTa(ta, false);
+    }
+
+    /**
+     * Updates a TA profile. Clears {@code ai_summary} when online resume fields change or when
+     * the CV attachment is added, removed, or its file content changes.
+     *
+     * @param cvContentChanged pass {@code true} after {@link com.bupt.tarecruit.util.FileStorageHelper#saveCv}
+     *                         reports that the on-disk CV bytes changed
+     */
+    public OperationResult<Ta> updateTa(Ta ta, boolean cvContentChanged) {
         taDao.findById(ta.getTaId()).ifPresent(stored -> {
-            if (hasNonAiSummaryFieldChanged(stored, ta)) {
+            if (shouldInvalidateAiSummary(stored, ta, cvContentChanged)) {
                 ta.setAiSummary("");
             }
         });
@@ -74,20 +85,29 @@ public class ProfileService {
     }
 
     /**
-     * Returns true when any TA.csv column other than {@code ai_summary} differs between
-     * the persisted record and the update payload.
+     * Returns true when TA data that feeds the MO applicant AI summary has changed.
      */
-    static boolean hasNonAiSummaryFieldChanged(Ta stored, Ta updated) {
-        return !Objects.equals(normalize(stored.getEmail()), normalize(updated.getEmail()))
-                || !Objects.equals(normalize(stored.getPassword()), normalize(updated.getPassword()))
-                || !Objects.equals(normalize(stored.getFullName()), normalize(updated.getFullName()))
-                || !Objects.equals(normalize(stored.getPhone()), normalize(updated.getPhone()))
-                || !Objects.equals(normalize(stored.getMajor()), normalize(updated.getMajor()))
+    static boolean shouldInvalidateAiSummary(Ta stored, Ta updated, boolean cvContentChanged) {
+        return hasResumeProfileChanged(stored, updated)
+                || hasCvAttachmentChanged(stored, updated, cvContentChanged);
+    }
+
+    static boolean hasResumeProfileChanged(Ta stored, Ta updated) {
+        return !Objects.equals(normalize(stored.getMajor()), normalize(updated.getMajor()))
                 || !Objects.equals(normalize(stored.getSkills()), normalize(updated.getSkills()))
                 || !Objects.equals(normalize(stored.getExperience()), normalize(updated.getExperience()))
-                || !Objects.equals(normalize(stored.getSelfEvaluation()), normalize(updated.getSelfEvaluation()))
-                || stored.isDisabled() != updated.isDisabled()
-                || !Objects.equals(normalize(stored.getCvPath()), normalize(updated.getCvPath()));
+                || !Objects.equals(normalize(stored.getSelfEvaluation()), normalize(updated.getSelfEvaluation()));
+    }
+
+    static boolean hasCvAttachmentChanged(Ta stored, Ta updated, boolean cvContentChanged) {
+        if (cvContentChanged) {
+            return true;
+        }
+        return hasCvPath(stored) != hasCvPath(updated);
+    }
+
+    private static boolean hasCvPath(Ta ta) {
+        return !normalize(ta.getCvPath()).isBlank();
     }
 
     private static String normalize(String value) {

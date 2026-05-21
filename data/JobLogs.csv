@@ -1,0 +1,6 @@
+log_id,admin_id,job_id,action,previous_state,new_state,timestamp
+jlog001,admin@bupt.edu.cn,job003,CLOSE_JOB,Open,Closed,2026-04-28 10:00
+jlog002,evans@bupt.edu.cn,job006,CLOSE_JOB,Open,Closed,2026-05-05 14:30
+jlog003,admin@bupt.edu.cn,job019,OPEN_JOB,Draft,Open,2026-04-28 09:00
+jlog004,cmartinez@bupt.edu.cn,job016,CLOSE_JOB,Open,Closed,2026-05-14 10:10
+jlog005,wanghong@bupt.edu.cn,job020,OPEN_JOB,Draft,Open,2026-04-25 08:30
