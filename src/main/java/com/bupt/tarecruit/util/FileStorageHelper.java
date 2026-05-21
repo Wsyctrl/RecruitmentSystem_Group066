@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 
 public class FileStorageHelper {
 
@@ -35,14 +36,22 @@ public class FileStorageHelper {
         return "data/cv/" + cvFileName(email);
     }
 
-    public String saveCv(String email, File source) {
+    public CvSaveOutcome saveCv(String email, File source) {
         if (source == null) {
-            return null;
+            return new CvSaveOutcome(null, false);
         }
         Path target = getCvDir().resolve(cvFileName(email));
         try {
-            Files.copy(source.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
-            return cvRelativePath(email);
+            byte[] newContent = Files.readAllBytes(source.toPath());
+            boolean contentChanged = true;
+            if (Files.isRegularFile(target)) {
+                byte[] existingContent = Files.readAllBytes(target);
+                contentChanged = !Arrays.equals(existingContent, newContent);
+            }
+            if (contentChanged) {
+                Files.write(target, newContent);
+            }
+            return new CvSaveOutcome(cvRelativePath(email), contentChanged);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to save CV", e);
         }

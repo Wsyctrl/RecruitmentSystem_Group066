@@ -9,6 +9,7 @@ import com.bupt.tarecruit.service.ApplicationService;
 import com.bupt.tarecruit.service.JobService;
 import com.bupt.tarecruit.util.DateTimeUtil;
 import com.bupt.tarecruit.util.DialogUtil;
+import com.bupt.tarecruit.util.CvSaveOutcome;
 import com.bupt.tarecruit.util.FileStorageHelper;
 import com.bupt.tarecruit.util.OperationResult;
 import com.bupt.tarecruit.viewmodel.ApplicationDisplay;
@@ -693,9 +694,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
             return;
         }
         FileStorageHelper helper = services.fileStorageHelper();
-        String storedPath = helper.saveCv(ta.getTaId(), selected);
-        ta.setCvPath(storedPath);
-        services.profileService().updateTa(ta);
+        CvSaveOutcome outcome = helper.saveCv(ta.getTaId(), selected);
+        ta.setCvPath(outcome.relativePath());
+        services.profileService().updateTa(ta, outcome.contentChanged());
         updateCvUi(ta);
         DialogUtil.info("CV uploaded", navigator.getPrimaryStage());
     }
