@@ -1,0 +1,27 @@
+log_id,admin_id,target_user_id,target_role,action,previous_state,new_state,timestamp
+log001,admin@bupt.edu.cn,20230002@bupt.edu.cn,TA,RESET_PASSWORD,Password changed,Password: Pass@123,2026-05-20 09:55
+log002,admin@bupt.edu.cn,20240014@bupt.edu.cn,TA,DISABLE,Account active,Account disabled,2026-04-28 14:10
+log003,admin@bupt.edu.cn,20240014@bupt.edu.cn,TA,ENABLE,Account disabled,Account active,2026-05-02 09:30
+log004,admin@bupt.edu.cn,wanghong@bupt.edu.cn,MO,RESET_PASSWORD,Password changed,Password: Pass@123,2026-03-10 11:20
+log005,admin@bupt.edu.cn,20240016@bupt.edu.cn,TA,RESET_PASSWORD,Password changed,Password: Pass@123,2026-05-12 16:45
+log006,admin@bupt.edu.cn,kzhang@bupt.edu.cn,MO,RESET_PASSWORD,Password changed,Password: Pass@123,2026-02-18 10:00
+log007,admin@bupt.edu.cn,20220009@bupt.edu.cn,TA,DISABLE,Account active,Account disabled,2026-01-15 13:25
+log008,admin@bupt.edu.cn,20220009@bupt.edu.cn,TA,ENABLE,Account disabled,Account active,2026-02-01 08:40
+log009,admin@bupt.edu.cn,slin@bupt.edu.cn,MO,RESET_PASSWORD,Password changed,Password: Pass@123,2026-04-05 15:55
+log010,admin@bupt.edu.cn,20240012@bupt.edu.cn,TA,RESET_PASSWORD,Password changed,Password: Pass@123,2026-05-08 11:10
+log011,admin@bupt.edu.cn,cmartinez@bupt.edu.cn,MO,RESET_PASSWORD,Password changed,Password: Pass@123,2026-04-22 09:05
+log012,admin@bupt.edu.cn,20230001@bupt.edu.cn,TA,RESET_PASSWORD,Password changed,Password: 123456,2026-03-01 10:30
+log013,admin@bupt.edu.cn,20210005@bupt.edu.cn,TA,RESET_PASSWORD,Password changed,Password: Pass@123,2026-04-14 17:20
+log014,admin@bupt.edu.cn,evans@bupt.edu.cn,MO,RESET_PASSWORD,Password changed,Password: Pass@123,2026-05-15 08:50
+log015,admin@bupt.edu.cn,20240004@bupt.edu.cn,TA,DISABLE,Account active,Account disabled,2026-05-18 19:00
+log016,admin@bupt.edu.cn,20240004@bupt.edu.cn,TA,ENABLE,Account disabled,Account active,2026-05-19 10:15
+log017,admin@bupt.edu.cn,rpark@bupt.edu.cn,MO,RESET_PASSWORD,Password changed,Password: Pass@123,2026-04-01 13:40
+log018,admin@bupt.edu.cn,20230040@bupt.edu.cn,TA,RESET_PASSWORD,Password changed,Password: Pass@123,2026-05-10 14:25
+log019,admin@bupt.edu.cn,jlee@bupt.edu.cn,MO,RESET_PASSWORD,Password changed,Password: Pass@123,2026-03-25 16:00
+log020,admin@bupt.edu.cn,20240031@bupt.edu.cn,TA,RESET_PASSWORD,Password changed,Password: Pass@123,2026-05-16 11:35
+log021,admin@bupt.edu.cn,20230001@bupt.edu.cn,TA,ENABLE,Disabled,Active,2026-05-21 01:19
+log022,admin@bupt.edu.cn,20230001@bupt.edu.cn,TA,DISABLE,Active,Disabled,2026-05-21 01:19
+log023,admin@bupt.edu.cn,20230001@bupt.edu.cn,TA,ENABLE,Disabled,Active,2026-05-21 02:16
+log024,admin@bupt.edu.cn,20230001@bupt.edu.cn,TA,DISABLE,Active,Disabled,2026-05-21 02:16
+log025,admin@bupt.edu.cn,20230001@bupt.edu.cn,TA,ENABLE,Disabled,Active,2026-05-21 02:21
+log026,admin@bupt.edu.cn,20230001@bupt.edu.cn,TA,DISABLE,Active,Disabled,2026-05-21 02:21
