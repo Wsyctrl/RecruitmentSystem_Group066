@@ -4,6 +4,7 @@ import com.bupt.tarecruit.dao.CsvMoDao;
 import com.bupt.tarecruit.dao.CsvTaDao;
 import com.bupt.tarecruit.entity.Ta;
 import com.bupt.tarecruit.util.FileStorageHelper;
+import com.bupt.tarecruit.util.OperationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -110,6 +111,51 @@ class ProfileServiceTest {
         updated.setAiSummary("Different cached summary.");
 
         assertFalse(ProfileService.shouldInvalidateAiSummary(stored, updated, false));
+    }
+
+    @Test
+    void changeTaPasswordSuccess() {
+        OperationResult<Void> result = profileService.changeTaPassword(
+                TA_ID, "Secret@1", "NewSecret@9", "NewSecret@9");
+        assertTrue(result.success());
+        assertEquals("NewSecret@9", taDao.findById(TA_ID).orElseThrow().getPassword());
+    }
+
+    @Test
+    void changeTaPasswordWrongCurrentShouldFail() {
+        OperationResult<Void> result = profileService.changeTaPassword(
+                TA_ID, "Wrong@1", "NewSecret@9", "NewSecret@9");
+        assertFalse(result.success());
+        assertTrue(result.message().toLowerCase().contains("incorrect"));
+    }
+
+    @Test
+    void changeTaPasswordMismatchConfirmShouldFail() {
+        OperationResult<Void> result = profileService.changeTaPassword(
+                TA_ID, "Secret@1", "NewSecret@9", "Other@9");
+        assertFalse(result.success());
+        assertTrue(result.message().toLowerCase().contains("match"));
+    }
+
+    @Test
+    void changeTaPasswordBlankNewShouldFail() {
+        OperationResult<Void> result = profileService.changeTaPassword(
+                TA_ID, "Secret@1", "  ", "  ");
+        assertFalse(result.success());
+        assertTrue(result.message().toLowerCase().contains("required"));
+    }
+
+    @Test
+    void updateMoProfileShouldPersist() {
+        com.bupt.tarecruit.entity.Mo mo = new com.bupt.tarecruit.entity.Mo("mo@bupt.edu.cn", "Mo@1");
+        mo.setEmail("mo@bupt.edu.cn");
+        mo.setFullName("Original");
+        new CsvMoDao(tempDir.resolve("MO.csv")).save(mo);
+
+        ProfileService service = new ProfileService(taDao, new CsvMoDao(tempDir.resolve("MO.csv")));
+        mo.setFullName("Updated MO");
+        assertTrue(service.updateMo(mo).success());
+        assertEquals("Updated MO", service.findMo("mo@bupt.edu.cn").orElseThrow().getFullName());
     }
 
     @Test
