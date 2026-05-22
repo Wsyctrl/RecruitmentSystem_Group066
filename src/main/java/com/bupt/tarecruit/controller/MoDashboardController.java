@@ -43,9 +43,30 @@ import java.util.stream.Collectors;
  */
 public class MoDashboardController extends BaseController implements SessionAware {
 
+    /** Snapshot of saved MO profile fields used when leaving the profile tab. */
+    private record MoProfileDraft(String fullName, String phone, String modules) {
+    }
+
+    /** Snapshot of the post/edit job form used when leaving that tab. */
+    private record JobFormDraft(
+            String jobName,
+            String module,
+            Integer positions,
+            LocalDate startDate,
+            LocalDate endDate,
+            String requirements,
+            String keywords,
+            String notes
+    ) {
+    }
+
     private UserSession session;
     private boolean adminMode;
     private Job currentEditingJob;
+    private MoProfileDraft persistedMoProfileDraft;
+    private JobFormDraft persistedJobFormDraft;
+    private boolean suppressTabGuard;
+    private boolean handlingEditableTabNavigation;
     private long applicantsAiContextVersion = 0L;
     private Task<List<AiService.ApplicantRecommendation>> activeRecommendApplicantsTask;
     private Task<List<AiService.ApplicantRecommendation>> activeSimilarApplicantsTask;
@@ -93,6 +114,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
     /** Create/edit job form tab. */
     @FXML
     private Tab postEditJobTab;
+
+    /** MO profile tab. */
+    @FXML
+    private Tab moProfileTab;
 
     /** Welcome header with display name. */
     @FXML
@@ -536,6 +561,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
         // When switching to admin tabs, refresh data
         if (tabPane != null) {
             tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+                if (newTab == null || handlingEditableTabNavigation) {
+                    return;
+                }
+                if (!suppressTabGuard && !handleEditableTabSwitch(oldTab, newTab)) {
+                    return;
+                }
                 if (oldTab == applicantsTab && newTab != applicantsTab) {
                     invalidateApplicantsAiContext();
                 }
@@ -566,6 +597,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
                 }
             });
         }
+        refreshJobFormDraft();
     }
 /**
  * Reloads all job records for the admin job table.
@@ -1099,6 +1131,122 @@ public class MoDashboardController extends BaseController implements SessionAwar
         moPhoneField.setText(mo.getPhone());
         moEmailField.setText(mo.getEmail());
         moModuleArea.setText(mo.getResponsibleModules());
+        persistedMoProfileDraft = snapshotMoProfileForm();
+    }
+
+    private MoProfileDraft snapshotMoProfileForm() {
+        return new MoProfileDraft(
+                safeText(moFullNameField.getText()).trim(),
+                safeText(moPhoneField.getText()).trim(),
+                safeText(moModuleArea.getText()).trim()
+        );
+    }
+
+    private boolean hasUnsavedMoProfileChanges() {
+        return persistedMoProfileDraft != null && !persistedMoProfileDraft.equals(snapshotMoProfileForm());
+    }
+
+    private JobFormDraft snapshotJobForm() {
+        Integer positions = positionsSpinner != null ? positionsSpinner.getValue() : 1;
+        return new JobFormDraft(
+                safeText(jobNameField.getText()).trim(),
+                safeText(moduleField.getText()).trim(),
+                positions,
+                startDatePicker.getValue(),
+                endDatePicker.getValue(),
+                safeText(requirementsField.getText()).trim(),
+                safeText(keywordsField.getText()).trim(),
+                safeText(notesField.getText()).trim()
+        );
+    }
+
+    private void refreshJobFormDraft() {
+        persistedJobFormDraft = snapshotJobForm();
+    }
+
+    private boolean hasUnsavedJobFormChanges() {
+        return persistedJobFormDraft != null && !persistedJobFormDraft.equals(snapshotJobForm());
+    }
+
+    private void loadJobForm() {
+        if (currentEditingJob != null) {
+            services.jobService().findById(currentEditingJob.getJobId())
+                    .ifPresentOrElse(job -> {
+                        currentEditingJob = job;
+                        populateJobForm(job);
+                    }, () -> populateJobForm(currentEditingJob));
+        } else {
+            resetNewJobFormFields();
+            formJobIdLabel.setText("New job");
+            formStatusLabel.setText("");
+            refreshJobFormDraft();
+        }
+    }
+
+    private void resetNewJobFormFields() {
+        jobNameField.clear();
+        moduleField.clear();
+        positionsSpinner.getValueFactory().setValue(1);
+        startDatePicker.setValue(null);
+        endDatePicker.setValue(null);
+        requirementsField.clear();
+        keywordsField.clear();
+        notesField.clear();
+    }
+
+    private boolean handleEditableTabSwitch(Tab oldTab, Tab newTab) {
+        if (postEditJobTab != null && oldTab == postEditJobTab && newTab != postEditJobTab) {
+            return handleLeavingEditableTab(postEditJobTab, newTab, this::hasUnsavedJobFormChanges,
+                    this::handleSaveJob, this::loadJobForm);
+        }
+        if (moProfileTab != null && oldTab == moProfileTab && newTab != moProfileTab) {
+            return handleLeavingEditableTab(moProfileTab, newTab, this::hasUnsavedMoProfileChanges,
+                    this::handleSaveMoProfile, this::loadProfile);
+        }
+        if (newTab == postEditJobTab) {
+            handlingEditableTabNavigation = true;
+            refreshJobFormDraft();
+            handlingEditableTabNavigation = false;
+        }
+        if (newTab == moProfileTab) {
+            handlingEditableTabNavigation = true;
+            loadProfile();
+            handlingEditableTabNavigation = false;
+        }
+        return true;
+    }
+
+    private boolean handleLeavingEditableTab(
+            Tab editableTab,
+            Tab newTab,
+            java.util.function.BooleanSupplier hasUnsavedChanges,
+            Runnable saveAction,
+            Runnable reloadAction) {
+        handlingEditableTabNavigation = true;
+        tabPane.getSelectionModel().select(editableTab);
+        handlingEditableTabNavigation = false;
+        if (hasUnsavedChanges.getAsBoolean()) {
+            boolean saveNow = DialogUtil.confirmYesNo(
+                    "You have unsaved changes. Save before leaving this page?",
+                    navigator.getPrimaryStage()
+            );
+            if (saveNow) {
+                saveAction.run();
+            } else {
+                reloadAction.run();
+            }
+        }
+        selectTab(newTab);
+        return false;
+    }
+
+    private void selectTab(Tab tab) {
+        if (tabPane == null || tab == null) {
+            return;
+        }
+        suppressTabGuard = true;
+        tabPane.getSelectionModel().select(tab);
+        suppressTabGuard = false;
     }
 
     private void loadAdminData() {
@@ -1133,25 +1281,17 @@ public class MoDashboardController extends BaseController implements SessionAwar
             return;
         }
         populateJobForm(selected);
-        if (postEditJobTab != null) {
-            tabPane.getSelectionModel().select(postEditJobTab);
-        }
+        selectTab(postEditJobTab);
     }
 
     /** Clears the post/edit form for a new job posting. */
     @FXML
     private void handleCreateNewJob() {
         currentEditingJob = null;
-        jobNameField.clear();
-        moduleField.clear();
-        positionsSpinner.getValueFactory().setValue(1);
-        startDatePicker.setValue(null);
-        endDatePicker.setValue(null);
-        requirementsField.clear();
-        keywordsField.clear();
-        notesField.clear();
+        resetNewJobFormFields();
         formJobIdLabel.setText("New job");
         formStatusLabel.setText("");
+        refreshJobFormDraft();
     }
 
     private void populateJobForm(Job job) {
@@ -1165,6 +1305,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         keywordsField.setText(safeText(job.getKeywords()));
         notesField.setText(safeText(job.getAdditionalNotes()));
         formJobIdLabel.setText("Edit: " + job.getJobId());
+        refreshJobFormDraft();
     }
 
     /** Creates or updates the job via {@link com.bupt.tarecruit.service.JobService#upsertJob}. */
@@ -1185,6 +1326,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
             if (result.success()) {
                 currentEditingJob = result.data();
                 formStatusLabel.setText(result.message());
+                refreshJobFormDraft();
                 refreshMyJobs();
                 if (adminMode) {
                     refreshAdminJobs();
@@ -1280,9 +1422,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
         jobSelector.getSelectionModel().select(job);
         loadApplicants(job);
-        if (applicantsTab != null) {
-            tabPane.getSelectionModel().select(applicantsTab);
-        }
+        selectTab(applicantsTab);
     }
 
     /** Re-applies applicant search filter and re-renders cards. */
@@ -1304,9 +1444,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
     @FXML
     private void handleAiGenerateInsights() {
         // Insights now live as their own admin tab; selecting that tab triggers loading.
-        if (tabPane != null && adminInsightsTab != null) {
-            tabPane.getSelectionModel().select(adminInsightsTab);
-        }
+        selectTab(adminInsightsTab);
     }
 
     /** Saves MO profile fields (name, phone, modules). */
@@ -1321,6 +1459,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         mo.setResponsibleModules(moModuleArea.getText());
         OperationResult<Mo> result = services.profileService().updateMo(mo);
         if (result.success()) {
+            persistedMoProfileDraft = snapshotMoProfileForm();
             welcomeLabel.setText("Welcome, " + session.getDisplayName());
             DialogUtil.info(result.message(), navigator.getPrimaryStage());
         } else {
@@ -2221,6 +2360,9 @@ CV: %s
         ApplicationRecord record = display.getRecord();
         if (record.getStatus() != ApplicationStatus.PENDING) {
             DialogUtil.info("This applicant has already been decided.", navigator.getPrimaryStage());
+            return;
+        }
+        if (!DialogUtil.confirm("Reject this applicant?", navigator.getPrimaryStage())) {
             return;
         }
         OperationResult<Void> result = services.applicationService().rejectApplicant(record.getApplyId());

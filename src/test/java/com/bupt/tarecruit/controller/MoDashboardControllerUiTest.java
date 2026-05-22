@@ -337,6 +337,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         services.applicationService().applyForJob("ta.daniel@bupt.edu.cn", job);
         loginAsBob();
         selectTab("Applicants");
+        nextAlertResponse = ButtonBar.ButtonData.OK_DONE;
         runOnFx(() -> {
             Button reject = fx("#rejectButton");
             assertNotNull(reject);
