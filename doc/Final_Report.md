@@ -559,6 +559,18 @@ Sprint demos taught me to explain features in user language for MO and admin tea
 
 ### 5.5 Liying Wu
 
+#### Main contribution
+
+I built MO applicant hire/reject, keyword search, AI-ranked and similar-applicant recommendations, and **unit tests** for hire cascades and application edge cases using `@TempDir` CSV fixtures.
+
+#### Reflective statement
+
+Software engineering quality was my main lens. Hire/reject is a high-impact business rule; I treated `ApplicationServiceTest` and edge-case tests as **living specification** when written requirements lagged. Adding tests in the same sprint as features matched our agile rule: don’t defer quality to the last week. CI on every PR meant my MO changes were regression-checked against TA auth and DAO layers I did not own—an example of **continuous integration** as a team contract, not a lead-only tool.
+
+Process-wise, I learned to communicate risks in review: one hire closes a job and rejects pending peers, so UI needs confirmations and clear `OperationResult` messages. AI ranking was demo-friendly but we agreed it must never auto-hire; that policy discussion was engineering ethics, not Java. Coordinating with Yuan on job open/close and with Jie on admin closure reduced duplicate fixes; earlier three-way sync would have saved time.
+
+GenAI suggested scenarios I had overlooked (e.g. duplicate apply after withdraw), but humans chose what entered the suite—illustrating AI as assistant, not author. Peer review taught me readable test names (`duplicateActiveApplicationShouldBeRejected`) help future maintainers. Discussing equivalence classes and boundaries in group meetings linked lecture material to our `@TempDir` fixtures. I also saw how 168 passing tests built trust before GitHub Releases. I leave valuing test design, cross-feature coordination, and accountable MO workflows as central to engineering, not extras around “real” development. Sharing test notes in PRs helped reviewers understand intent quickly.
+
 ---
 
 ### 5.6 Jie Sun
