@@ -574,5 +574,17 @@ GenAI suggested scenarios I had overlooked (e.g. duplicate apply after withdraw)
 ---
 
 ### 5.6 Jie Sun
+#### Main contribution
 
+I delivered admin password reset, account enable/disable, all-jobs management, account/job audit logs, insights (statistics, workload, 30-day AI summary), and **integration testing** across TA/MO/admin flows including TestFX for admin tabs.
+
+#### Reflective statement
+
+Admin and integration work highlighted **systems thinking**. Low-frequency features (reset password, disable account) carry high risk; our engineering response was end-to-end checks—disabled users cannot log in on either portal, admin job close propagates to MO/TA views, insights load on first open—documented in manual scripts and automated tests where stable. I planned test paths across sprints rather than only in Sprint 4, though earlier start would have smoothed load.
+
+Logs via `AdminService` and CSV log DAOs are **non-functional requirements**: auditability supports accountability in a coursework system mimicking real operations. Sprint reviews with the team clarified ADMIN vs MO permissions and what “insights” should show module officers versus central admins—requirements negotiation, not coding speed.
+
+Collaboration was constant: log field formats with Siyan, job status rules with Liying, data consistency with Yuan’s MO closes. GitHub PR review caught security-sensitive mistakes (e.g. exposing unnecessary fields in insights). GenAI helped layout ideas; human review enforced our no-secrets and review-before-merge policy. The 30-day AI summary depended on network availability, so degradation messaging was part of deliverable quality, not a polish task.
+
+Preparing demo data in `data/` for each release taught me environment consistency matters as much as code. I finish seeing integration testing as the glue between roles—essential for software engineering courses that assess the whole product, not isolated modules. Structured handover notes between sprints reduced duplicated effort on admin flows.
 ---
