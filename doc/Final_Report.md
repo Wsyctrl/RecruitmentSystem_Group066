@@ -535,6 +535,18 @@ CI with 168 tests became our shared quality gate; flaky TestFX runs taught us th
 
 ### 5.2 Xinzhu Wang
 
+#### Main contribution
+
+I delivered TA job browsing (guest and logged-in), apply flow, keyword search, AI job recommendations, AI résumé advice, and TA UI polish via `TaJobDisplay`, FXML, and thin controllers over `ApplicationService` and `AiService`.
+
+#### Reflective statement
+
+This module showed me that **requirements evolve** during engineering, not only at the start. Our backlog listed browse and apply in Sprint 2, but sprint reviews revealed needs—clearer validation messages, guest browse, better alignment between search keywords and how MOs name modules—that we refined before calling the increment “done.” Prototyping screens early was a lightweight form of validation testing with the team acting as users.
+
+Working in six people required explicit communication: agreeing `fx:id`s, when to add view models, and who owned which TA tab. I paired informally with Shuyu so “apply” and “track applications” felt like one journey. Pull requests and peer review caught binding mistakes I had missed alone. GenAI helped draft FXML faster, yet acceptance still depended on manual runs of the TA portal and on tests others added—AI did not remove the need to understand withdraw rules in `ApplicationService`.
+
+Sprint demos taught me to explain features in user language for MO and admin teammates, not only in Java terms. AI recommendations were exciting in presentation but needed offline-friendly behaviour for fair assessment. Updating `/doc` after each increment helped onboarding new testers. I would involve MO colleagues earlier in search design next time. I leave with stronger habits in incremental delivery, teamwork, and treating UI work as part of systems engineering—skills I expect to reuse in industry projects.
+
 ---
 
 ### 5.3 Shuyu Zhu
