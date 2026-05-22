@@ -543,6 +543,18 @@ CI with 168 tests became our shared quality gate; flaky TestFX runs taught us th
 
 ### 5.4 Yuan Zhang
 
+#### Main contribution
+
+I implemented MO job post/edit, “My jobs” list, open/close jobs via `JobService`, Sprint 4 AI job keywords, and **functional testing** across MO posting flows (manual scripts and defect reports on GitHub Issues).
+
+#### Reflective statement
+
+I contributed heavily to **verification as engineering work**, not an afterthought. While others focused on unit or UI automation, I executed structured functional tests each sprint: post/edit/close jobs, verify lists and logs, and log failures with reproduction steps. Several defects—invalid empty fields, state after close with pending applicants—reached `main` only after this layer, complementing Liying’s hire tests and Jie’s admin integration tests. That experience showed me the **test pyramid** is a team composition, not one person writing JUnit only.
+
+MO job management sits between TA demand and admin oversight, so I had to read others’ modules and attend sprint planning even for “MO-only” stories. Coordinating `fx:id`s and job IDs with the lead and Liying avoided rework when applicant tabs reused selectors. Our four releases gave rhythm: each sprint ended with something installable, which motivated disciplined testing before tagging v2.0, v3.0, v4.0.
+
+AI keyword generation raised process questions: who approves model output before it becomes a job requirement? We agreed MO review in the UI, mirroring responsible GenAI practice. Recording test evidence (steps, expected/actual) before closing Issues improved traceability for the final report. I would publish MO test checklists in `/doc` earlier for knowledge sharing. This project improved my ability to connect backlog items, manual validation, and collaborative defect fixing—core skills for software engineering beyond coding. I now see testing meetings as design meetings, not only bug hunts.
+
 ---
 
 ### 5.5 Liying Wu
