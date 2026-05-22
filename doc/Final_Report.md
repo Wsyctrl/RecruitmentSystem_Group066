@@ -587,4 +587,5 @@ Logs via `AdminService` and CSV log DAOs are **non-functional requirements**: au
 Collaboration was constant: log field formats with Siyan, job status rules with Liying, data consistency with Yuan’s MO closes. GitHub PR review caught security-sensitive mistakes (e.g. exposing unnecessary fields in insights). GenAI helped layout ideas; human review enforced our no-secrets and review-before-merge policy. The 30-day AI summary depended on network availability, so degradation messaging was part of deliverable quality, not a polish task.
 
 Preparing demo data in `data/` for each release taught me environment consistency matters as much as code. I finish seeing integration testing as the glue between roles—essential for software engineering courses that assess the whole product, not isolated modules. Structured handover notes between sprints reduced duplicated effort on admin flows.
+
 ---
