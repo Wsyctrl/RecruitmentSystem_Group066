@@ -10,10 +10,19 @@ import java.util.Locale;
 
 /**
  * Manages on-disk storage for teaching assistant CV files under the application data directory.
+ * <p>
+ * Attachments are stored under {@code data/cv/} as {@code {email}_cv.{txt|md|pdf}}. Upload,
+ * download, delete, and AI text extraction all use the same extension set defined by
+ * {@link #ALLOWED_CV_EXTENSIONS}. Plain text for LLM prompts is produced by
+ * {@link CvTextExtractor}.
+ * </p>
  */
 public class FileStorageHelper {
 
-    /** Supported resume attachment extensions (lowercase, including the leading dot). */
+    /**
+     * Supported resume attachment extensions (lowercase, including the leading dot).
+     * <p>Values: {@code .txt}, {@code .md}, {@code .pdf}.</p>
+     */
     public static final List<String> ALLOWED_CV_EXTENSIONS = List.of(".txt", ".md", ".pdf");
 
     /**
@@ -34,6 +43,7 @@ public class FileStorageHelper {
      * Returns the CV storage directory, creating it when missing.
      *
      * @return absolute path to the {@code cv} subdirectory under {@code dataDir}
+     * @throws IllegalStateException when the directory cannot be created
      */
     public Path getCvDir() {
         Path cvDir = dataDir.resolve("cv");
@@ -95,7 +105,7 @@ public class FileStorageHelper {
     /**
      * Checks whether the given file name uses a supported resume attachment extension.
      *
-     * @param fileName source file name
+     * @param fileName source file name; null or blank yields {@code false}
      * @return {@code true} when the extension is {@code .txt}, {@code .md}, or {@code .pdf}
      */
     public static boolean isAllowedCvFileName(String fileName) {
@@ -108,9 +118,9 @@ public class FileStorageHelper {
     /**
      * Returns the normalized extension for a file name.
      *
-     * @param fileName source file name
+     * @param fileName source file name; null or blank throws {@link IllegalArgumentException}
      * @return extension including the leading dot
-     * @throws IllegalArgumentException when the extension is unsupported
+     * @throws IllegalArgumentException when the file name is missing or the extension is unsupported
      */
     public static String extensionOf(String fileName) {
         if (fileName == null || fileName.isBlank()) {
@@ -127,11 +137,15 @@ public class FileStorageHelper {
 
     /**
      * Copies CV content from a source file into the canonical CV location for the given email.
+     * The stored extension is taken from {@link #extensionOf(String)} on the source file name.
+     * Any previously stored CV file for the same email in another supported format is removed.
      * Skips writing when an existing file already has identical bytes.
      *
      * @param email  teaching assistant email
      * @param source source file to read; {@code null} yields a result with no path and no change
      * @return save outcome including relative path and whether content changed
+     * @throws IllegalArgumentException when the source file name has an unsupported extension
+     * @throws IllegalStateException when the file cannot be read or written
      */
     public CvSaveOutcome saveCv(String email, File source) {
         if (source == null) {
@@ -157,7 +171,8 @@ public class FileStorageHelper {
     }
 
     /**
-     * Deletes the canonical CV file for the email and, when different, the file at {@code storedPath}.
+     * Deletes all canonical CV files for the email ({@code .txt}, {@code .md}, {@code .pdf})
+     * and, when different, the file at {@code storedPath}.
      *
      * @param email      teaching assistant email
      * @param storedPath path from CSV ({@code cv_path}); may be null or blank
@@ -175,6 +190,10 @@ public class FileStorageHelper {
 
     /**
      * Reads resume text for AI features from the stored CV attachment.
+     * <p>
+     * Supports {@code .txt}, {@code .md}, and {@code .pdf} via {@link CvTextExtractor}.
+     * IO or parse failures are swallowed and yield an empty string so callers can continue.
+     * </p>
      *
      * @param email      teaching assistant email
      * @param storedPath path from CSV ({@code cv_path}); may be null or blank
@@ -207,6 +226,13 @@ public class FileStorageHelper {
         }
     }
 
+    /**
+     * Removes CV files for the email in formats other than the one being saved.
+     *
+     * @param email         teaching assistant email
+     * @param keepExtension extension to retain (e.g. {@code .pdf})
+     * @throws IOException when deletion of an existing file fails
+     */
     private void deleteOtherCvFormats(String email, String keepExtension) throws IOException {
         for (String extension : ALLOWED_CV_EXTENSIONS) {
             if (extension.equals(keepExtension)) {
@@ -276,6 +302,13 @@ public class FileStorageHelper {
         return getCvDir().resolve(cvFileName(email));
     }
 
+    /**
+     * Normalizes and validates a CV file extension.
+     *
+     * @param extension extension with or without a leading dot (e.g. {@code pdf} or {@code .PDF})
+     * @return lowercase extension including the leading dot
+     * @throws IllegalArgumentException when {@code extension} is null, blank, or unsupported
+     */
     private static String normalizeExtension(String extension) {
         if (extension == null || extension.isBlank()) {
             throw new IllegalArgumentException("extension is required");

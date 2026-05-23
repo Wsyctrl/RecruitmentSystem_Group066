@@ -10,9 +10,14 @@ import java.nio.file.Path;
 
 /**
  * Extracts plain text from TA resume attachments stored as {@code .txt}, {@code .md}, or {@code .pdf}.
+ * <p>
+ * Used by {@link FileStorageHelper#readCvText} and AI fill-from-CV flows so large-language-model
+ * prompts always receive a UTF-8 string regardless of the on-disk attachment format.
+ * </p>
  */
 public final class CvTextExtractor {
 
+    /** Utility class; not instantiable. */
     private CvTextExtractor() {
     }
 
@@ -31,6 +36,13 @@ public final class CvTextExtractor {
         return Files.readString(cvFile);
     }
 
+    /**
+     * Extracts text from a PDF resume using Apache PDFBox.
+     *
+     * @param cvFile path to a {@code .pdf} file
+     * @return stripped text content from all pages
+     * @throws IOException when the PDF cannot be loaded or parsed
+     */
     private static String extractPdfText(Path cvFile) throws IOException {
         try (PDDocument document = Loader.loadPDF(cvFile.toFile())) {
             PDFTextStripper stripper = new PDFTextStripper();

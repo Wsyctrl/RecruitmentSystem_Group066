@@ -10,10 +10,12 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for FileStorageHelper CV file operations.
+ * Unit tests for {@link FileStorageHelper} CV file operations, including multi-format
+ * ({@code .txt}, {@code .md}, {@code .pdf}) storage and text extraction.
  */
 class FileStorageHelperTest {
 
+    /** Temporary data directory for isolated file operations. */
     @TempDir
     Path tempDir;
 

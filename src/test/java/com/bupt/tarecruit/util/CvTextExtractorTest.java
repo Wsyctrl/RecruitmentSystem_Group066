@@ -14,10 +14,12 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for {@link CvTextExtractor}.
+ * Unit tests for {@link CvTextExtractor} resume text extraction across
+ * {@code .txt}, {@code .md}, and {@code .pdf} attachments.
  */
 class CvTextExtractorTest {
 
+    /** Temporary directory for synthetic resume files. */
     @TempDir
     Path tempDir;
 
