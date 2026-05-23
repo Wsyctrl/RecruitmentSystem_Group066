@@ -393,7 +393,7 @@ Manage your online profile and résumé attachment.
 | Control | Description |
 |---------|-------------|
 | Status label | Shows uploaded file name or *No file uploaded* |
-| **Upload CV** | Pick a `.txt` file (file chooser) |
+| **Upload CV** | Pick a `.txt`, `.md`, or `.pdf` file (file chooser) |
 | **Download** | Save CV to disk (file chooser) |
 | **Delete** | Remove attachment |
 | **AI Fill from CV** | Parse CV and draft profile fields |
@@ -418,7 +418,7 @@ Manage your online profile and résumé attachment.
 #### Step-by-step: Upload and AI-fill CV
 
 1. Click **Upload CV**.
-2. In the file chooser, select a **`.txt`** résumé only.
+2. In the file chooser, select a **`.txt`**, **`.md`**, or **`.pdf`** résumé.
 3. On success, **Information**: *"CV uploaded"*.
 4. Click **AI Fill from CV**; review populated fields.
 5. Click **Save profile**.
@@ -508,11 +508,13 @@ Review applications for **your open jobs** only.
 
 1. Select a **Pending** applicant.
 2. Click **Reject**.
-3. **Information** or **Error** reports outcome (no separate confirm for reject).
+3. **Confirm**: *"Reject this applicant?"* → **OK** (or **Cancel** to abort).
+4. **Information** or **Error** reports outcome; applicant list refreshes.
 
 | Situation | Dialog |
 |-----------|--------|
-| Hire confirm | Confirm: *Hire this applicant?* |
+| Hire confirm | Confirm: *Hire this applicant?* → OK / Cancel |
+| Reject confirm | Confirm: *Reject this applicant?* → OK / Cancel |
 | Concurrent jobs warning | Confirm Yes/No with overlapping job list |
 | CV missing | Error: *CV file not found* |
 | CV saved | Information: *CV saved to: \<path\>* |

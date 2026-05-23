@@ -5,7 +5,6 @@ import com.bupt.tarecruit.service.AiService;
 import com.bupt.tarecruit.service.ApplicationService;
 import com.bupt.tarecruit.util.DateTimeUtil;
 import com.bupt.tarecruit.util.DialogUtil;
-import com.bupt.tarecruit.util.FileStorageHelper;
 import com.bupt.tarecruit.util.OperationResult;
 import com.bupt.tarecruit.util.WorkloadRules;
 import com.bupt.tarecruit.viewmodel.*;
@@ -40,14 +39,36 @@ import java.util.stream.Collectors;
  * and edit profile. Admin users gain extra tabs: TA/MO accounts, all jobs, insights,
  * account logs, and job management logs.
  * </p>
+ * <p>
+ * Post/edit job and MO profile tabs prompt before navigation when forms have unsaved changes,
+ * mirroring TA profile behaviour. Applicant reject uses a cancellable confirmation dialog
+ * consistent with hire.
+ * </p>
  */
 public class MoDashboardController extends BaseController implements SessionAware {
 
-    /** Snapshot of saved MO profile fields used when leaving the profile tab. */
+    /**
+     * Snapshot of saved MO profile fields used to detect unsaved changes when leaving the profile tab.
+     *
+     * @param fullName display name
+     * @param phone    contact phone
+     * @param modules  responsible module list text
+     */
     private record MoProfileDraft(String fullName, String phone, String modules) {
     }
 
-    /** Snapshot of the post/edit job form used when leaving that tab. */
+    /**
+     * Snapshot of the post/edit job form used to detect unsaved changes when leaving that tab.
+     *
+     * @param jobName      job title
+     * @param module       module name
+     * @param positions    number of positions
+     * @param startDate    job start date
+     * @param endDate      job end date
+     * @param requirements job requirements text
+     * @param keywords     quick-review keywords
+     * @param notes        additional notes
+     */
     private record JobFormDraft(
             String jobName,
             String module,
@@ -63,9 +84,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private UserSession session;
     private boolean adminMode;
     private Job currentEditingJob;
+    /** Last saved MO profile snapshot; compared against the form to detect unsaved edits. */
     private MoProfileDraft persistedMoProfileDraft;
+    /** Last saved post/edit job form snapshot; compared against the form to detect unsaved edits. */
     private JobFormDraft persistedJobFormDraft;
     private boolean suppressTabGuard;
+    /** Prevents tab listeners from re-entering while programmatically switching tabs during save prompts. */
     private boolean handlingEditableTabNavigation;
     private long applicantsAiContextVersion = 0L;
     private Task<List<AiService.ApplicantRecommendation>> activeRecommendApplicantsTask;
@@ -1122,6 +1146,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Loads MO profile fields from the signed-in session and refreshes the persisted draft baseline.
+     */
     private void loadProfile() {
         Mo mo = session.moOptional().orElse(null);
         if (mo == null) {
@@ -1134,6 +1161,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         persistedMoProfileDraft = snapshotMoProfileForm();
     }
 
+    /**
+     * Captures the current MO profile form values for unsaved-change detection.
+     *
+     * @return draft snapshot of name, phone, and modules fields
+     */
     private MoProfileDraft snapshotMoProfileForm() {
         return new MoProfileDraft(
                 safeText(moFullNameField.getText()).trim(),
@@ -1142,10 +1174,20 @@ public class MoDashboardController extends BaseController implements SessionAwar
         );
     }
 
+    /**
+     * Returns whether the MO profile form differs from the last saved snapshot.
+     *
+     * @return {@code true} when the user has edited profile fields without saving
+     */
     private boolean hasUnsavedMoProfileChanges() {
         return persistedMoProfileDraft != null && !persistedMoProfileDraft.equals(snapshotMoProfileForm());
     }
 
+    /**
+     * Captures the current post/edit job form values for unsaved-change detection.
+     *
+     * @return draft snapshot of all job form fields
+     */
     private JobFormDraft snapshotJobForm() {
         Integer positions = positionsSpinner != null ? positionsSpinner.getValue() : 1;
         return new JobFormDraft(
@@ -1160,14 +1202,25 @@ public class MoDashboardController extends BaseController implements SessionAwar
         );
     }
 
+    /**
+     * Refreshes {@link #persistedJobFormDraft} from the current job form (e.g. after load or save).
+     */
     private void refreshJobFormDraft() {
         persistedJobFormDraft = snapshotJobForm();
     }
 
+    /**
+     * Returns whether the post/edit job form differs from the last saved snapshot.
+     *
+     * @return {@code true} when the user has edited job fields without saving
+     */
     private boolean hasUnsavedJobFormChanges() {
         return persistedJobFormDraft != null && !persistedJobFormDraft.equals(snapshotJobForm());
     }
 
+    /**
+     * Loads the job form for the job being edited, or clears fields for a new posting.
+     */
     private void loadJobForm() {
         if (currentEditingJob != null) {
             services.jobService().findById(currentEditingJob.getJobId())
@@ -1183,6 +1236,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Clears post/edit job form controls for creating a new job.
+     */
     private void resetNewJobFormFields() {
         jobNameField.clear();
         moduleField.clear();
@@ -1194,6 +1250,18 @@ public class MoDashboardController extends BaseController implements SessionAwar
         notesField.clear();
     }
 
+    /**
+     * Handles tab switches involving editable MO profile or job forms.
+     * <p>
+     * When leaving {@link #postEditJobTab} or {@link #moProfileTab} with unsaved edits, prompts
+     * the user to save (Yes submits the form) or discard (reloads the last saved values), matching
+     * TA {@code My Profile} behaviour.
+     * </p>
+     *
+     * @param oldTab previously selected tab
+     * @param newTab tab the user is switching to
+     * @return {@code false} when navigation was intercepted to show a save prompt; {@code true} otherwise
+     */
     private boolean handleEditableTabSwitch(Tab oldTab, Tab newTab) {
         if (postEditJobTab != null && oldTab == postEditJobTab && newTab != postEditJobTab) {
             return handleLeavingEditableTab(postEditJobTab, newTab, this::hasUnsavedJobFormChanges,
@@ -1216,6 +1284,16 @@ public class MoDashboardController extends BaseController implements SessionAwar
         return true;
     }
 
+    /**
+     * Prompts to save or discard unsaved edits before leaving an editable tab.
+     *
+     * @param editableTab       tab being left (re-selected briefly while the dialog is shown)
+     * @param newTab            destination tab after the prompt completes
+     * @param hasUnsavedChanges supplier that detects dirty form state
+     * @param saveAction        invoked when the user chooses Yes (typically submits the form)
+     * @param reloadAction      invoked when the user chooses No (reloads saved values from persistence)
+     * @return {@code false} because the outer tab listener must not proceed with default navigation
+     */
     private boolean handleLeavingEditableTab(
             Tab editableTab,
             Tab newTab,
@@ -1240,6 +1318,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         return false;
     }
 
+    /**
+     * Selects a tab while suppressing the tab-change guard listener.
+     *
+     * @param tab tab to select; no-op when {@code tabPane} or {@code tab} is null
+     */
     private void selectTab(Tab tab) {
         if (tabPane == null || tab == null) {
             return;
@@ -2312,8 +2395,12 @@ CV: %s
     }
 
     /**
-     * Hires the selected pending applicant with concurrent-job warning and optional
-     * similar-candidate AI prompt afterward.
+     * Hires the selected pending applicant after a cancellable confirmation dialog,
+     * with concurrent-job warning and optional similar-candidate AI prompt afterward.
+     * <p>
+     * Uses {@link DialogUtil#confirm(String, javafx.stage.Window)} (OK/Cancel) so the hire
+     * can be aborted before persistence.
+     * </p>
      */
     @FXML
     private void handleHireApplicant() {
@@ -2349,7 +2436,13 @@ CV: %s
         finishApplicantAction(result, hireTarget, true);
     }
 
-    /** Rejects the selected pending applicant and refreshes the applicant list for the same job. */
+    /**
+     * Rejects the selected pending applicant after a cancellable confirmation dialog.
+     * <p>
+     * Uses {@link DialogUtil#confirm(String, javafx.stage.Window)} (OK/Cancel), consistent with
+     * {@link #handleHireApplicant()}, so the action can be aborted before persistence.
+     * </p>
+     */
     @FXML
     private void handleRejectApplicant() {
         if (selectedApplicant == null) {
@@ -2397,19 +2490,18 @@ CV: %s
         }
     }
 
+    /**
+     * Reads plain-text resume content from the applicant's stored CV attachment.
+     * <p>Supports {@code .txt}, {@code .md}, and {@code .pdf} via {@link com.bupt.tarecruit.util.FileStorageHelper#readCvText}.</p>
+     *
+     * @param ta applicant TA profile; may be null
+     * @return extracted CV text, or an empty string when none is available
+     */
     private String readAttachedCvText(Ta ta) {
-        if (ta == null || ta.getCvPath() == null || ta.getCvPath().isBlank()) {
+        if (ta == null) {
             return "";
         }
-        Path cvFile = services.fileStorageHelper().resolveCvFile(ta.getTaId(), ta.getCvPath());
-        if (!Files.isRegularFile(cvFile)) {
-            return "";
-        }
-        try {
-            return Files.readString(cvFile);
-        } catch (IOException e) {
-            return "";
-        }
+        return services.fileStorageHelper().readCvText(ta.getTaId(), ta.getCvPath());
     }
 
     /** Downloads the selected applicant's CV to a user-chosen file. */
@@ -2427,7 +2519,7 @@ CV: %s
             return;
         }
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialFileName(FileStorageHelper.cvFileName(ta.getTaId()));
+        fileChooser.setInitialFileName(source.getFileName().toString());
         File dest = fileChooser.showSaveDialog(navigator.getPrimaryStage());
         if (dest == null) {
             return;

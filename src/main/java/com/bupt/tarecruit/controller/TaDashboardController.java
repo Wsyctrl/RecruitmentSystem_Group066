@@ -10,6 +10,7 @@ import com.bupt.tarecruit.service.JobService;
 import com.bupt.tarecruit.util.DateTimeUtil;
 import com.bupt.tarecruit.util.DialogUtil;
 import com.bupt.tarecruit.util.CvSaveOutcome;
+import com.bupt.tarecruit.util.CvTextExtractor;
 import com.bupt.tarecruit.util.FileStorageHelper;
 import com.bupt.tarecruit.util.OperationResult;
 import com.bupt.tarecruit.viewmodel.ApplicationDisplay;
@@ -37,20 +38,34 @@ import java.util.stream.Collectors;
  * Controller for the TA dashboard (signed-in and guest browse modes).
  * <p>
  * Tabs: browse open jobs (apply, AI job match, resume tips), my applications (withdraw),
- * and profile (save, CV, AI fill-from-CV). Guest mode hides authenticated tabs and redirects
- * protected actions to login.
+ * and profile (save, CV attachment in {@code .txt}/{@code .md}/{@code .pdf}, AI fill-from-CV).
+ * Guest mode hides authenticated tabs and redirects protected actions to login.
+ * </p>
+ * <p>
+ * The profile tab prompts before navigation when the form has unsaved changes.
  * </p>
  */
 public class TaDashboardController extends BaseController implements SessionAware {
 
-    /** Snapshot of saved profile fields used to detect unsaved edits when leaving the profile tab. */
+    /**
+     * Snapshot of saved TA profile fields used to detect unsaved changes when leaving the profile tab.
+     *
+     * @param fullName       display name
+     * @param phone          contact phone
+     * @param major          academic major
+     * @param skills         skills text
+     * @param experience     experience text
+     * @param selfEvaluation self-evaluation text
+     */
     private record ProfileDraft(String fullName, String phone, String major, String skills, String experience, String selfEvaluation) {
     }
 
     private UserSession session;
     private boolean guestMode;
     private boolean suppressTabGuard;
+    /** Prevents tab listeners from re-entering while programmatically switching tabs during save prompts. */
     private boolean handlingProfileNavigation;
+    /** Last saved profile snapshot; compared against the form to detect unsaved edits. */
     private ProfileDraft persistedProfileDraft;
     private long resumeAdviceContextVersion = 0L;
     private Task<String> activeResumeAdviceTask;
@@ -198,7 +213,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
     @FXML
     private Button downloadCvButton;
 
-    /** Uploads a .txt CV via file chooser. */
+    /** Uploads a resume attachment via file chooser. */
     @FXML
     private Button uploadCvButton;
 
@@ -483,12 +498,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
         persistedProfileDraft = snapshotProfileForm();
         updateCvUi(ta);
     }
-/**
- * Updates the CV-related UI controls according to whether
- * the current TA user has uploaded a CV file.
- *
- * @param ta current TA user
- */
+    /**
+     * Updates CV-related UI controls according to whether the current TA user has uploaded
+     * a resume attachment.
+     *
+     * @param ta current TA user
+     */
     private void updateCvUi(Ta ta) {
         boolean hasCv = ta.getCvPath() != null && !ta.getCvPath().isBlank();
         if (cvPathLabel != null) {
@@ -756,7 +771,13 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
-    /** Uploads a .txt resume and updates the TA CV path. */
+    /**
+     * Uploads a resume attachment ({@code .txt}, {@code .md}, or {@code .pdf}) and updates the TA CV path.
+     * <p>
+     * Validates the file extension, persists bytes via {@link FileStorageHelper#saveCv}, and clears
+     * cached AI summary when content changes.
+     * </p>
+     */
     @FXML
     private void handleUploadCv() {
         if (guestMode) {
@@ -768,14 +789,15 @@ public class TaDashboardController extends BaseController implements SessionAwar
             return;
         }
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Choose TXT resume");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text files (*.txt)", "*.txt"));
+        fileChooser.setTitle("Choose resume file");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+                "Resume files (*.txt, *.md, *.pdf)", "*.txt", "*.md", "*.pdf"));
         File selected = fileChooser.showOpenDialog(navigator.getPrimaryStage());
         if (selected == null) {
             return;
         }
-        if (!selected.getName().toLowerCase().endsWith(".txt")) {
-            DialogUtil.error("Only .txt files are allowed", navigator.getPrimaryStage());
+        if (!FileStorageHelper.isAllowedCvFileName(selected.getName())) {
+            DialogUtil.error("Only .txt, .md, and .pdf files are allowed", navigator.getPrimaryStage());
             return;
         }
         FileStorageHelper helper = services.fileStorageHelper();
@@ -786,7 +808,10 @@ public class TaDashboardController extends BaseController implements SessionAwar
         DialogUtil.info("CV uploaded", navigator.getPrimaryStage());
     }
 
-    /** Deletes the on-disk CV and clears the profile CV reference. */
+    /**
+     * Deletes the on-disk CV (all supported formats) and clears the profile CV reference.
+     * <p>Requires a Yes/No confirmation before deletion.</p>
+     */
     @FXML
     private void handleDeleteCv() {
         if (guestMode) {
@@ -815,7 +840,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
         DialogUtil.info("CV deleted", navigator.getPrimaryStage());
     }
 
-    /** Saves a copy of the uploaded CV via file chooser. */
+    /**
+     * Saves a copy of the uploaded CV via file chooser, preserving the stored file extension.
+     */
     @FXML
     private void handleDownloadCv() {
         if (guestMode) {
@@ -834,7 +861,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
 
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialFileName(FileStorageHelper.cvFileName(ta.getTaId()));
+        fileChooser.setInitialFileName(source.getFileName().toString());
         File dest = fileChooser.showSaveDialog(navigator.getPrimaryStage());
         if (dest == null) {
             return;
@@ -881,6 +908,11 @@ public class TaDashboardController extends BaseController implements SessionAwar
         suppressTabGuard = false;
     }
 
+    /**
+     * Captures the current profile form values for unsaved-change detection.
+     *
+     * @return draft snapshot of all editable profile fields
+     */
     private ProfileDraft snapshotProfileForm() {
         return new ProfileDraft(
                 safeText(fullNameField.getText()).trim(),
@@ -892,10 +924,26 @@ public class TaDashboardController extends BaseController implements SessionAwar
         );
     }
 
+    /**
+     * Returns whether the profile form differs from the last saved snapshot.
+     *
+     * @return {@code true} when the user has edited profile fields without saving
+     */
     private boolean hasUnsavedProfileChanges() {
         return persistedProfileDraft != null && !persistedProfileDraft.equals(snapshotProfileForm());
     }
 
+    /**
+     * Handles tab switches involving the editable TA profile form.
+     * <p>
+     * When leaving {@link #myProfileTab} with unsaved edits, prompts the user to save (Yes submits
+     * the profile) or discard (reloads persisted values from the database).
+     * </p>
+     *
+     * @param oldTab previously selected tab
+     * @param newTab tab the user is switching to
+     * @return {@code false} when navigation was intercepted to show a save prompt; {@code true} otherwise
+     */
     private boolean handleProfileTabSwitch(Tab oldTab, Tab newTab) {
         if (myProfileTab == null || tabPane == null) {
             return true;
@@ -1077,23 +1125,23 @@ public class TaDashboardController extends BaseController implements SessionAwar
         new Thread(task, "ai-recommend-jobs").start();
     }
 
+    /**
+     * Reads plain-text resume content from the TA's stored CV attachment.
+     * <p>Supports {@code .txt}, {@code .md}, and {@code .pdf} via {@link FileStorageHelper#readCvText}.</p>
+     *
+     * @param ta signed-in TA profile
+     * @return extracted CV text, or an empty string when none is available
+     */
     private String readAttachedCvText(Ta ta) {
-        if (ta.getCvPath() == null || ta.getCvPath().isBlank()) {
-            return "";
-        }
-        Path cvFile = services.fileStorageHelper().resolveCvFile(ta.getTaId(), ta.getCvPath());
-        if (!Files.isRegularFile(cvFile)) {
-            return "";
-        }
-        try {
-            return Files.readString(cvFile);
-        } catch (IOException e) {
-            return "";
-        }
+        return services.fileStorageHelper().readCvText(ta.getTaId(), ta.getCvPath());
     }
 
     /**
      * Extracts profile draft fields from the uploaded CV via AI; user must still click Save profile.
+     * <p>
+     * Parses {@code .txt}, {@code .md}, and {@code .pdf} attachments through
+     * {@link CvTextExtractor} before calling {@link AiService#draftResumeFromCv}.
+     * </p>
      */
     @FXML
     private void handleAiFillProfileFromCv() {
@@ -1116,7 +1164,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         Task<AiService.ResumeDraft> task = new Task<>() {
             @Override
             protected AiService.ResumeDraft call() throws Exception {
-                String cvText = Files.readString(cvFile);
+                String cvText = CvTextExtractor.extractText(cvFile);
                 return services.aiService().draftResumeFromCv(ta, cvText);
             }
         };

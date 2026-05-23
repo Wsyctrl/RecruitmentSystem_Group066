@@ -109,7 +109,8 @@ public class AiService {
      * @param ta         TA profile
      * @param jobs       eligible open jobs (callers typically exclude applied/disabled-MO jobs)
      * @param preference free-text preference
-     * @param cvText     plain-text resume body, or blank if none
+     * @param cvText     plain-text resume body extracted from {@code .txt}, {@code .md}, or {@code .pdf};
+     *                   blank if none
      * @return parsed recommendations; invalid array elements are skipped
      * @throws IOException          API or transport failure
      * @throws InterruptedException if the HTTP call is interrupted
@@ -132,7 +133,7 @@ public class AiService {
                 TA online profile:
                 %s
                 
-                Attached resume (TXT):
+                Attached resume:
                 %s
                 
                 User preference (higher priority):
@@ -160,7 +161,7 @@ public class AiService {
      * Extracts resume fields from CV text without inventing facts; missing fields become empty strings.
      *
      * @param ta     existing TA profile included as context in the prompt
-     * @param cvText full CV plain text
+     * @param cvText full CV plain text extracted from {@code .txt}, {@code .md}, or {@code .pdf}
      * @return structured draft for form pre-fill (not persisted by this class)
      * @throws IOException          API or transport failure
      * @throws InterruptedException if the HTTP call is interrupted
@@ -430,7 +431,7 @@ public class AiService {
      * Returns {@code Profile incomplete.} without calling the API when all sources are empty.
      *
      * @param ta     applicant
-     * @param cvText attached resume plain text, or blank
+     * @param cvText attached resume plain text extracted from supported attachment formats, or blank
      * @return phrase trimmed from model output, at most ~12 words by prompt rules
      * @throws IOException          API or transport failure
      * @throws InterruptedException if the HTTP call is interrupted
@@ -456,7 +457,7 @@ public class AiService {
                 Experience: %s
                 Self-evaluation: %s
 
-                Attached resume (TXT):
+                Attached resume:
                 %s
                 """.formatted(
                 safe(ta.getMajor()),
@@ -474,7 +475,7 @@ public class AiService {
      * {@code Profile incomplete.}
      *
      * @param ta     applicant
-     * @param cvText optional resume text
+     * @param cvText optional resume text extracted from {@code .txt}, {@code .md}, or {@code .pdf}
      * @return truncated phrase suitable for card display
      */
     public static String fallbackApplicantSummary(Ta ta, String cvText) {
