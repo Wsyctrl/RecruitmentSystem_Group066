@@ -239,7 +239,7 @@ Against the quality attributes emphasised in lectures, our design targets:
 - **Modular** — Six primary packages with documented `package-info.java` intent.
 - **Maintainable** — JavaDoc on public APIs; consistent naming (`CsvJobDao`, `JobService`).
 - **Understandable** — Role-based portals and explicit status enums.
-- **Testable** — 168 automated tests; services testable with `@TempDir` CSV fixtures.
+- **Testable** — 173 automated tests; services testable with `@TempDir` CSV fixtures.
 
 ---
 
@@ -354,6 +354,7 @@ We derived tests from **requirements and input domains** without inspecting impl
 
 - **Equivalence partitioning** — Valid vs invalid `@bupt.edu.cn` emails; enabled vs disabled accounts; `OPEN` vs `CLOSED` jobs.
 - **Boundary value analysis** — Empty passwords, whitespace-only fields (`ValidationUtilTest`), zero positions, concurrent job threshold (`WorkloadRules.CONCURRENT_JOB_WARNING_THRESHOLD = 2`).
+- **CV attachment formats** — Allowed vs rejected résumé extensions (`.txt`, `.md`, `.pdf`) in `FileStorageHelperTest` and plain-text extraction in `CvTextExtractorTest`.
 
 #### White-box testing
 
@@ -446,8 +447,8 @@ The full automated suite is run **locally** (`mvn clean test` or `mvn verify`) a
 
 | Metric | Value |
 |--------|-------|
-| **Test classes** | 26 |
-| **Total test methods** | 168 |
+| **Test classes** | 27 |
+| **Total test methods** | 173 |
 | **Failures** | 0 |
 | **Errors** | 0 |
 | **Skipped** | 0 |
@@ -462,9 +463,9 @@ Counts below are from the Surefire report for the same run (8 service test class
 | **Services** | `AuthServiceTest`, `ApplicationServiceTest`, `ApplicationServiceEdgeCaseTest`, `ApplicationServiceStateTest`, `JobServiceTest`, `ProfileServiceTest`, `AdminServiceTest`, `AiServiceFallbackTest` | 63 |
 | **DAO** | `CsvTaDaoTest`, `CsvMoDaoTest`, `CsvJobDaoTest`, `CsvApplicationDaoTest`, `CsvAccountLogDaoTest`, `CsvJobLogDaoTest` | 11 |
 | **Controllers (UI)** | `LoginControllerUiTest`, `RegisterControllerUiTest`, `TaDashboardControllerUiTest`, `MoDashboardControllerUiTest`, `ChangePasswordDialogControllerUiTest`, `InsightsDialogControllerUiTest` | 70 |
-| **Utilities** | `ValidationUtilTest`, `IdGeneratorTest`, `IdFormatUtilTest`, `DateTimeUtilTest`, `FileStorageHelperTest` | 21 |
+| **Utilities** | `ValidationUtilTest`, `IdGeneratorTest`, `IdFormatUtilTest`, `DateTimeUtilTest`, `FileStorageHelperTest`, `CvTextExtractorTest` | 26 |
 | **Entity** | `EntityEnumTest` | 3 |
-| **Total** | 26 classes | **168** |
+| **Total** | 27 classes | **173** |
 
 #### Defects found during testing
 
@@ -529,7 +530,7 @@ Software engineering here was as much about **process** as about code. We ran fo
 
 GenAI (Cursor/ChatGPT) was part of the toolchain, not a substitute for engineering discipline. We adopted a team rule: AI-generated changes must be reviewed and tested before merge—matching coursework expectations for responsible GenAI use. I sometimes over-focused on implementation when facilitation would have helped more; a per-sprint “interface changelog” and earlier cross-portal demos would reduce late integration surprises.
 
-CI with 168 tests became our shared quality gate; flaky TestFX runs taught us that test infrastructure is product work. I learned that scoping AI as optional enhancement kept demos reliable when the network failed. Facilitating sprint retros—what to defer, what blocked others—was as important as merging code. Overall this project trained me in technical leadership: architecture, collaboration, release management, and accountability—not only Java syntax. Delivering four named releases on GitHub made progress visible to the whole group.
+CI with 173 tests became our shared quality gate; flaky TestFX runs taught us that test infrastructure is product work. I learned that scoping AI as optional enhancement kept demos reliable when the network failed. Facilitating sprint retros—what to defer, what blocked others—was as important as merging code. Overall this project trained me in technical leadership: architecture, collaboration, release management, and accountability—not only Java syntax. Delivering four named releases on GitHub made progress visible to the whole group.
 
 ---
 
