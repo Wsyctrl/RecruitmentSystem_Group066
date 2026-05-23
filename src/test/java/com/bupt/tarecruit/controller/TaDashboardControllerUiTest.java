@@ -30,17 +30,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class TaDashboardControllerUiTest extends BaseUiTest {
 
+    /** @return TA portal mode under test */
     @Override
     protected PortalMode getPortalMode() {
         return PortalMode.TA_PORTAL;
     }
 
+    /** Opens the login screen by default; individual tests may navigate elsewhere. */
     @Override
     protected void navigateInitialView() {
         // Most tests will set their own scene; default to login.
         navigator.showLogin();
     }
 
+    /** Seeds open and closed jobs posted by Bob for browse/apply tests. */
     @Override
     protected void seedData() {
         super.seedData();
@@ -50,6 +53,9 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         addJob("Old Position", "OldMod", 1, "Old", "", LocalDate.now().minusDays(20), LocalDate.now().minusDays(1));
     }
 
+    /**
+     * @return persisted open job owned by Bob for TA dashboard fixtures
+     */
     private Job addJob(String name, String module, int positions, String req, String notes,
                        LocalDate start, LocalDate end) {
         Job j = new Job();
@@ -64,6 +70,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         return services.jobService().upsertJob(j).data();
     }
 
+    /** Navigates to the signed-in TA dashboard as Alice. */
     private void loginAsAlice() {
         runOnFx(() -> {
             UserSession session = new UserSession(Role.TA,
@@ -74,6 +81,7 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
     }
 
+    /** Navigates to the guest job browse dashboard without authentication. */
     private void enterGuestMode() {
         runOnFx(() -> navigator.showTaGuestDashboard());
         WaitForAsyncUtils.waitForFxEvents();
@@ -349,6 +357,10 @@ class TaDashboardControllerUiTest extends BaseUiTest {
         assertEquals("Apply", apply.getText());
     }
 
+    /**
+     * @param text exact button label
+     * @return first matching button in the scene, or {@code null}
+     */
     private Button findButtonByText(String text) {
         for (Node n : primaryStage.getScene().getRoot().lookupAll(".button")) {
             if (n instanceof Button b && text.equals(b.getText())) return b;

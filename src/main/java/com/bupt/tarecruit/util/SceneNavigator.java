@@ -27,7 +27,10 @@ import java.util.function.Consumer;
  */
 public class SceneNavigator {
 
+    /** Default width for newly created scenes when no prior scene exists. */
     private static final double DEFAULT_SCENE_WIDTH = 1100;
+
+    /** Default height for newly created scenes when no prior scene exists. */
     private static final double DEFAULT_SCENE_HEIGHT = 720;
 
     /**

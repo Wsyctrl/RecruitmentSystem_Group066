@@ -25,7 +25,10 @@ import java.util.stream.Collectors;
  */
 public class InsightsDialogController {
 
+    /** Application services for jobs, applications, and AI insights. */
     private ServiceRegistry services;
+
+    /** Owning stage when shown as a modal dialog; {@code null} when embedded in the admin tab. */
     private Stage dialogStage;
 
     /** Module application counts for the textual bar chart. */
@@ -88,6 +91,9 @@ public class InsightsDialogController {
         setupCharts();
     }
 
+    /**
+     * Configures chart axes, labels, and animation defaults for the hiring-status bar chart.
+     */
     private void setupCharts() {
         // Hiring Status Chart setup only
         CategoryAxis statusXAxis = new CategoryAxis();
@@ -139,6 +145,12 @@ public class InsightsDialogController {
         }
     }
 
+    /**
+     * Aggregates application counts per academic module and refreshes the textual bar display.
+     *
+     * @param applications all application records to include in the aggregation
+     * @param jobs         job catalog used to resolve module names from job identifiers
+     */
     private void updateModuleStats(List<com.bupt.tarecruit.entity.ApplicationRecord> applications,
                                    List<com.bupt.tarecruit.entity.Job> jobs) {
         // Create a map of jobId to Job
@@ -165,6 +177,9 @@ public class InsightsDialogController {
         renderModuleStats();
     }
 
+    /**
+     * Renders {@link #moduleStats} as labeled rows with proportional ASCII bar lengths.
+     */
     private void renderModuleStats() {
         moduleStatsBox.getChildren().clear();
 
@@ -206,6 +221,11 @@ public class InsightsDialogController {
         }
     }
 
+    /**
+     * Populates the hiring-status bar chart with pending, hired, rejected, and withdrawn counts.
+     *
+     * @param applications application records whose statuses are counted
+     */
     private void updateHiringStatusChart(List<com.bupt.tarecruit.entity.ApplicationRecord> applications) {
         long pending = applications.stream().filter(a -> a.getStatus() == com.bupt.tarecruit.entity.ApplicationStatus.PENDING).count();
         long hired = applications.stream().filter(a -> a.getStatus() == com.bupt.tarecruit.entity.ApplicationStatus.HIRED).count();
@@ -222,12 +242,24 @@ public class InsightsDialogController {
         hiringStatusChart.getData().add(series);
     }
 
+    /**
+     * Requests 30-day AI insights on a background thread and updates {@link #insightsContentBox}.
+     *
+     * @param applications all applications passed to the AI summarization prompt
+     * @param openJobs     current count of open job postings
+     */
     private void loadAiInsights(List<com.bupt.tarecruit.entity.ApplicationRecord> applications,
                                 int openJobs) {
         insightsContentBox.getChildren().clear();
         insightsContentBox.getChildren().add(new Label("Generating 30-day insights..."));
 
         javafx.concurrent.Task<String> task = new javafx.concurrent.Task<>() {
+            /**
+             * Invokes {@link com.bupt.tarecruit.service.AiService#generate30DayInsights} off the UI thread.
+             *
+             * @return AI-generated insight text
+             * @throws Exception when the AI service call fails
+             */
             @Override
             protected String call() throws Exception {
                 return services.aiService().generate30DayInsights(applications, openJobs);
@@ -247,6 +279,11 @@ public class InsightsDialogController {
         new Thread(task, "ai-insights-loader").start();
     }
 
+    /**
+     * Parses numbered AI insight points and renders each as a styled card.
+     *
+     * @param insightsText raw model output; blank shows a placeholder label
+     */
     private void displayInsights(String insightsText) {
         insightsContentBox.getChildren().clear();
 
@@ -267,6 +304,11 @@ public class InsightsDialogController {
         }
     }
 
+    /**
+     * Builds a single insight card with title/content styling based on sentiment keywords.
+     *
+     * @param content one insight section (may contain multiple sentences or bullet lines)
+     */
     private void addInsightCard(String content) {
         javafx.scene.layout.VBox card = new javafx.scene.layout.VBox();
         card.setSpacing(8);
@@ -347,21 +389,37 @@ public class InsightsDialogController {
     }
 
     /**
-     * Inner class to hold module statistics
+     * Immutable row for per-module application counts shown in the insights panel.
      */
     private static class ModuleStat {
+
+        /** Academic module name; never {@code null} (unknown modules use {@code "Unknown"}). */
         private final String moduleName;
+
+        /** Number of applications associated with this module. */
         private final long count;
 
+        /**
+         * Creates a module statistics row.
+         *
+         * @param moduleName module label; {@code null} is stored as {@code "Unknown"}
+         * @param count      application count for the module
+         */
         public ModuleStat(String moduleName, long count) {
             this.moduleName = moduleName != null ? moduleName : "Unknown";
             this.count = count;
         }
 
+        /**
+         * @return module display name
+         */
         public String getModuleName() {
             return moduleName;
         }
 
+        /**
+         * @return application count for this module
+         */
         public long getCount() {
             return count;
         }

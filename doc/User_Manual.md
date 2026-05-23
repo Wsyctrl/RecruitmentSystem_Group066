@@ -289,24 +289,24 @@ The default tab for guests and the primary job-discovery area for TAs.
 > 
 > *1) Main gaps*
 > 
-> *- No direct proctoring, monitoring, or exam-related experience*
-> *- Limited evidence of reliability, calmness under pressure, or handling disruptions*
-> *- Weak emphasis on communication (especially verbal instructions), attendance tracking, or protocol adherence*
-> *- Missing proof of punctuality, schedule flexibility, or procedural diligence*
+> *- No direct proctoring, monitoring, or exam-related experience*  
+> *- Limited evidence of reliability, calmness under pressure, or handling disruptions*  
+> *- Weak emphasis on communication (especially verbal instructions), attendance tracking, or protocol adherence*  
+> *- Missing proof of punctuality, schedule flexibility, or procedural diligence*  
 > 
 > *2) Immediate rewrite suggestions*
 > 
-> *- Replace "TA" focus with proctor-relevant traits: reliability, observation, procedure-following, calm authority*
-> *- Add concrete examples of responsibility, timeliness, or rule enforcement (even non-academic)*
-> *- Highlight English fluency and ability to give clear, calm verbal instructions*
-> *- Quantify availability (e.g., "available for early-morning/variable shifts") and commitment to briefings*
+> *- Replace "TA" focus with proctor-relevant traits: reliability, observation, procedure-following, calm authority*  
+> *- Add concrete examples of responsibility, timeliness, or rule enforcement (even non-academic)*  
+> *- Highlight English fluency and ability to give clear, calm verbal instructions*  
+> *- Quantify availability (e.g., "available for early-morning/variable shifts") and commitment to briefings*  
 > 
 > *3) Example phrasing*
 > 
-> *- "Reliable and detail-oriented student with proven punctuality—consistently arrived 30+ mins early for lab setups and deadline-critical coursework."*
-> *- "Calm and observant in high-focus settings; monitored peer debugging sessions for 15+ hours/week, identifying subtle errors (e.g., memory leaks, aliasing) before escalation."*
-> *- "Fluent English speaker; gave clear, step-by-step verbal instructions during dorm study groups—adapted tone and pace for frustrated peers."*
-> *- "Committed to integrity and protocol: followed strict lab safety/checklist procedures, documented all deviations, and reported issues immediately to instructors."*
+> *- "Reliable and detail-oriented student with proven punctuality—consistently arrived 30+ mins early for lab setups and deadline-critical coursework."*  
+> *- "Calm and observant in high-focus settings; monitored peer debugging sessions for 15+ hours/week, identifying subtle errors (e.g., memory leaks, aliasing) before escalation."*  
+> *- "Fluent English speaker; gave clear, step-by-step verbal instructions during dorm study groups—adapted tone and pace for frustrated peers."*  
+> *- "Committed to integrity and protocol: followed strict lab safety/checklist procedures, documented all deviations, and reported issues immediately to instructors."*  
 
 #### AI Recommend Jobs (signed-in)
 

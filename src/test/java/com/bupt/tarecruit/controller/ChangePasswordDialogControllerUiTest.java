@@ -24,18 +24,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class ChangePasswordDialogControllerUiTest extends BaseUiTest {
 
+    /** @return MO portal mode for service wiring */
     @Override
     protected PortalMode getPortalMode() {
         return PortalMode.MO_PORTAL;
     }
 
+    /** Skips default login navigation; tests load the dialog directly. */
     @Override
     protected void navigateInitialView() {
         // No app view needed for this dialog test.
     }
 
+    /** FXML load result for the change-password dialog. */
     private record Loaded(ChangePasswordDialogController controller, Stage stage, Parent root) {}
 
+    /**
+     * Opens the change-password dialog on the FX thread.
+     *
+     * @param ta     {@code true} for TA mode, {@code false} for MO mode
+     * @param userId account identifier passed to the controller
+     * @return loaded controller, stage, and root node
+     */
     private Loaded openDialog(boolean ta, String userId) {
         AtomicReference<Loaded> ref = new AtomicReference<>();
         runOnFx(() -> {
@@ -59,6 +69,11 @@ class ChangePasswordDialogControllerUiTest extends BaseUiTest {
         return ref.get();
     }
 
+    /**
+     * @param root  dialog root node
+     * @param text  exact button label
+     * @return first matching button, or {@code null}
+     */
     private Button findButton(Parent root, String text) {
         for (var n : root.lookupAll(".button")) {
             if (n instanceof Button b && text.equals(b.getText())) return b;

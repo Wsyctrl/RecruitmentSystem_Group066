@@ -20,6 +20,7 @@ import java.util.Optional;
  */
 public final class DialogUtil {
 
+    /** Maximum width applied to alert message labels for readable line wrapping. */
     private static final double MESSAGE_MAX_WIDTH = 520;
     /** Explicit English labels; default ButtonType.OK is localized on non-English OS locales. */
     private static final ButtonType OK_EN = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);

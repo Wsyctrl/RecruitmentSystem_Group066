@@ -41,16 +41,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class MoDashboardControllerUiTest extends BaseUiTest {
 
+    /** @return MO portal mode under test */
     @Override
     protected PortalMode getPortalMode() {
         return PortalMode.MO_PORTAL;
     }
 
+    /** Opens the MO login screen before each test. */
     @Override
     protected void navigateInitialView() {
         navigator.showLogin();
     }
 
+    /** Extends base seed with an extra TA and a default job for Bob. */
     @Override
     protected void seedData() {
         super.seedData();
@@ -69,6 +72,11 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         addJob("Initial Job", "InitialMod", 2, "REQ", "NOTES", LocalDate.now(), LocalDate.now().plusDays(30));
     }
 
+    /**
+     * Creates and persists a job owned by Bob for UI fixtures.
+     *
+     * @return saved job from {@link com.bupt.tarecruit.service.JobService#upsertJob}
+     */
     private Job addJob(String name, String module, int positions, String req, String notes,
                        LocalDate start, LocalDate end) {
         Job j = new Job();
@@ -83,6 +91,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         return services.jobService().upsertJob(j).data();
     }
 
+    /** Navigates to the MO dashboard as Bob. */
     private void loginAsBob() {
         runOnFx(() -> {
             UserSession session = new UserSession(Role.MO, null,
@@ -92,6 +101,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
     }
 
+    /** Navigates to the admin dashboard. */
     private void loginAsAdmin() {
         runOnFx(() -> {
             UserSession session = new UserSession(Role.ADMIN, null,
@@ -101,6 +111,11 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
     }
 
+    /**
+     * Selects a tab by its display text on the root tab pane.
+     *
+     * @param text tab label to select
+     */
     private void selectTab(String text) {
         runOnFx(() -> {
             TabPane tabs = fx("#tabPane");
@@ -114,6 +129,10 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
     }
 
+    /**
+     * @param text exact button label
+     * @return first matching button in the selected tab or scene root
+     */
     private Button findButtonByText(String text) {
         TabPane tabs = fx("#tabPane");
         if (tabs != null && tabs.getSelectionModel().getSelectedItem() != null) {
@@ -482,7 +501,7 @@ class MoDashboardControllerUiTest extends BaseUiTest {
         assertEquals("1", totalJobs.getText());
     }
 
-    // Reference unused import suppression for ApplicationRecord.
+    /** Holds a reference so {@link ApplicationRecord} stays linked in test Javadoc. */
     @SuppressWarnings("unused")
     private ApplicationRecord referenced;
 }

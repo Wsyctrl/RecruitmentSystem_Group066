@@ -1,48 +1,52 @@
-# RecruitmentSystem
+# Recruitment System
 
-### Team Members
-| GitHub Username | QMID (Student ID) |
-|-----------------|-------------------|
-| Wsyctrl         | 231226576         |
-| Season-art      | 231226912         |
-| YUNSHI111       | 231226646 |
-| KKkkKKkk501     | 231226635         |
-| bibilabu-gugugaga | 231226602       |
-| Mellow-zhu | 231226901 |
+**BUPT TA Recruitment System** — desktop application for Teaching Assistant recruitment at BUPT.
 
-### Commit Message Standards
-All commit messages must strictly follow the format: `[Type]: [Concise Description]`. Refer to the table below for valid types and usage:
+Two separate JavaFX portals:
 
-| Type       | Description                                                                 | Example                                                |
-| :--------- | :-------------------------------------------------------------------------- | :----------------------------------------------------- |
-| `feat`     | New feature development                                                     | `feat: add TA profile creation function`               |
-| `fix`      | Bug fix                                                                     | `fix: resolve CV upload file format error`             |
-| `doc`      | Document modification (all updates in `/doc` folder)                        | `doc: update product backlog in doc folder`            |
-| `refactor` | Code refactoring (no new features or bug fixes, only optimization)          | `refactor: optimize TA application status query logic` |
-| `test`     | Add or modify test code                                                     | `test: write unit test for MO job posting function`    |
-| `chore`    | Routine maintenance tasks (no code/logic changes)                           | `chore: update README.md`                              |
+| Portal | Users |
+|--------|--------|
+| **TA Portal** | TA applicants |
+| **MO/Admin Portal** | Module Officers and system administrators |
+
+For login, workflows, and screenshots, see the end-user guide: [`doc/User_Manual.md`](doc/User_Manual.md).
 
 ---
 
-# RecruitmentSystem Project Run Guide
+## Setup
 
-## 1. Environment Setup
+### Environment Setup
+
 - JDK 21
 - Apache Maven
 
-## 2. Clone the Repository
+### Clone the Repository
+
 ```bash
 git clone https://github.com/Wsyctrl/RecruitmentSystem_Group066.git
 ```
 
-## 3. Load Maven Dependencies
+### Load Maven Dependencies
+
 Navigate to the project root directory and run:
+
 ```bash
 mvn clean install
 ```
 
-## 4. Run the Project
+---
+
+## Configure
+
+- **Data:** Keep the `data/` folder in the project root (CSV accounts, jobs, applications, CV files). The app reads/writes it from the working directory when you run via Maven or from the folder that contains the JAR in a release package.
+- **AI (optional):** Set `QWEN_API_KEY`, or edit `src/main/resources/ai-config.properties` (`qwen.api.key=...`). Without a key, the app runs normally; AI features will error when used.
+
+---
+
+## Run
+
 Run different portals with dedicated execution IDs:
+
 - TA Portal：
 ```bash
 mvn javafx:run@ta-portal
@@ -54,7 +58,7 @@ mvn javafx:run@mo-portal
 
 ---
 
-# Package and Run Executable JAR
+## Package and Run Executable JAR
 
 (replace "your-version" with the actual version)
 
@@ -98,3 +102,39 @@ Zip the `release/` folder and send it to users.
 After unzip, run by double-clicking:
 - `run-ta.bat` (TA Portal)
 - `run-mo.bat` (MO/Admin Portal)
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+Third-party libraries and their licenses are documented in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+
+---
+
+## Team Members
+
+| GitHub Username | QMID (Student ID) |
+|-----------------|-------------------|
+| Wsyctrl | 231226576 |
+| Season-art | 231226912 |
+| YUNSHI111 | 231226646 |
+| KKkkKKkk501 | 231226635 |
+| bibilabu-gugugaga | 231226602 |
+| Mellow-zhu | 231226901 |
+
+---
+
+## Commit Message Standards
+
+All commit messages must follow: `[Type]: [Concise Description]`
+
+| Type | Description | Example |
+| :--- | :---------- | :------ |
+| `feat` | New feature | `feat: add TA profile creation function` |
+| `fix` | Bug fix | `fix: resolve CV upload file format error` |
+| `doc` | Document updates (especially `/doc`) | `doc: update product backlog in doc folder` |
+| `refactor` | Refactor without feature/fix | `refactor: optimize TA application status query logic` |
+| `test` | Add or change tests | `test: write unit test for MO job posting function` |
+| `chore` | Maintenance (no logic change) | `chore: update README.md` |

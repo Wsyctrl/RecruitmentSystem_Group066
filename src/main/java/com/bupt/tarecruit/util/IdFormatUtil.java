@@ -8,6 +8,7 @@ package com.bupt.tarecruit.util;
  */
 public final class IdFormatUtil {
 
+    /** Regular expression for valid BUPT email addresses used as user identifiers. */
     private static final String BUPT_EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@bupt\\.edu\\.cn$";
 
     private IdFormatUtil() {

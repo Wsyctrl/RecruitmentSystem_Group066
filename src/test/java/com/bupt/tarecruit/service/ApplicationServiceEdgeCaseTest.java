@@ -125,6 +125,10 @@ class ApplicationServiceEdgeCaseTest {
         assertEquals(1, service.findByTa("ta20230005").size());
     }
 
+    /**
+     * @param jobId job identifier to assign
+     * @return open job template for edge-case tests
+     */
     private Job createOpenJob(String jobId) {
         Job job = new Job();
         job.setJobId(jobId);

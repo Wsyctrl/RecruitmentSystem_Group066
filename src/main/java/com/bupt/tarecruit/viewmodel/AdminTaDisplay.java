@@ -167,6 +167,12 @@ public class AdminTaDisplay {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Resolves a job from the cached catalog by identifier (case-insensitive).
+     *
+     * @param jobId job identifier to look up
+     * @return matching {@link Job}, or {@code null} when not found in {@link #allJobs}
+     */
     private Job findJob(String jobId) {
         return allJobs.stream()
                 .filter(j -> j.getJobId().equalsIgnoreCase(jobId))

@@ -155,6 +155,14 @@ class JobServiceTest {
         assertEquals(1, service.searchOpenJobs(null).size());
     }
 
+    /**
+     * Builds a valid open job entity for {@link JobService} tests.
+     *
+     * @param jobName   posting title
+     * @param module    module name
+     * @param startDate job start date
+     * @return job with required fields populated
+     */
     private Job createValidJob(String jobName, String module, LocalDate startDate) {
         Job job = new Job();
         job.setJobName(jobName);

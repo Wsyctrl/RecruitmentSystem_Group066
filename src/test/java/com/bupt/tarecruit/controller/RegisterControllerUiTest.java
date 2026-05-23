@@ -22,11 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class RegisterControllerUiTest extends BaseUiTest {
 
+    /** @return TA portal mode under test */
     @Override
     protected PortalMode getPortalMode() {
         return PortalMode.TA_PORTAL;
     }
 
+    /** Opens the registration view before each test. */
     @Override
     protected void navigateInitialView() {
         navigator.showRegister();
@@ -163,6 +165,13 @@ class RegisterControllerUiTest extends BaseUiTest {
         assertEquals("Browse jobs as guest", welcome.getText());
     }
 
+    /**
+     * Sets registration form fields on the FX thread.
+     *
+     * @param email   user id / email
+     * @param pwd     password
+     * @param confirm confirmation password
+     */
     private void fillForm(String email, String pwd, String confirm) {
         runOnFx(() -> {
             ((TextField) fx("#userIdField")).setText(email);
@@ -171,6 +180,7 @@ class RegisterControllerUiTest extends BaseUiTest {
         });
     }
 
+    /** Fires the Register button on the registration form. */
     private void clickRegister() {
         runOnFx(() -> {
             Button btn = findButtonByText("Register");
@@ -185,6 +195,10 @@ class RegisterControllerUiTest extends BaseUiTest {
         WaitForAsyncUtils.waitForFxEvents();
     }
 
+    /**
+     * @param text exact button label
+     * @return first matching button, or {@code null}
+     */
     private Button findButtonByText(String text) {
         for (Node n : primaryStage.getScene().getRoot().lookupAll(".button")) {
             if (n instanceof Button b && text.equals(b.getText())) {
