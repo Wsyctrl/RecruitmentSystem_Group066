@@ -551,6 +551,20 @@ Sprint demos taught me to explain features in user language for MO and admin tea
 
 ### 5.3 Shuyu Zhu
 
+### 5.3 Shuyu Zhu
+
+#### Main contribution
+
+I owned TA application tracking (list, status, withdraw), the TA profile page via `ProfileService`, CV upload validation, Sprint 4 AI profile fill from CV text, and TA UI polish aligned with the User Manual.
+
+#### Reflective statement
+
+My reflection centres on **cross-role workflows** and **quality in the round**. Application status on a TA screen is shaped by MO hire/reject, job closure, and admin disable—none of which I owned entirely. Weekly syncs and GitHub PR comments were essential; assumptions broke quickly without them. When Liying’s hire flow closed a job, my list had to refresh correctly; integration issues we found this way became team fixes, not private bugs.
+
+From a software engineering perspective, I learned traceability: linking user stories → manual checks → automated tests. Edge cases such as duplicate active applications after withdraw appeared in testing meetings and were later covered by service tests I did not write alone—good engineering is shared ownership of quality. Sprint 4’s AI profile feature forced us to discuss ethics and product policy: AI suggestions as drafts the user confirms, CV paths documented, no secrets in prompts—aligned with our GenAI agreement in §4.
+
+Documentation in `/doc` and the User Manual mattered as much as controllers; inconsistent wording caused more confusion than a missing button. GenAI sped boilerplate but could ignore JavaFX threading; local runs before PR remained mandatory. If I repeated the project, I would add UI tests in the same sprint as each screen. I finish understanding TA features as one chapter in a multi-role system, not an isolated app.
+
 ---
 
 ### 5.4 Yuan Zhang
