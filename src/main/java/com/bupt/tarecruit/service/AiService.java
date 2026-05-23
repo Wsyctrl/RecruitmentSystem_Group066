@@ -132,7 +132,7 @@ public class AiService {
                 TA online profile:
                 %s
                 
-                Attached resume (TXT):
+                Attached resume:
                 %s
                 
                 User preference (higher priority):
@@ -456,7 +456,7 @@ public class AiService {
                 Experience: %s
                 Self-evaluation: %s
 
-                Attached resume (TXT):
+                Attached resume:
                 %s
                 """.formatted(
                 safe(ta.getMajor()),

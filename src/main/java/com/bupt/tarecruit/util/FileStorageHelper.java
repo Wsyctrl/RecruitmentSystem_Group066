@@ -4,13 +4,17 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Manages on-disk storage for teaching assistant CV files under the application data directory.
  */
 public class FileStorageHelper {
+
+    /** Supported resume attachment extensions (lowercase, including the leading dot). */
+    public static final List<String> ALLOWED_CV_EXTENSIONS = List.of(".txt", ".md", ".pdf");
 
     /**
      * Root directory for application data (CSV files and the {@code cv} subdirectory).
@@ -49,10 +53,22 @@ public class FileStorageHelper {
      * @throws IllegalArgumentException when {@code email} is null or blank
      */
     public static String cvFileName(String email) {
+        return cvFileName(email, ".txt");
+    }
+
+    /**
+     * Builds the canonical CV file name for a teaching assistant email and extension.
+     *
+     * @param email     teaching assistant email (used as identity)
+     * @param extension file extension such as {@code .txt}, {@code .md}, or {@code .pdf}
+     * @return file name in the form {@code {email}_cv{extension}}
+     * @throws IllegalArgumentException when {@code email} is null or blank, or the extension is unsupported
+     */
+    public static String cvFileName(String email, String extension) {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("email is required");
         }
-        return email.trim() + "_cv.txt";
+        return email.trim() + "_cv" + normalizeExtension(extension);
     }
 
     /**
@@ -62,7 +78,51 @@ public class FileStorageHelper {
      * @return path relative to the project root, e.g. {@code data/cv/{email}_cv.txt}
      */
     public static String cvRelativePath(String email) {
-        return "data/cv/" + cvFileName(email);
+        return cvRelativePath(email, ".txt");
+    }
+
+    /**
+     * Returns the relative CV path stored in {@code TA.csv} ({@code cv_path}).
+     *
+     * @param email     teaching assistant email
+     * @param extension file extension such as {@code .txt}, {@code .md}, or {@code .pdf}
+     * @return path relative to the project root
+     */
+    public static String cvRelativePath(String email, String extension) {
+        return "data/cv/" + cvFileName(email, extension);
+    }
+
+    /**
+     * Checks whether the given file name uses a supported resume attachment extension.
+     *
+     * @param fileName source file name
+     * @return {@code true} when the extension is {@code .txt}, {@code .md}, or {@code .pdf}
+     */
+    public static boolean isAllowedCvFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return false;
+        }
+        return ALLOWED_CV_EXTENSIONS.stream().anyMatch(ext -> fileName.toLowerCase(Locale.ROOT).endsWith(ext));
+    }
+
+    /**
+     * Returns the normalized extension for a file name.
+     *
+     * @param fileName source file name
+     * @return extension including the leading dot
+     * @throws IllegalArgumentException when the extension is unsupported
+     */
+    public static String extensionOf(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new IllegalArgumentException("file name is required");
+        }
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        for (String ext : ALLOWED_CV_EXTENSIONS) {
+            if (lower.endsWith(ext)) {
+                return ext;
+            }
+        }
+        throw new IllegalArgumentException("Unsupported CV file type: " + fileName);
     }
 
     /**
@@ -77,8 +137,10 @@ public class FileStorageHelper {
         if (source == null) {
             return new CvSaveOutcome(null, false);
         }
-        Path target = getCvDir().resolve(cvFileName(email));
+        String extension = extensionOf(source.getName());
+        Path target = getCvDir().resolve(cvFileName(email, extension));
         try {
+            deleteOtherCvFormats(email, extension);
             byte[] newContent = Files.readAllBytes(source.toPath());
             boolean contentChanged = true;
             if (Files.isRegularFile(target)) {
@@ -88,7 +150,7 @@ public class FileStorageHelper {
             if (contentChanged) {
                 Files.write(target, newContent);
             }
-            return new CvSaveOutcome(cvRelativePath(email), contentChanged);
+            return new CvSaveOutcome(cvRelativePath(email, extension), contentChanged);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to save CV", e);
         }
@@ -102,13 +164,34 @@ public class FileStorageHelper {
      * @throws IOException when a file deletion fails
      */
     public void deleteCv(String email, String storedPath) throws IOException {
-        Path canonical = getCvDir().resolve(cvFileName(email));
-        deleteIfExists(canonical);
+        for (String extension : ALLOWED_CV_EXTENSIONS) {
+            deleteIfExists(getCvDir().resolve(cvFileName(email, extension)));
+        }
         if (storedPath != null && !storedPath.isBlank()) {
             Path resolved = resolveCvFile(email, storedPath);
-            if (!resolved.equals(canonical)) {
-                deleteIfExists(resolved);
-            }
+            deleteIfExists(resolved);
+        }
+    }
+
+    /**
+     * Reads resume text for AI features from the stored CV attachment.
+     *
+     * @param email      teaching assistant email
+     * @param storedPath path from CSV ({@code cv_path}); may be null or blank
+     * @return extracted text, or an empty string when no readable CV is available
+     */
+    public String readCvText(String email, String storedPath) {
+        if (storedPath == null || storedPath.isBlank()) {
+            return "";
+        }
+        Path cvFile = resolveCvFile(email, storedPath);
+        if (!Files.isRegularFile(cvFile)) {
+            return "";
+        }
+        try {
+            return CvTextExtractor.extractText(cvFile);
+        } catch (IOException e) {
+            return "";
         }
     }
 
@@ -121,6 +204,15 @@ public class FileStorageHelper {
     private void deleteIfExists(Path path) throws IOException {
         if (Files.exists(path)) {
             Files.delete(path);
+        }
+    }
+
+    private void deleteOtherCvFormats(String email, String keepExtension) throws IOException {
+        for (String extension : ALLOWED_CV_EXTENSIONS) {
+            if (extension.equals(keepExtension)) {
+                continue;
+            }
+            deleteIfExists(getCvDir().resolve(cvFileName(email, extension)));
         }
     }
 
@@ -146,7 +238,7 @@ public class FileStorageHelper {
 
     /**
      * Resolves a stored CV path from CSV (may be relative or use mixed separators).
-     * Falls back to {@code cv/{email}_cv.txt} under the data directory when no file matches.
+     * Falls back to the first existing canonical CV file under {@code cv/}, then {@code .txt}.
      *
      * @param email      teaching assistant email; blank values are treated as {@code unknown}
      * @param storedPath path from CSV ({@code cv_path}); may be null or blank
@@ -175,6 +267,25 @@ public class FileStorageHelper {
                 return underData;
             }
         }
+        for (String extension : ALLOWED_CV_EXTENSIONS) {
+            Path candidate = getCvDir().resolve(cvFileName(email, extension));
+            if (Files.isRegularFile(candidate)) {
+                return candidate;
+            }
+        }
         return getCvDir().resolve(cvFileName(email));
+    }
+
+    private static String normalizeExtension(String extension) {
+        if (extension == null || extension.isBlank()) {
+            throw new IllegalArgumentException("extension is required");
+        }
+        String normalized = extension.startsWith(".")
+                ? extension.toLowerCase(Locale.ROOT)
+                : "." + extension.toLowerCase(Locale.ROOT);
+        if (!ALLOWED_CV_EXTENSIONS.contains(normalized)) {
+            throw new IllegalArgumentException("Unsupported CV extension: " + extension);
+        }
+        return normalized;
     }
 }

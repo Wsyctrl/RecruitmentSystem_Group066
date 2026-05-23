@@ -5,7 +5,6 @@ import com.bupt.tarecruit.service.AiService;
 import com.bupt.tarecruit.service.ApplicationService;
 import com.bupt.tarecruit.util.DateTimeUtil;
 import com.bupt.tarecruit.util.DialogUtil;
-import com.bupt.tarecruit.util.FileStorageHelper;
 import com.bupt.tarecruit.util.OperationResult;
 import com.bupt.tarecruit.util.WorkloadRules;
 import com.bupt.tarecruit.viewmodel.*;
@@ -2398,18 +2397,10 @@ CV: %s
     }
 
     private String readAttachedCvText(Ta ta) {
-        if (ta == null || ta.getCvPath() == null || ta.getCvPath().isBlank()) {
+        if (ta == null) {
             return "";
         }
-        Path cvFile = services.fileStorageHelper().resolveCvFile(ta.getTaId(), ta.getCvPath());
-        if (!Files.isRegularFile(cvFile)) {
-            return "";
-        }
-        try {
-            return Files.readString(cvFile);
-        } catch (IOException e) {
-            return "";
-        }
+        return services.fileStorageHelper().readCvText(ta.getTaId(), ta.getCvPath());
     }
 
     /** Downloads the selected applicant's CV to a user-chosen file. */
@@ -2427,7 +2418,7 @@ CV: %s
             return;
         }
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialFileName(FileStorageHelper.cvFileName(ta.getTaId()));
+        fileChooser.setInitialFileName(source.getFileName().toString());
         File dest = fileChooser.showSaveDialog(navigator.getPrimaryStage());
         if (dest == null) {
             return;

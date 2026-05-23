@@ -200,7 +200,7 @@
                                             <Label text="Resume attachment" styleClass="cv-attachment-title"/>
                                             <Label text="Quick start" styleClass="cv-attachment-badge"/>
                                         </HBox>
-                                        <Label text="Upload a TXT resume, let AI auto-fill your online profile from the attachment."
+                                        <Label text="Upload a resume (.txt, .md, or .pdf), let AI auto-fill your online profile from the attachment."
                                                styleClass="cv-attachment-desc" wrapText="true"/>
                                     </VBox>
 

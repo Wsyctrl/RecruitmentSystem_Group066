@@ -10,6 +10,7 @@ import com.bupt.tarecruit.service.JobService;
 import com.bupt.tarecruit.util.DateTimeUtil;
 import com.bupt.tarecruit.util.DialogUtil;
 import com.bupt.tarecruit.util.CvSaveOutcome;
+import com.bupt.tarecruit.util.CvTextExtractor;
 import com.bupt.tarecruit.util.FileStorageHelper;
 import com.bupt.tarecruit.util.OperationResult;
 import com.bupt.tarecruit.viewmodel.ApplicationDisplay;
@@ -198,7 +199,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
     @FXML
     private Button downloadCvButton;
 
-    /** Uploads a .txt CV via file chooser. */
+    /** Uploads a resume attachment via file chooser. */
     @FXML
     private Button uploadCvButton;
 
@@ -756,7 +757,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
-    /** Uploads a .txt resume and updates the TA CV path. */
+    /** Uploads a resume attachment (.txt, .md, or .pdf) and updates the TA CV path. */
     @FXML
     private void handleUploadCv() {
         if (guestMode) {
@@ -768,14 +769,15 @@ public class TaDashboardController extends BaseController implements SessionAwar
             return;
         }
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Choose TXT resume");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text files (*.txt)", "*.txt"));
+        fileChooser.setTitle("Choose resume file");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+                "Resume files (*.txt, *.md, *.pdf)", "*.txt", "*.md", "*.pdf"));
         File selected = fileChooser.showOpenDialog(navigator.getPrimaryStage());
         if (selected == null) {
             return;
         }
-        if (!selected.getName().toLowerCase().endsWith(".txt")) {
-            DialogUtil.error("Only .txt files are allowed", navigator.getPrimaryStage());
+        if (!FileStorageHelper.isAllowedCvFileName(selected.getName())) {
+            DialogUtil.error("Only .txt, .md, and .pdf files are allowed", navigator.getPrimaryStage());
             return;
         }
         FileStorageHelper helper = services.fileStorageHelper();
@@ -834,7 +836,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
 
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialFileName(FileStorageHelper.cvFileName(ta.getTaId()));
+        fileChooser.setInitialFileName(source.getFileName().toString());
         File dest = fileChooser.showSaveDialog(navigator.getPrimaryStage());
         if (dest == null) {
             return;
@@ -1078,18 +1080,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
     }
 
     private String readAttachedCvText(Ta ta) {
-        if (ta.getCvPath() == null || ta.getCvPath().isBlank()) {
-            return "";
-        }
-        Path cvFile = services.fileStorageHelper().resolveCvFile(ta.getTaId(), ta.getCvPath());
-        if (!Files.isRegularFile(cvFile)) {
-            return "";
-        }
-        try {
-            return Files.readString(cvFile);
-        } catch (IOException e) {
-            return "";
-        }
+        return services.fileStorageHelper().readCvText(ta.getTaId(), ta.getCvPath());
     }
 
     /**
@@ -1116,7 +1107,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         Task<AiService.ResumeDraft> task = new Task<>() {
             @Override
             protected AiService.ResumeDraft call() throws Exception {
-                String cvText = Files.readString(cvFile);
+                String cvText = CvTextExtractor.extractText(cvFile);
                 return services.aiService().draftResumeFromCv(ta, cvText);
             }
         };
