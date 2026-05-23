@@ -109,7 +109,7 @@ After unzip, run by double-clicking:
 
 This project is licensed under the [MIT License](LICENSE).
 
-Third-party libraries and their licenses are documented in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).
+Third-party libraries and their licenses are documented in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 ---
 
