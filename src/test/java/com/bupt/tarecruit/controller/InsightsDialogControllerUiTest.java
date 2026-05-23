@@ -29,18 +29,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class InsightsDialogControllerUiTest extends BaseUiTest {
 
+    /** @return MO portal mode for service wiring */
     @Override
     protected PortalMode getPortalMode() {
         return PortalMode.MO_PORTAL;
     }
 
+    /** Skips default login navigation; tests load the insights dialog directly. */
     @Override
     protected void navigateInitialView() {
         // No app navigation needed.
     }
 
+    /** FXML load result for the insights dialog. */
     private record Loaded(InsightsDialogController controller, Stage stage, Parent root) {}
 
+    /** @return controller and stage after loading insights FXML on the FX thread */
     private Loaded openInsights() {
         AtomicReference<Loaded> ref = new AtomicReference<>();
         runOnFx(() -> {
@@ -62,6 +66,14 @@ class InsightsDialogControllerUiTest extends BaseUiTest {
         return ref.get();
     }
 
+    /**
+     * Creates a persisted job for insights fixtures.
+     *
+     * @param name   job title
+     * @param module module name
+     * @param open   when {@code false}, closes the job after creation
+     * @return saved job entity
+     */
     private Job createJob(String name, String module, boolean open) {
         Job j = new Job();
         j.setJobName(name);
@@ -212,6 +224,10 @@ class InsightsDialogControllerUiTest extends BaseUiTest {
         assertFalse(l.stage.isShowing());
     }
 
+    /**
+     * @param box module stats container
+     * @return first module name label in the first row, or {@code null}
+     */
     private Label extractFirstModuleLabel(VBox box) {
         if (box.getChildren().isEmpty()) {
             return null;
@@ -227,7 +243,7 @@ class InsightsDialogControllerUiTest extends BaseUiTest {
         return null;
     }
 
-    // Reference unused import suppression for ApplicationStatus.
+    /** Holds a reference so {@link ApplicationStatus} stays linked in test Javadoc. */
     @SuppressWarnings("unused")
     private static final ApplicationStatus REF = ApplicationStatus.PENDING;
 }

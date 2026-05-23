@@ -518,13 +518,15 @@ Testing found and fixed issues such as duplicate applications after withdraw, in
 
 ## 5. Individual Member Contributions and Reflections
 
-### 5.1 Siyan Wu (Project Lead)
+#### QM no: 231226576
 
-#### Main contribution
+#### Name: Siyan Wu
+
+#### Main contribution:
 
 As project lead, I set up the Maven/JavaFX skeleton, layered packages, CSV DAOs, `ServiceRegistry`, and `OperationResult<T>`. I implemented dual-portal login/register, AI applicant summaries, workload checks, `AiService` fallbacks, and GitHub Actions CI. I coordinated interface contracts, pull-request merges, and four GitHub Releases (v1.0–v4.0).
 
-#### Reflective statement
+#### Reflective statement:
 
 Software engineering here was as much about **process** as about code. We ran four agile sprints with a versioned release at each end; my role was to keep `main` integratable while five teammates worked on feature branches. That meant agreeing DAO interfaces early, writing a short PR description, and refusing merges when `mvn verify` failed locally or in CI. GitHub Issues tracked bugs and backlog items; our commit convention (`feat`, `fix`, `test`, …) made history readable during review.
 
@@ -534,13 +536,15 @@ CI with 173 tests became our shared quality gate; flaky TestFX runs taught us th
 
 ---
 
-### 5.2 Xinzhu Wang
+#### QM no: 231226901
 
-#### Main contribution
+#### Name: Xinzhu Wang
+
+#### Main contribution:
 
 I delivered TA job browsing (guest and logged-in), apply flow, keyword search, AI job recommendations, AI résumé advice, and TA UI polish via `TaJobDisplay`, FXML, and thin controllers over `ApplicationService` and `AiService`.
 
-#### Reflective statement
+#### Reflective statement:
 
 This module showed me that **requirements evolve** during engineering, not only at the start. Our backlog listed browse and apply in Sprint 2, but sprint reviews revealed needs—clearer validation messages, guest browse, better alignment between search keywords and how MOs name modules—that we refined before calling the increment “done.” Prototyping screens early was a lightweight form of validation testing with the team acting as users.
 
@@ -550,9 +554,9 @@ Sprint demos taught me to explain features in user language for MO and admin tea
 
 ---
 
-### 5.3 Shuyu Zhu
+#### QM no: 231226646
 
-### 5.3 Shuyu Zhu
+#### Name: Shuyu Zhu
 
 #### Main contribution
 
@@ -568,7 +572,9 @@ Documentation in `/doc` and the User Manual mattered as much as controllers; inc
 
 ---
 
-### 5.4 Yuan Zhang
+#### QM no: 231226602
+
+#### Name: Yuan Zhang
 
 #### Main contribution
 
@@ -584,7 +590,9 @@ AI keyword generation raised process questions: who approves model output before
 
 ---
 
-### 5.5 Liying Wu
+#### QM no: 231226635
+
+#### Name: Liying Wu
 
 #### Main contribution
 
@@ -596,11 +604,14 @@ Software engineering quality was my main lens. Hire/reject is a high-impact busi
 
 Process-wise, I learned to communicate risks in review: one hire closes a job and rejects pending peers, so UI needs confirmations and clear `OperationResult` messages. AI ranking was demo-friendly but we agreed it must never auto-hire; that policy discussion was engineering ethics, not Java. Coordinating with Yuan on job open/close and with Jie on admin closure reduced duplicate fixes; earlier three-way sync would have saved time.
 
-GenAI suggested scenarios I had overlooked (e.g. duplicate apply after withdraw), but humans chose what entered the suite—illustrating AI as assistant, not author. Peer review taught me readable test names (`duplicateActiveApplicationShouldBeRejected`) help future maintainers. Discussing equivalence classes and boundaries in group meetings linked lecture material to our `@TempDir` fixtures. I also saw how 168 passing tests built trust before GitHub Releases. I leave valuing test design, cross-feature coordination, and accountable MO workflows as central to engineering, not extras around “real” development. Sharing test notes in PRs helped reviewers understand intent quickly.
+GenAI suggested scenarios I had overlooked (e.g. duplicate apply after withdraw), but humans chose what entered the suite—illustrating AI as assistant, not author. Peer review taught me readable test names (`duplicateActiveApplicationShouldBeRejected`) help future maintainers. Discussing equivalence classes and boundaries in group meetings linked lecture material to our `@TempDir` fixtures. I also saw how 173 passing tests built trust before GitHub Releases. I leave valuing test design, cross-feature coordination, and accountable MO workflows as central to engineering, not extras around “real” development. Sharing test notes in PRs helped reviewers understand intent quickly.
 
 ---
 
-### 5.6 Jie Sun
+#### QM no: 231226912
+
+#### Name: Jie Sun
+
 #### Main contribution
 
 I delivered admin password reset, account enable/disable, all-jobs management, account/job audit logs, insights (statistics, workload, 30-day AI summary), and **integration testing** across TA/MO/admin flows including TestFX for admin tabs.

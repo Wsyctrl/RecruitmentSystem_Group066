@@ -34,13 +34,22 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class BaseUiTest extends FxRobot {
 
+    /** Isolated CSV data directory for this test method. */
     protected Path dataDir;
+
+    /** Service registry wired to {@link #dataDir}. */
     protected ServiceRegistry services;
+
+    /** Scene navigator for the portal under test. */
     protected SceneNavigator navigator;
+
+    /** Primary JavaFX stage shown during the test. */
     protected Stage primaryStage;
 
     /** Which button data to press on the NEXT alert that appears. */
     protected volatile ButtonBar.ButtonData nextAlertResponse = ButtonBar.ButtonData.OK_DONE;
+
+    /** Listener that auto-dismisses modal dialogs opened during a test. */
     private ListChangeListener<Window> windowListener;
 
     @BeforeAll
@@ -198,6 +207,7 @@ public abstract class BaseUiTest extends FxRobot {
         Window.getWindows().addListener(windowListener);
     }
 
+    /** Removes the dialog auto-dismiss listener installed in {@link #setUpUi()}. */
     private void uninstallDialogAutoCloser() {
         if (windowListener != null) {
             try {
@@ -208,6 +218,11 @@ public abstract class BaseUiTest extends FxRobot {
         }
     }
 
+    /**
+     * Presses the configured alert button on a modal {@link DialogPane} stage.
+     *
+     * @param stage dialog stage to dismiss
+     */
     private void tryDismissDialog(Stage stage) {
         Scene scene = stage.getScene();
         if (scene == null) {

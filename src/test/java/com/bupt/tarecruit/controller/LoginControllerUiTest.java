@@ -22,11 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class LoginControllerUiTest extends BaseUiTest {
 
+    /** @return TA portal mode under test */
     @Override
     protected PortalMode getPortalMode() {
         return PortalMode.TA_PORTAL;
     }
 
+    /** Adds disabled TA and extra MO fixtures beyond the base seed data. */
     @Override
     protected void seedData() {
         super.seedData();
@@ -219,6 +221,7 @@ class LoginControllerUiTest extends BaseUiTest {
         assertFalse(back.isVisible(), "MO portal hides the back button on the login view");
     }
 
+    /** Fires the Sign in button on the login form. */
     private void clickLogin() {
         // Fire the Sign in button by lookup via text, since FXML didn't give it an fx:id.
         runOnFx(() -> {

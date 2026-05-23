@@ -60,18 +60,34 @@ public class TaDashboardController extends BaseController implements SessionAwar
     private record ProfileDraft(String fullName, String phone, String major, String skills, String experience, String selfEvaluation) {
     }
 
+    /** Authenticated TA session; {@code null} in guest browse mode. */
     private UserSession session;
+
+    /** {@code true} when browsing jobs without signing in. */
     private boolean guestMode;
+
+    /** Suppresses guest tab-guard logic during programmatic tab selection. */
     private boolean suppressTabGuard;
     /** Prevents tab listeners from re-entering while programmatically switching tabs during save prompts. */
     private boolean handlingProfileNavigation;
     /** Last saved profile snapshot; compared against the form to detect unsaved edits. */
     private ProfileDraft persistedProfileDraft;
+    /** Monotonic token invalidated when job selection or browse tab changes (resume advice). */
     private long resumeAdviceContextVersion = 0L;
+
+    /** In-flight resume optimization task; cancelled when context is invalidated. */
     private Task<String> activeResumeAdviceTask;
+
+    /** In-flight AI job recommendation task; cancelled on reset or new request. */
     private Task<List<AiService.JobRecommendation>> activeRecommendJobsTask;
+
+    /** Backing list for the open-jobs table. */
     private final ObservableList<TaJobDisplay> jobItems = FXCollections.observableArrayList();
+
+    /** Keyword-filtered view of {@link #jobItems}. */
     private FilteredList<TaJobDisplay> filteredJobs;
+
+    /** Sorted view of {@link #filteredJobs} (AI recommendations and applied rows ordered last). */
     private javafx.collections.transformation.SortedList<TaJobDisplay> sortedJobs;
     /** AI-recommended job ids (lowercased) → score, used to surface and sort AI hits at the top. */
     private final java.util.Map<String, Integer> aiRecommendedJobScores = new java.util.HashMap<>();
@@ -236,6 +252,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
         sortedJobs = new javafx.collections.transformation.SortedList<>(filteredJobs, this::compareJobsForTable);
         jobTable.setItems(sortedJobs);
         jobTable.setRowFactory(tv -> new javafx.scene.control.TableRow<>() {
+            /**
+             * Applies CSS row classes for AI-recommended and already-applied jobs.
+             *
+             * @param item  row job display model
+             * @param empty {@code true} when the row has no item
+             */
             @Override
             protected void updateItem(TaJobDisplay item, boolean empty) {
                 super.updateItem(item, empty);
@@ -302,10 +324,20 @@ public class TaDashboardController extends BaseController implements SessionAwar
         updateJobDetails(null);
     }
 
+    /**
+     * Normalizes a job identifier for case-insensitive map lookups.
+     *
+     * @param jobId raw job id
+     * @return trimmed lower-case id, or empty string when {@code jobId} is {@code null}
+     */
     private static String normalizeJobId(String jobId) {
         return jobId == null ? "" : jobId.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
+    /**
+     * @param display job row to test
+     * @return {@code true} when the job id is present in {@link #aiRecommendedJobScores}
+     */
     private boolean isAiRecommended(TaJobDisplay display) {
         return display != null
                 && display.getJob() != null
@@ -339,12 +371,17 @@ public class TaDashboardController extends BaseController implements SessionAwar
         return safeText(a.getJob().getJobId()).compareToIgnoreCase(safeText(b.getJob().getJobId()));
     }
 
+    /**
+     * @param display job row to test
+     * @return {@code true} when the TA has already applied to the job
+     */
     private boolean isApplied(TaJobDisplay display) {
         return display != null
                 && display.getJob() != null
                 && hasApplied(display.getJob().getJobId());
     }
 
+    /** Re-applies {@link #compareJobsForTable} and refreshes the job table view. */
     private void refreshJobTableOrder() {
         if (sortedJobs != null) {
             sortedJobs.setComparator(null);
@@ -355,6 +392,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Pins a split-pane divider at a fixed ratio and disables user dragging.
+     *
+     * @param split    split pane to configure
+     * @param position divider position in {@code [0,1]}
+     */
     private void lockSplitDivider(SplitPane split, double position) {
         if (split == null) return;
         split.setDividerPositions(position);
@@ -366,11 +409,11 @@ public class TaDashboardController extends BaseController implements SessionAwar
         javafx.application.Platform.runLater(() ->
                 split.lookupAll(".split-pane-divider").forEach(node -> node.setMouseTransparent(true)));
     }
-/**
- * Sets the current user session and loads the initial dashboard data.
- *
- * @param session current authenticated user session
- */
+    /**
+     * Sets the current user session and loads the initial dashboard data.
+     *
+     * @param session current authenticated user session
+     */
     @Override
     public void setSession(UserSession session) {
         this.session = session;
@@ -895,10 +938,20 @@ public class TaDashboardController extends BaseController implements SessionAwar
         applyJobFilter(jobSearchField == null ? "" : jobSearchField.getText());
     }
 
+    /**
+     * Navigates to login with an optional notice banner (guest mode guard).
+     *
+     * @param message notice text shown on the login screen
+     */
     private void requireLoginAndRedirect(String message) {
         navigator.showLoginWithNotice(message);
     }
 
+    /**
+     * Selects a tab while temporarily suppressing guest tab-guard listeners.
+     *
+     * @param tab target tab; no-op when {@code tabPane} or {@code tab} is {@code null}
+     */
     private void selectTab(Tab tab) {
         if (tabPane == null || tab == null) {
             return;
@@ -976,6 +1029,9 @@ public class TaDashboardController extends BaseController implements SessionAwar
         return true;
     }
 
+    /**
+     * Cancels in-flight resume advice and clears the advice text area when job context changes.
+     */
     private void invalidateResumeAdviceContext() {
         resumeAdviceContextVersion++;
         if (activeResumeAdviceTask != null && activeResumeAdviceTask.isRunning()) {
@@ -986,6 +1042,13 @@ public class TaDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Returns whether resume-advice results should still be applied to the UI.
+     *
+     * @param contextToken   token captured when the advice task started
+     * @param jobIdSnapshot  job id selected when the task started
+     * @return {@code false} when the user changed tabs, selection, or invalidated context
+     */
     private boolean isResumeAdviceContextValid(long contextToken, String jobIdSnapshot) {
         if (contextToken != resumeAdviceContextVersion) {
             return false;
@@ -1008,6 +1071,7 @@ public class TaDashboardController extends BaseController implements SessionAwar
         refreshJobTableOrder();
     }
 
+    /** Clears the AI job recommendation results text area. */
     private void clearAiJobRecommendationOutputs() {
         if (aiJobRecommendationArea != null) {
             aiJobRecommendationArea.clear();
@@ -1049,6 +1113,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
         final int targetTopN = Math.min(3, jobs.size());
         final String cvText = readAttachedCvText(ta);
         Task<List<AiService.JobRecommendation>> task = new Task<>() {
+            /**
+             * Calls {@link AiService#recommendJobsForTa} off the UI thread.
+             *
+             * @return ranked job recommendations
+             * @throws Exception when the AI service call fails
+             */
             @Override
             protected List<AiService.JobRecommendation> call() throws Exception {
                 return services.aiService().recommendJobsForTa(ta, jobs, preference, cvText);
@@ -1162,6 +1232,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
             aiFillStatusLabel.setText("AI is filling profile fields...");
         }
         Task<AiService.ResumeDraft> task = new Task<>() {
+            /**
+             * Extracts CV text and requests an AI profile draft off the UI thread.
+             *
+             * @return structured profile fields parsed from the CV
+             * @throws Exception when CV parsing or the AI call fails
+             */
             @Override
             protected AiService.ResumeDraft call() throws Exception {
                 String cvText = CvTextExtractor.extractText(cvFile);
@@ -1210,6 +1286,12 @@ public class TaDashboardController extends BaseController implements SessionAwar
         String jobIdSnapshot = job.getJobId();
         aiResumeAdviceArea.setText("AI is generating suggestions...");
         Task<String> task = new Task<>() {
+            /**
+             * Requests resume optimization suggestions for the selected job off the UI thread.
+             *
+             * @return optimization text from the AI service
+             * @throws Exception when the AI service call fails
+             */
             @Override
             protected String call() throws Exception {
                 if (isCancelled()) {

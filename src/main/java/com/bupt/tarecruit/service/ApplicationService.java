@@ -376,6 +376,13 @@ public class ApplicationService {
         return IdGenerator.nextId("apply", existing);
     }
 
+    /**
+     * Checks whether a date falls strictly between a job's start and end dates (exclusive bounds).
+     *
+     * @param date calendar date to test
+     * @param job  job whose {@link Job#getStartDate()} and {@link Job#getEndDate()} define the range
+     * @return {@code true} when all three values are non-null and the date is inside the open interval
+     */
     private boolean isDateWithinJobRange(LocalDate date, Job job) {
         if (date == null || job.getStartDate() == null || job.getEndDate() == null) {
             return false;
@@ -383,6 +390,14 @@ public class ApplicationService {
         return date.isAfter(job.getStartDate()) && date.isBefore(job.getEndDate());
     }
 
+    /**
+     * Determines whether two jobs have overlapping employment date ranges.
+     * Used to warn about concurrent hires that span the same calendar period.
+     *
+     * @param existingJob already-assigned or candidate job
+     * @param targetJob   job being evaluated for overlap
+     * @return {@code true} when both jobs have valid start/end dates and the ranges intersect
+     */
     private boolean isOverlapping(Job existingJob, Job targetJob) {
         if (existingJob.getStartDate() == null || existingJob.getEndDate() == null
                 || targetJob.getStartDate() == null || targetJob.getEndDate() == null) {

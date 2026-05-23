@@ -200,6 +200,13 @@ class ApplicationServiceStateTest {
         assertEquals(1, service.findCurrentOngoingHiredJobs(taId, today).size());
     }
 
+    /**
+     * Applies and hires a TA for a job (test helper).
+     *
+     * @param service application service under test
+     * @param taId    teaching assistant id
+     * @param job     target job
+     */
     private void hire(ApplicationService service, String taId, Job job) {
         service.applyForJob(taId, job);
         String applyId = appDao(service).findByTaId(taId).stream()
@@ -210,20 +217,27 @@ class ApplicationServiceStateTest {
         service.hireApplicant(applyId);
     }
 
+    /** @return new {@link ApplicationService} backed by temp CSV files */
     private ApplicationService createService() {
         return new ApplicationService(
                 new CsvApplicationDao(tempDir.resolve("Applications.csv")),
                 new CsvJobDao(tempDir.resolve("Jobs.csv")));
     }
 
+    /** @param ignored unused; keeps helper signature distinct from {@link #appDao} */
     private CsvJobDao jobDao(ApplicationService ignored) {
         return new CsvJobDao(tempDir.resolve("Jobs.csv"));
     }
 
+    /** @param ignored unused; returns the applications DAO for assertions */
     private CsvApplicationDao appDao(ApplicationService ignored) {
         return new CsvApplicationDao(tempDir.resolve("Applications.csv"));
     }
 
+    /**
+     * @param jobId job identifier to assign
+     * @return open job template saved by callers as needed
+     */
     private Job createOpenJob(String jobId) {
         Job job = new Job();
         job.setJobId(jobId);

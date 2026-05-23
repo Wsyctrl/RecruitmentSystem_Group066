@@ -22,8 +22,13 @@ class ProfileServiceTest {
     @TempDir
     Path tempDir;
 
+    /** System under test. */
     private ProfileService profileService;
+
+    /** TA persistence for profile tests. */
     private CsvTaDao taDao;
+
+    /** Default TA account id used across tests. */
     private static final String TA_ID = "ta@bupt.edu.cn";
 
     @BeforeEach

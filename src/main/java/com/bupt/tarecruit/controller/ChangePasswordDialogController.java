@@ -14,11 +14,22 @@ import javafx.stage.Stage;
  */
 public class ChangePasswordDialogController {
 
+    /** Application services used for password change operations. */
     private ServiceRegistry services;
+
+    /** Modal stage hosting this dialog; closed after a successful change. */
     private Stage dialogStage;
+
+    /** Module organizer identifier when {@link #isTaUser} is {@code false}. */
     private String moId;
+
+    /** Teaching assistant identifier when {@link #isTaUser} is {@code true}. */
     private String taId;
+
+    /** {@code true} when the dialog was opened for a TA account. */
     private boolean isTaUser = false;
+
+    /** {@code true} after a successful password change in this dialog session. */
     private boolean passwordChanged = false;
 
     /** Current password for verification. */

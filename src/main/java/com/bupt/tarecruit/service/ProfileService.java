@@ -106,10 +106,22 @@ public class ProfileService {
         return hasCvPath(stored) != hasCvPath(updated);
     }
 
+    /**
+     * Returns whether the TA record references a non-blank CV storage path.
+     *
+     * @param ta teaching assistant profile
+     * @return {@code true} when {@link Ta#getCvPath()} is present after normalization
+     */
     private static boolean hasCvPath(Ta ta) {
         return !normalize(ta.getCvPath()).isBlank();
     }
 
+    /**
+     * Normalizes nullable strings for profile comparison (null becomes empty, trimmed).
+     *
+     * @param value raw field value
+     * @return trimmed text, or empty string when {@code value} is {@code null}
+     */
     private static String normalize(String value) {
         return value == null ? "" : value.trim();
     }

@@ -28,10 +28,19 @@ class AdminServiceTest {
     @TempDir
     Path tempDir;
 
+    /** System under test. */
     private AdminService adminService;
+
+    /** TA persistence used by the admin service. */
     private CsvTaDao taDao;
+
+    /** MO persistence used by the admin service. */
     private CsvMoDao moDao;
+
+    /** Job persistence used by the admin service. */
     private CsvJobDao jobDao;
+
+    /** Account audit log persistence. */
     private CsvAccountLogDao accountLogDao;
 
     @BeforeEach

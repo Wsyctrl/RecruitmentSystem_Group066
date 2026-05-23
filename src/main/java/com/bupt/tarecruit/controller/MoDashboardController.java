@@ -81,31 +81,61 @@ public class MoDashboardController extends BaseController implements SessionAwar
     ) {
     }
 
+    /** Authenticated MO or admin session. */
     private UserSession session;
+
+    /** {@code true} when {@link com.bupt.tarecruit.entity.Role#ADMIN} tabs are visible. */
     private boolean adminMode;
+
+    /** Job currently loaded in the post/edit job form; {@code null} for a new posting. */
     private Job currentEditingJob;
     /** Last saved MO profile snapshot; compared against the form to detect unsaved edits. */
     private MoProfileDraft persistedMoProfileDraft;
     /** Last saved post/edit job form snapshot; compared against the form to detect unsaved edits. */
     private JobFormDraft persistedJobFormDraft;
+    /** Suppresses tab-guard side effects during programmatic tab selection. */
     private boolean suppressTabGuard;
+
     /** Prevents tab listeners from re-entering while programmatically switching tabs during save prompts. */
     private boolean handlingEditableTabNavigation;
+
+    /** Monotonic token invalidated when the selected job or applicant context changes. */
     private long applicantsAiContextVersion = 0L;
+
+    /** In-flight AI applicant ranking task for the current job. */
     private Task<List<AiService.ApplicantRecommendation>> activeRecommendApplicantsTask;
+
+    /** In-flight AI similar-applicant recommendation task. */
     private Task<List<AiService.ApplicantRecommendation>> activeSimilarApplicantsTask;
+
+    /** In-flight AI keyword generation task for the job form. */
     private Task<List<String>> activeKeywordTask;
 
+    /** MO-owned job postings shown in the my-jobs table. */
     private final ObservableList<Job> myJobs = FXCollections.observableArrayList();
+
+    /** Keyword-filtered view of {@link #myJobs}. */
     private FilteredList<Job> filteredMyJobs;
+
+    /** Open jobs available in the applicant-review job selector. */
     private final ObservableList<Job> jobOptions = FXCollections.observableArrayList();
+
+    /** Applicants for the job selected in {@link #jobSelector}. */
     private final ObservableList<ApplicantDisplay> applicantItems = FXCollections.observableArrayList();
+
+    /** Keyword-filtered view of {@link #applicantItems}. */
     private FilteredList<ApplicantDisplay> filteredApplicants;
+
+    /** Cached TA list for admin account management (when needed). */
     private final ObservableList<Ta> taUsers = FXCollections.observableArrayList();
+
+    /** Cached MO list for admin account management (when needed). */
     private final ObservableList<Mo> moUsers = FXCollections.observableArrayList();
+
+    /** Raw job list backing legacy admin job views. */
     private final ObservableList<Job> adminJobItems = FXCollections.observableArrayList();
 
-    // Admin TA/MO display items
+    /** Admin teaching-assistant rows with workload and application aggregates. */
     private final ObservableList<AdminTaDisplay> adminTaItems = FXCollections.observableArrayList();
     private final ObservableList<AdminMoDisplay> adminMoItems = FXCollections.observableArrayList();
     private final ObservableList<AdminJobDisplay> adminJobDisplayItems = FXCollections.observableArrayList();
@@ -115,7 +145,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
     private final ObservableList<AccountLogDisplay> accountLogItems = FXCollections.observableArrayList();
     private final ObservableList<JobLogDisplay> jobLogItems = FXCollections.observableArrayList();
 
-    // Applicant card state
+    /** Applicant currently shown in the detail panel and action buttons. */
     private ApplicantDisplay selectedApplicant;
     private final java.util.Map<String, String> applicantSummaries = new java.util.concurrent.ConcurrentHashMap<>();
     /** Top-match ranking for the current job; survives applicant list reload after hire/reject. */
@@ -445,6 +475,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
 
         jobSelector.setItems(jobOptions);
         jobSelector.setCellFactory(list -> new ListCell<>() {
+            /** @param item job row; {@code null} when empty */
             @Override
             protected void updateItem(Job item, boolean empty) {
                 super.updateItem(item, empty);
@@ -452,6 +483,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
             }
         });
         jobSelector.setButtonCell(new ListCell<>() {
+            /** @param item selected job; empty string when none */
             @Override
             protected void updateItem(Job item, boolean empty) {
                 super.updateItem(item, empty);
@@ -513,6 +545,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
             adminTaTable.setItems(adminTaItems);
             adminTaTable.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> updateAdminTaDetail(val));
             adminTaTable.setRowFactory(tv -> new TableRow<>() {
+                /** Highlights TAs over the concurrent-hire warning threshold. */
                 @Override
                 protected void updateItem(AdminTaDisplay item, boolean empty) {
                     super.updateItem(item, empty);
@@ -545,6 +578,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         if (adminTaHiredJobsTable != null) {
             adminTaHiredJobsTable.setItems(adminTaHiredJobsItems);
             adminTaHiredJobsTable.setRowFactory(tv -> new TableRow<>() {
+                /** Highlights rows for jobs that are currently in progress by calendar dates. */
                 @Override
                 protected void updateItem(AdminTaDisplay.JobApplicationInfo item, boolean empty) {
                     super.updateItem(item, empty);
@@ -623,10 +657,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
         refreshJobFormDraft();
     }
-/**
- * Reloads all job records for the admin job table.
- * Each job is converted into a display model with hired-count information.
- */
+    /**
+     * Reloads all job records for the admin job table.
+     * Each job is converted into a display model with hired-count information.
+     */
     private void refreshAdminJobs() {
         if (!adminMode) {
             return;
@@ -648,10 +682,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
             adminJobTable.refresh();
         }
     }
-/**
- * Reloads all TA account data for the admin TA table,
- * including application and hired-job summaries.
- */
+    /**
+     * Reloads all TA account data for the admin TA table,
+     * including application and hired-job summaries.
+     */
     private void refreshAdminTaData() {
         if (!adminMode) {
             return;
@@ -682,10 +716,10 @@ public class MoDashboardController extends BaseController implements SessionAwar
             adminTaTable.refresh();
         }
     }
-/**
- * Reloads all MO account data for the admin MO table
- * and groups related jobs for display.
- */
+    /**
+     * Reloads all MO account data for the admin MO table
+     * and groups related jobs for display.
+     */
     private void refreshAdminMoData() {
         if (!adminMode) {
             return;
@@ -711,6 +745,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Updates admin TA detail labels and nested applied/hired job tables.
+     *
+     * @param display selected TA row; {@code null} clears the panel
+     */
     private void updateAdminTaDetail(AdminTaDisplay display) {
         if (display == null) {
             adminTaNameLabel.setText("None selected");
@@ -728,6 +767,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         adminTaHiredJobsItems.setAll(display.getHiredJobs());
     }
 
+    /**
+     * Updates admin MO detail labels and the MO job list table.
+     *
+     * @param display selected MO row; {@code null} clears the panel
+     */
     private void updateAdminMoDetail(AdminMoDisplay display) {
         if (display == null) {
             adminMoNameLabel.setText("None selected");
@@ -746,6 +790,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         adminMoJobsItems.setAll(jobDisplays);
     }
 
+    /**
+     * Shows or hides administrator tabs on the root {@link #tabPane}.
+     *
+     * @param enabled {@code true} to add admin tabs for {@link Role#ADMIN}
+     */
     private void setupAdminVisibility(boolean enabled) {
         if (tabPane == null) {
             return;
@@ -779,6 +828,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Pins a split-pane divider at a fixed ratio and disables user dragging.
+     *
+     * @param split    split pane to configure
+     * @param position divider position in {@code [0,1]}
+     */
     private void lockSplitDivider(SplitPane split, double position) {
         if (split == null) return;
         split.setDividerPositions(position);
@@ -792,6 +847,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
                 split.lookupAll(".split-pane-divider").forEach(node -> node.setMouseTransparent(true)));
     }
 
+    /**
+     * Selects the first row when a table has items but no current selection.
+     *
+     * @param <T>   row type
+     * @param table target table
+     */
     private <T> void autoSelectFirst(TableView<T> table) {
         if (table == null || table.getItems() == null || table.getItems().isEmpty()) return;
         if (table.getSelectionModel().getSelectedItem() == null) {
@@ -799,6 +860,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Selects the first filtered applicant when none is selected and re-renders cards. */
     private void autoSelectFirstApplicantCard() {
         if (selectedApplicant == null && !filteredApplicants.isEmpty()) {
             selectedApplicant = filteredApplicants.get(0);
@@ -807,6 +869,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Lazily wires and loads the embedded {@link InsightsDialogController} on first admin insights visit.
+     */
     private void ensureInsightsLoaded() {
         if (insightsViewController == null) return;
         if (!insightsLoaded) {
@@ -835,6 +900,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         loadData();
     }
 
+    /** Refreshes MO jobs, profile, and optional admin data for the current session. */
     private void loadData() {
         refreshMyJobs();
         loadProfile();
@@ -843,10 +909,17 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * @return signed-in module organizer identifier, or empty string when unavailable
+     */
     private String currentMoId() {
         return session.moOptional().map(Mo::getMoId).orElse("");
     }
 
+    /**
+     * Reloads jobs owned by the current MO, preserves table/selector selection when possible,
+     * and triggers applicant reload when a job remains selected.
+     */
     private void refreshMyJobs() {
         // Preserve current selections across refresh so hiring/closing actions don't
         // bounce the MO back to the first job.
@@ -898,6 +971,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Updates the my-jobs detail panel for the table selection.
+     *
+     * @param job selected job; {@code null} clears the panel
+     */
     private void updateSelectedJob(Job job) {
         if (job == null) {
             selectedJobNameLabel.setText("None selected");
@@ -926,6 +1004,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Applies a case-insensitive keyword filter to {@link #filteredMyJobs}.
+     *
+     * @param keyword search text matched against job name and module
+     */
     private void filterJobs(String keyword) {
         String lower = keyword == null ? "" : keyword.toLowerCase();
         filteredMyJobs.setPredicate(job -> {
@@ -935,6 +1018,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         });
     }
 
+    /**
+     * Loads applicant cards for a job, resets AI context when the job changes, and starts summary generation.
+     *
+     * @param job target job; {@code null} clears applicants and AI state
+     */
     private void loadApplicants(Job job) {
         invalidateApplicantsAiContext();
         if (job == null) {
@@ -957,6 +1045,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         generateAllSummariesInBackground();
     }
 
+    /**
+     * Rebuilds {@link #applicantItems} from persistence and seeds cached AI summaries from TA profiles.
+     *
+     * @param job job whose active applications are loaded; {@code null} clears the list
+     */
     private void reloadApplicantItems(Job job) {
         if (job == null) {
             applicantItems.clear();
@@ -984,6 +1077,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Reloads applicants after a hire/reject decision and advances AI highlight state.
+     *
+     * @param job          job that was decided on
+     * @param decidedTaId  teaching assistant identifier affected by the decision
+     */
     private void refreshApplicantsAfterHireOrReject(Job job, String decidedTaId) {
         if (job == null) {
             return;
@@ -1002,6 +1101,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
         filterApplicants(applicantSearchField == null ? "" : applicantSearchField.getText());
     }
 
+    /**
+     * Selects the next pending applicant, preferring AI top-match order when highlights are active.
+     */
     private void selectNextApplicantForReview() {
         Job job = jobSelector.getSelectionModel().getSelectedItem();
         String jobId = job != null ? job.getJobId() : "";
@@ -1033,6 +1135,13 @@ public class MoDashboardController extends BaseController implements SessionAwar
                 }, () -> selectedApplicant = null);
     }
 
+    /**
+     * Compares job identifiers case-insensitively.
+     *
+     * @param a first job id
+     * @param b second job id
+     * @return {@code true} when both are non-null and equal ignoring case
+     */
     private static boolean sameJobId(String a, String b) {
         if (a == null || b == null) {
             return false;
@@ -1055,6 +1164,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         filterApplicants(applicantSearchField == null ? "" : applicantSearchField.getText());
     }
 
+    /**
+     * Filters applicant cards by TA id, name, phone, email, status, or major, then re-renders cards.
+     *
+     * @param keyword search text; blank shows all applicants
+     */
     private void filterApplicants(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             filteredApplicants.setPredicate(item -> true);
@@ -1092,6 +1206,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         renderApplicantCards();
     }
 
+    /**
+     * Builds the eligible applicant list for AI ranking (active applications, disabled TAs excluded).
+     *
+     * @return pending/hired/rejected displays for the selected job, or empty when no job is selected
+     */
     private List<ApplicantDisplay> currentApplicants() {
         Job selectedJob = jobSelector.getSelectionModel().getSelectedItem();
         if (selectedJob == null) {
@@ -1108,10 +1227,20 @@ public class MoDashboardController extends BaseController implements SessionAwar
                 .collect(Collectors.toList());
     }
 
+    /**
+     * @return current applicants AI context version token
+     */
     private long captureApplicantsAiContext() {
         return applicantsAiContextVersion;
     }
 
+    /**
+     * Returns whether applicant AI results should still be applied to the UI.
+     *
+     * @param contextToken  token captured when the task started
+     * @param jobIdSnapshot job id selected when the task started
+     * @return {@code false} when tab, job, or context version changed
+     */
     private boolean isApplicantsAiContextValid(long contextToken, String jobIdSnapshot) {
         if (contextToken != applicantsAiContextVersion) {
             return false;
@@ -1123,6 +1252,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
         return currentJob != null && currentJob.getJobId().equalsIgnoreCase(jobIdSnapshot);
     }
 
+    /**
+     * Cancels in-flight applicant AI tasks and clears AI output areas when job context changes.
+     */
     private void invalidateApplicantsAiContext() {
         applicantsAiContextVersion++;
         if (activeRecommendApplicantsTask != null && activeRecommendApplicantsTask.isRunning()) {
@@ -1137,6 +1269,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         clearApplicantsAiOutputs();
     }
 
+    /** Clears applicant AI result and keyword text areas. */
     private void clearApplicantsAiOutputs() {
         if (aiApplicantResultArea != null) {
             aiApplicantResultArea.clear();
@@ -1332,6 +1465,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         suppressTabGuard = false;
     }
 
+    /** Loads admin account tables, TA/MO aggregates, and job audit data. */
     private void loadAdminData() {
         taUsers.setAll(services.adminService().findAllTa());
         moUsers.setAll(services.adminService().findAllMo().stream()
@@ -1377,6 +1511,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         refreshJobFormDraft();
     }
 
+    /**
+     * Copies a job entity into the post/edit job form and refreshes the saved draft baseline.
+     *
+     * @param job job to edit; must not be {@code null}
+     */
     private void populateJobForm(Job job) {
         currentEditingJob = job;
         jobNameField.setText(job.getJobName());
@@ -1598,14 +1737,28 @@ public class MoDashboardController extends BaseController implements SessionAwar
         navigator.showLogin();
     }
 
+    /**
+     * @param value nullable string
+     * @return {@code value} or empty string when {@code null}
+     */
     private String safeText(String value) {
         return value == null ? "" : value;
     }
 
+    /**
+     * @param taId teaching assistant identifier
+     * @return trimmed lower-case id, or empty string when {@code null}
+     */
     private static String normalizeTaId(String taId) {
         return taId == null ? "" : taId.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
+    /**
+     * Formats AI applicant recommendations as a bullet list for display.
+     *
+     * @param recommendations ranked recommendations; may be {@code null}
+     * @return formatted multi-line text
+     */
     private String formatApplicantRecommendations(List<AiService.ApplicantRecommendation> recommendations) {
         if (recommendations == null || recommendations.isEmpty()) {
             return "No AI applicant results were returned.";
@@ -1615,6 +1768,13 @@ public class MoDashboardController extends BaseController implements SessionAwar
                 .collect(Collectors.joining("\n\n"));
     }
 
+    /**
+     * Builds a confirmation message warning about overlapping hired jobs for one TA.
+     *
+     * @param targetJob       job the MO is attempting to hire for
+     * @param overlappingJobs existing hired jobs that overlap the target period
+     * @return multi-line warning text for {@link DialogUtil#confirmYesNo}
+     */
     private String buildConcurrentHireWarning(Job targetJob, List<Job> overlappingJobs) {
         String listedJobs = overlappingJobs.stream()
                 .sorted(Comparator.comparing(Job::getStartDate, Comparator.nullsLast(LocalDate::compareTo)))
@@ -1781,6 +1941,7 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /** Reloads administrator account-management audit log rows when in admin mode. */
     private void refreshAccountLogs() {
         if (!adminMode || accountLogItems == null) {
             return;
@@ -1794,10 +1955,16 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * Legacy hook for job-management detail panel (no longer used).
+     *
+     * @param display selected admin job row
+     */
     private void updateJobManagementDetail(AdminJobDisplay display) {
         // No longer used
     }
 
+    /** Reloads job open/close audit log rows when in admin mode. */
     private void refreshJobLogs() {
         if (!adminMode || jobLogItems == null) {
             return;
@@ -1875,6 +2042,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * @return next unique job log identifier using {@link com.bupt.tarecruit.util.IdGenerator}
+     */
     private String generateJobLogId() {
         List<String> existing = services.jobLogDao().findAll().stream()
                 .map(JobLog::getLogId)
@@ -1892,6 +2062,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
     // Applicant Card Methods
     // ========================================
 
+    /**
+     * Rebuilds applicant card nodes grouped by status (pending, hired, rejected) with AI ordering.
+     */
     private void renderApplicantCards() {
         if (applicantCardPane == null) {
             return;
@@ -2012,6 +2185,9 @@ public class MoDashboardController extends BaseController implements SessionAwar
         }
     }
 
+    /**
+     * @return horizontal separator node between applicant status groups
+     */
     private javafx.scene.layout.VBox createSeparator() {
         javafx.scene.layout.VBox separator = new javafx.scene.layout.VBox();
         separator.getStyleClass().add("applicant-group-separator");
@@ -2024,6 +2200,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
         return separator;
     }
 
+    /**
+     * Builds one clickable applicant summary card for the flow pane.
+     *
+     * @param applicant applicant row to render
+     * @return styled card node bound to half the pane width
+     */
     private javafx.scene.layout.VBox createApplicantCard(ApplicantDisplay applicant) {
         javafx.scene.layout.VBox card = new javafx.scene.layout.VBox();
         card.setSpacing(8);
@@ -2104,8 +2286,14 @@ public class MoDashboardController extends BaseController implements SessionAwar
         return card;
     }
 
+    /** Starts background AI (or fallback) one-line summaries for all applicants on the current job. */
     private void generateAllSummariesInBackground() {
         Task<Void> task = new Task<>() {
+            /**
+             * Generates or loads cached applicant summaries and persists new summaries to TA records.
+             *
+             * @return always {@code null}
+             */
             @Override
             protected Void call() {
                 for (ApplicantDisplay applicant : applicantItems) {
@@ -2184,6 +2372,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
         aiKeywordsArea.setText("AI is selecting the top " + requestedTopN
                 + " candidate(s) from pending applicants...");
         Task<List<AiService.ApplicantRecommendation>> task = new Task<>() {
+            /**
+             * Ranks pending applicants for the selected job off the UI thread.
+             *
+             * @return AI recommendations
+             * @throws Exception when the AI service call fails
+             */
             @Override
             protected List<AiService.ApplicantRecommendation> call() throws Exception {
                 return services.aiService().recommendApplicantsForJob(
@@ -2226,6 +2420,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
         runSimilarApplicantRecommendation(benchmarkDisplay, topN);
     }
 
+    /**
+     * Runs AI similar-applicant search relative to a benchmark TA and applies highlight results.
+     *
+     * @param benchmarkDisplay hired or reference applicant
+     * @param topN           maximum recommendations (clamped to 1–10)
+     */
     private void runSimilarApplicantRecommendation(ApplicantDisplay benchmarkDisplay, int topN) {
         Job job = jobSelector.getSelectionModel().getSelectedItem();
         if (job == null) {
@@ -2253,6 +2453,12 @@ public class MoDashboardController extends BaseController implements SessionAwar
                 + " candidate(s) similar to " + benchmarkTaId + "...");
 
         Task<List<AiService.ApplicantRecommendation>> task = new Task<>() {
+            /**
+             * Finds applicants similar to the benchmark off the UI thread.
+             *
+             * @return AI recommendations
+             * @throws Exception when the AI service call fails
+             */
             @Override
             protected List<AiService.ApplicantRecommendation> call() throws Exception {
                 return services.aiService().findSimilarApplicants(
@@ -2276,6 +2482,14 @@ public class MoDashboardController extends BaseController implements SessionAwar
         new Thread(task, "ai-similar-applicants").start();
     }
 
+    /**
+     * Applies AI ranking scores to card highlights and the keywords/result text area.
+     *
+     * @param recommendations     raw AI output (invalid ids are skipped)
+     * @param pendingApplicants   eligible pending pool used for padding
+     * @param requestedTopN       desired highlight count
+     * @param resultHeaderFormat  {@link String#format} header with one {@code %d} for count
+     */
     private void applyApplicantRecommendationResults(
             List<AiService.ApplicantRecommendation> recommendations,
             List<ApplicantDisplay> pendingApplicants,
@@ -2349,6 +2563,11 @@ public class MoDashboardController extends BaseController implements SessionAwar
         filterApplicants(applicantSearchField == null ? "" : applicantSearchField.getText());
     }
 
+    /**
+     * Updates the applicant detail panel and hire/reject button states.
+     *
+     * @param display selected applicant; {@code null} clears the panel
+     */
     private void updateApplicantDetail(ApplicantDisplay display) {
         if (display == null || display.getTa() == null) {
             applicantNameLabel.setText("None selected");
@@ -2382,6 +2601,11 @@ CV: %s
         updateActionButtons(display);
     }
 
+    /**
+     * Enables hire/reject only for pending applications.
+     *
+     * @param display selected applicant; {@code null} disables actions
+     */
     private void updateActionButtons(ApplicantDisplay display) {
         boolean isPending = display != null
                 && display.getRecord() != null
@@ -2544,6 +2768,12 @@ CV: %s
         String jobIdSnapshot = job.getJobId();
         aiKeywordsArea.setText("AI is generating keywords...");
         Task<List<String>> task = new Task<>() {
+            /**
+             * Generates quick-review keywords for the selected job off the UI thread.
+             *
+             * @return keyword phrases
+             * @throws Exception when the AI service call fails
+             */
             @Override
             protected List<String> call() throws Exception {
                 if (isCancelled()) {
@@ -2587,6 +2817,12 @@ CV: %s
         keywordsLoadingLabel.setVisible(true);
 
         Task<List<String>> task = new Task<>() {
+            /**
+             * Builds a temporary job from the form and requests keywords off the UI thread.
+             *
+             * @return keyword phrases
+             * @throws Exception when the AI service call fails
+             */
             @Override
             protected List<String> call() throws Exception {
                 Job tempJob = new Job();
@@ -2619,19 +2855,33 @@ CV: %s
      * can refresh CSV data without losing MO-visible ranking.
      */
     private static final class ApplicantAiHighlightState {
+
+        /** Job id for which the current highlight set applies. */
         private String jobId = "";
+
+        /** Normalized TA ids shown as top matches, in display order. */
         private final java.util.LinkedHashSet<String> topMatchTaIds = new java.util.LinkedHashSet<>();
+
+        /** Match scores keyed by normalized TA id. */
         private final java.util.Map<String, Integer> scores = new java.util.HashMap<>();
+
+        /** Last AI analysis text restored to {@link #aiKeywordsArea}. */
         private String analysisText = "";
 
+        /** @return {@code true} when at least one top-match id is stored */
         boolean isActive() {
             return !topMatchTaIds.isEmpty();
         }
 
+        /**
+         * @param id job identifier to test
+         * @return {@code true} when highlights belong to this job
+         */
         boolean isForJob(String id) {
             return id != null && !id.isBlank() && jobId != null && jobId.equalsIgnoreCase(id);
         }
 
+        /** Clears job binding, top-match ids, scores, and analysis text. */
         void clear() {
             jobId = "";
             topMatchTaIds.clear();
@@ -2639,6 +2889,14 @@ CV: %s
             analysisText = "";
         }
 
+        /**
+         * Stores a new top-match ranking for one job.
+         *
+         * @param jobId        job identifier
+         * @param orderedTaIds highlighted TA ids in display order
+         * @param scoreByTaId  scores keyed by normalized TA id
+         * @param analysis     text shown in the AI keywords/result area
+         */
         void applyRanking(
                 String jobId,
                 java.util.List<String> orderedTaIds,
@@ -2658,6 +2916,12 @@ CV: %s
             analysisText = analysis == null ? "" : analysis;
         }
 
+        /**
+         * Removes decided or non-pending applicants from the highlight set after hire/reject.
+         *
+         * @param decidedTaId            TA id that was hired or rejected
+         * @param pendingNormalizedIds   normalized ids still pending on the job
+         */
         void afterApplicantDecided(String decidedTaId, java.util.Set<String> pendingNormalizedIds) {
             if (decidedTaId != null) {
                 String key = MoDashboardController.normalizeTaId(decidedTaId);
@@ -2668,14 +2932,27 @@ CV: %s
             scores.keySet().retainAll(topMatchTaIds);
         }
 
+        /**
+         * @param taId applicant TA id
+         * @return {@code true} when this TA is in the top-match set
+         */
         boolean contains(String taId) {
             return topMatchTaIds.contains(MoDashboardController.normalizeTaId(taId));
         }
 
+        /**
+         * @param taId applicant TA id
+         * @return match score, or {@code 0} when not ranked
+         */
         int scoreOf(String taId) {
             return scores.getOrDefault(MoDashboardController.normalizeTaId(taId), 0);
         }
 
+        /**
+         * Restores stored analysis text into the UI when non-blank.
+         *
+         * @param area target text area; no-op when {@code null}
+         */
         void restoreAnalysisTo(TextArea area) {
             if (area != null && !analysisText.isBlank()) {
                 area.setText(analysisText);
